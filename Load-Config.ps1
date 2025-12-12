@@ -1,0 +1,1 @@
+﻿$Config =  Get-Content .\Config.json | ConvertFrom-Json
