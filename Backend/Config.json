@@ -1,0 +1,11 @@
+{
+   "SQLInstance" : "DATA2025\\CADATA",
+   "Database" : "CADB",
+   "DatabaseFile" : "C:\\SQL Server\\Data\\CADB.mdf",
+   "DatabaseSize" : 262144,
+   "DatabaseLog" : "CADB_Log",
+   "DatabaseLogSize" : 65536,
+   "DatabaseLogFile" : "C:\\SQL Server\\Data\\CADB.ldf",
+   "SQLProviderFormatFile":"C:\\Program Files\\WindowsPowerShell\\Modules\\SqlServer\\22.4.5.1\\SQLProvider.Format.ps1xml",
+   "CAConfig" : "CA2025.ad.local\\CA2025-RSA"
+}
