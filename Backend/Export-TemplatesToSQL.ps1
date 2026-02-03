@@ -1,4 +1,4 @@
-﻿. .\Load-Config.ps1
+. .\Load-Config.ps1
 . .\New-ADConnection.ps1
 . .\Get-ADObject.ps1
 . .\Open-SQLConnection.ps1
@@ -15,7 +15,12 @@ function Export-TemplatesToSQL
         -WorkingFolder "C:\Temp" `
         -PageSize $ADConnectionInfo.PageSize `
         -LDAPFilter "(&(objectclass=pKICertificateTemplate))" `
-        -AttributeList "cn","distinguishedName","flags","msPKI-Certificate-Application-Policy","msPKI-Certificate-Name-Flag", `        "msPKI-Certificate-Policy","msPKI-Cert-Template-OID","msPKI-Enrollment-Flag","msPKI-Minimal-Key-Size", `        "msPKI-Private-Key-Flag","msPKI-RA-Application-Policies","msPKI-RA-Policies","msPKI-RA-Signature","msPKI-Supersede-Templates", `        "msPKI-Template-Minor-Revision","msPKI-Template-Schema-Version","objectGUID","pKICriticalExtensions", `        "pKIDefaultCSPs","pKIDefaultKeySpec","pKIExpirationPeriod","pKIExtendedKeyUsage","pKIKeyUsage", `        "pKIMaxIssuingDepth","pKIOverlapPeriod","nTSecurityDescriptor"
+        -AttributeList "cn","distinguishedName","flags","msPKI-Certificate-Application-Policy","msPKI-Certificate-Name-Flag", `
+        "msPKI-Certificate-Policy","msPKI-Cert-Template-OID","msPKI-Enrollment-Flag","msPKI-Minimal-Key-Size", `
+        "msPKI-Private-Key-Flag","msPKI-RA-Application-Policies","msPKI-RA-Policies","msPKI-RA-Signature","msPKI-Supersede-Templates", `
+        "msPKI-Template-Minor-Revision","msPKI-Template-Schema-Version","objectGUID","pKICriticalExtensions", `
+        "pKIDefaultCSPs","pKIDefaultKeySpec","pKIExpirationPeriod","pKIExtendedKeyUsage","pKIKeyUsage", `
+        "pKIMaxIssuingDepth","pKIOverlapPeriod","nTSecurityDescriptor"
     $Templates
     for($i=0;$i -lt $Templates.Count;$i++)
     {
@@ -157,10 +162,17 @@ function Export-TemplatesToSQL
             $Template.pKIOverlapPeriod = [math]::Round([convert]::ToInt64($LittleEndianByte,16) * -0.0000001 / 3600 / 24,2)
         }
         
-        $ntsecuritydescriptor = $Templates[$i].Attributes.ntsecuritydescriptor[0]
-        $ACL = New-Object System.Security.AccessControl.CommonSecurityDescriptor "true","true",$ntSecurityDescriptor,0
-        $SDDL = $ACL.GetSddlForm([System.Security.AccessControl.AccessControlSections]::ALL)
-        $Template.ntSecurityDescriptor = $SDDL
+        if($Templates[$i].Attributes.ntsecuritydescriptor)
+        {
+            $ntsecuritydescriptor = $Templates[$i].Attributes.ntsecuritydescriptor[0]
+            $ACL = New-Object System.Security.AccessControl.CommonSecurityDescriptor "true","true",$ntSecurityDescriptor,0
+            $SDDL = $ACL.GetSddlForm([System.Security.AccessControl.AccessControlSections]::ALL)
+            $Template.ntSecurityDescriptor = $SDDL
+        }
+        else
+        {
+            $Template.ntSecurityDescriptor = "Could not read ntsecuritydescriptor"
+        }
 
         if($Templates[$i].Attributes.objectsid)
         {
@@ -178,7 +190,11 @@ function Export-TemplatesToSQL
         msPKITemplateMinorRevision,msPKITemplateSchemaVersion,pKICriticalExtensions,pKIDefaultCSPs,pKIDefaultKeySpec,pKIExpirationPeriod,pKIExtendedKeyUsage,
         pKIKeyUsage,pKIMaxIssuingDepth,pKIOverlapPeriod,ntSecurityDescriptor) 
         VALUES 
-        ('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}','{11}','{12}','{13}','{14}','{15}','{16}','{17}','{18}','{19}','{20}','{21}','{22}','{23}','{24}','{25}')" `        -f $Template.objectGUID,$Template.cn,$Template.distinguishedName,$Template.flags,$Template.msPKICertificateApplicationPolicy,$Template.msPKICertificateNameFlag,$Template.msPKICertificatePolicy, `        $Template.msPKICertTemplateOID,$Template.msPKIEnrollmentFlag,$Template.msPKIMinimalKeySize,$Template.msPKIPrivateKeyFlag,$Template.msPKIRAApplicationPolicies,$Template.msPKIRAPolicies, `        $Template.msPKIRASignature,$Template.msPKISupersedeTemplates,$Template.msPKITemplateMinorRevision,$Template.msPKITemplateSchemaVersion,$Template.pKICriticalExtensions,$Template.pKIDefaultCSPs, `        $Template.pKIDefaultKeySpec,$Template.pKIExpirationPeriod,$Template.pKIExtendedKeyUsage,$Template.pKIKeyUsage,$Template.pKIMaxIssuingDepth,$Template.pKIOverlapPeriod,$Template.ntSecurityDescriptor
+        ('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}','{11}','{12}','{13}','{14}','{15}','{16}','{17}','{18}','{19}','{20}','{21}','{22}','{23}','{24}','{25}')" `
+        -f $Template.objectGUID,$Template.cn,$Template.distinguishedName,$Template.flags,$Template.msPKICertificateApplicationPolicy,$Template.msPKICertificateNameFlag,$Template.msPKICertificatePolicy, `
+        $Template.msPKICertTemplateOID,$Template.msPKIEnrollmentFlag,$Template.msPKIMinimalKeySize,$Template.msPKIPrivateKeyFlag,$Template.msPKIRAApplicationPolicies,$Template.msPKIRAPolicies, `
+        $Template.msPKIRASignature,$Template.msPKISupersedeTemplates,$Template.msPKITemplateMinorRevision,$Template.msPKITemplateSchemaVersion,$Template.pKICriticalExtensions,$Template.pKIDefaultCSPs, `
+        $Template.pKIDefaultKeySpec,$Template.pKIExpirationPeriod,$Template.pKIExtendedKeyUsage,$Template.pKIKeyUsage,$Template.pKIMaxIssuingDepth,$Template.pKIOverlapPeriod,$Template.ntSecurityDescriptor
         
         $SQLCommand = New-object System.Data.SqlClient.SqlCommand $Statement, $SQLConnection
         try
