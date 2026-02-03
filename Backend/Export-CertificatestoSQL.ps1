@@ -14,6 +14,8 @@ $LastRow = Get-LastCertificateDatabaseEntry `
 $stepsize = 10
 for ($i=0;$i -lt $LastRow.RequestID; $i+=$stepsize)
 {
+    $Percent = [math]::Round(($i*100/$LastRow.RequestID),2)
+    Write-Progress -Activity "Initial Export of Certificates" -Status ("Working at {0}% with RequestID {1}" -f $Percent,$i) -PercentComplete $Percent
     $Filter = @(
         @{IndexColumn="RequestID";QueryValue=$i;SeekQualifier=$CVR_SEEK_GE;SortQualifier=$CVR_SORT_NONE},
         @{IndexColumn="RequestID";QueryValue=($i+$stepsize);SeekQualifier=$CVR_SEEK_LT;SortQualifier=$CVR_SORT_NONE}

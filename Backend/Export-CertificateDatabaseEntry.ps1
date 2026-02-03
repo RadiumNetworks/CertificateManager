@@ -88,7 +88,6 @@
         #If the cmc parsing fails we try to parse it directly as a pkcs7 and following pkcs10 format
         if($Row.BinaryRequest)
         {
-            $Row.RequestType
             switch($Row.RequestType)
             {
                 263168 {
@@ -97,33 +96,36 @@
                         $CMCRequest = New-Object -ComObject X509enrollment.CX509CertificateRequestCmc
                         $CMCRequest.InitializeDecode($Row.BinaryRequest,6)
                         $PKCS7Request = $CMCRequest.GetInnerRequest(0)
-                        $SANExtension = $PKCS7Request.X509Extensions | ? { $_.objectid.value -eq $AlternativeNames}
-                        "CMC"
+                        $SANExtension = $PKCS7Request.X509Extensions | Where-Object { 
+                            $_.objectid.value -eq $AlternativeNames
+                            }
                     } catch 
                     { 
-                        "NO CMC" 
+                        "Error reading CMC format" 
                     }
                 }
                 262912 {
                     try {
                         $PKCS7Request = New-Object -ComObject X509enrollment.CX509CertificateRequestPKCS7
                         $PKCS7Request.InitializeDecode($Row.BinaryRequest,0)
-                        $SANExtension = $PKCS7Request.X509Extensions | ? { $_.objectid.value -eq $AlternativeNames}
-                        "PKCS7"
+                        $SANExtension = $PKCS7Request.X509Extensions | Where-Object { 
+                            $_.objectid.value -eq $AlternativeNames
+                            }
                     } catch 
                     {
-                        "NO PKCS7"
+                        "Error reading PKCS7 format"
                     }
                 }
                 262400 {
                     try {
                         $PKCS10Request = New-Object -ComObject X509enrollment.CX509CertificateRequestPKCS10
                         $PKCS10Request.InitializeDecode($Row.BinaryRequest,0)
-                        $SANExtension = $PKCS10Request.X509Extensions | ? { $_.objectid.value -eq $AlternativeNames}
-                        "PKCS10"
+                        $SANExtension = $PKCS10Request.X509Extensions | Where-Object { 
+                            $_.objectid.value -eq $AlternativeNames
+                            }
 
                     } catch {
-                        "NO PKCS10"
+                        "Error reading PKCS10 format"
                     }
                 }
             }
