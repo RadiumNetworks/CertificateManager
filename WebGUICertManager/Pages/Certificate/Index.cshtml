@@ -1,0 +1,86 @@
+﻿@page
+@model WebGUICertManager.Pages.Certificate.IndexModel
+@{
+    ViewData["Title"] = "Certificates";
+}
+
+<h1>Certificates List</h1>
+<hr />
+<form asp-page="./Index" method="get">
+    <div class="form-actions no-color">
+        <p>
+            Search String:
+            <input type="text" name="SearchString" value="@Model.CurrentStringFilter" />
+            <input type="submit" value="Search" class="btn btn-primary" /> |
+            <a asp-page="./Index">Back to full List</a>
+        </p>
+        <p>
+            Search ID:
+            <input type="text" name="SearchID" value="@Model.CurrentIdFilter" />
+            <input type="submit" value="Search" class="btn btn-primary" /> |
+            <a asp-page="./Index">Back to full List</a>
+        </p>
+    </div>
+</form>
+<table class="table table-responsive table-striped table-hover align-middle">
+    <thead>
+        <tr class="text-center">
+            <th>@Html.DisplayNameFor(model => model.Entries[0].CAConfig)</th>
+            <th>
+                <a asp-page="./Index" asp-route-sortOrder="@Model.IdSort"
+                   asp-route-currentIdFilter="@Model.CurrentIdFilter">
+                        @Html.DisplayNameFor(model => model.Entries[0].RequestId)
+                </a>
+            </th>
+            <th>
+                <a asp-page="./Index" asp-route-sortOrder="@Model.SubjectSort"
+                   asp-route-currentStringFilter="@Model.CurrentStringFilter">
+                    @Html.DisplayNameFor(model => model.Entries[0].RequestCommonName)
+                </a>
+            </th>
+            <th>@Html.DisplayNameFor(model => model.Entries[0].Owner)</th>
+            <th>@Html.DisplayNameFor(model => model.Entries[0].Notes)</th>
+            <th>Actions</th>
+        </tr>
+
+    </thead>
+    <tbody>
+        @foreach (var entry in Model.Entries)
+        {
+            <tr class="text-center">
+                <td>@Html.DisplayFor(model => entry.CAConfig)</td>
+                <td>@Html.DisplayFor(model => entry.RequestId)</td>
+                <td>@Html.DisplayFor(model => entry.RequestCommonName)</td>
+                <td>@Html.DisplayFor(model => entry.Owner)</td>
+                <td>@Html.DisplayFor(model => entry.Notes)</td>
+                <td>
+                    <a asp-page="Edit" asp-route-id="@entry.RequestId" asp-route-config="@entry.CAConfig" class="btn btn-primary">Edit</a>
+                </td>
+            </tr>
+
+        }
+    </tbody>
+
+</table>
+
+@{
+    var prevDisabled = !Model.Entries.HasPreviousPage ? "disabled" : "";
+    var nextDisabled = !Model.Entries.HasNextPage ? "disabled" : "";
+}
+
+<a asp-page="./Index"
+   asp-route-sortOrder="@Model.CurrentSort"
+   asp-route-pageIndex="@(Model.Entries.PageIndex - 1)"
+   asp-route-currentIdFilter="@Model.CurrentIdFilter"
+   asp-route-currentStringFilter="@Model.CurrentStringFilter"
+   class="btn btn-primary @prevDisabled">
+    Previous
+</a>
+<a asp-page="./Index"
+   asp-route-sortOrder="@Model.CurrentSort"
+   asp-route-pageIndex="@(Model.Entries.PageIndex + 1)"
+   asp-route-currentIdFilter="@Model.CurrentIdFilter"
+   asp-route-currentStringFilter="@Model.CurrentStringFilter"
+   class="btn btn-primary @nextDisabled">
+    Next
+</a>

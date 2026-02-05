@@ -1,0 +1,76 @@
+﻿@page
+@model WebGUICertManager.Pages.Certificate.EditModel
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h1>Edit</h1>
+<hr/>
+
+<div class="row">
+    <div class="col-4">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="Entries.RequestId" />
+            <input type="hidden" asp-for="Entries.CAConfig" />
+            <input type="hidden" asp-for="Entries.Base64Certificate" />
+            <input type="hidden" asp-for="Entries.Base64Request" />
+            <input type="hidden" asp-for="Entries.SerialNumber" />
+            <input type="hidden" asp-for="Entries.RequestDisposition" />
+            <input type="hidden" asp-for="Entries.RequesterName" />
+            <input type="hidden" asp-for="Entries.RequestType" />
+            <input type="hidden" asp-for="Entries.RequestAttributes" />
+            <input type="hidden" asp-for="Entries.IssuedEmailAddress" />
+            <input type="hidden" asp-for="Entries.IssuedCommonName" />
+            <input type="hidden" asp-for="Entries.IssuedCountryRegion" />
+            <input type="hidden" asp-for="Entries.IssuedOrganization" />
+            <input type="hidden" asp-for="Entries.IssuedOrganizationUnit" />
+            <input type="hidden" asp-for="Entries.CallerName" />
+            <input type="hidden" asp-for="Entries.CertificateHash" />
+            <input type="hidden" asp-for="Entries.CertificateTemplate" />
+            <input type="hidden" asp-for="Entries.CertificateEffectiveDate" />
+            <input type="hidden" asp-for="Entries.CertificateExpirationDate" />
+            <input type="hidden" asp-for="Entries.PublicKeyLength" />
+            <input type="hidden" asp-for="Entries.PublicKeyAlgorithm" />
+            <input type="hidden" asp-for="Entries.RequestCountryRegion" />
+            <input type="hidden" asp-for="Entries.RequestOrganization" />
+            <input type="hidden" asp-for="Entries.RequestOrganizationUnit" />
+            <input type="hidden" asp-for="Entries.RequestCommonName" />
+            <input type="hidden" asp-for="Entries.RequestCity" />
+            <input type="hidden" asp-for="Entries.RequestTitle" />
+            <input type="hidden" asp-for="Entries.RequestEmailAddress" />
+            <input type="hidden" asp-for="Entries.TemplateEnrollmentFlags" />
+            <input type="hidden" asp-for="Entries.TemplateGeneralFlags" />
+            <input type="hidden" asp-for="Entries.TemplatePrivateKeyFlags" />
+            <input type="hidden" asp-for="Entries.PublicKeyAlgorithmParameters" />
+            <input type="hidden" asp-for="Entries.RevocationDate" />
+            <input type="hidden" asp-for="Entries.RevocationReason" />
+
+            <div class="form-group">
+                <label asp-for="Entries.RequestId" class="control-label"></label>
+                <input asp-for="Entries.RequestId" class="form-control" readonly/>
+                <span asp-validation-for="Entries.RequestId" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Entries.Owner" class="control-label"></label>
+                <input asp-for="Entries.Owner" class="form-control" />
+                <span asp-validation-for="Entries.Owner" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Entries.Notes" class="control-label"></label>
+                <input asp-for="Entries.Notes" class="form-control" />
+                <span asp-validation-for="Entries.Notes" class="text-danger"></span>
+            </div>
+            <div class="form-group mt-2">
+                <a asp-page="./Index" class="btn btn-danger">Back</a>
+                <input type="submit" value="Update" class="btn btn-success" />
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
