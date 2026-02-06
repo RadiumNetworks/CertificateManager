@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -8,6 +9,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Linq.Expressions;
+using System.Reflection;
+using System.Text;
 using WebGUICertManager.Data;
 using WebGUICertManager.Models;
 
@@ -33,18 +36,69 @@ namespace WebGUICertManager.Pages.Certificate
         public string CurrentDateFilter { get; set; }
         public string CurrentSort { get; set; }
 
+        public List<SelectListItem> AvailableOptions { get; set; }
+
+        public string SelectedOption { get; set; } 
 
         public PaginatedList<Entries> Entries { get; set; } = default!;
 
-        public async Task OnGetAsync(string sortOrder, string currentStringFilter, string currentIdFilter, string currentDateFilter, string searchString, string searchId, string searchDate, int? pageIndex)
+        public void DownloadExport(List<Entries> ExportEntries, string[]? ExportFilter)
         {
-            CurrentSort = sortOrder;
+            {
+                string csv = string.Empty;
+                string date = DateTime.Now.ToString("yyyy-MM-dd_hh-mm-ss");
+                using (StreamWriter writer = new StreamWriter(("c:\\temp\\certificatelist_" + date + ".csv"), true))
+                {
+                    if (ExportFilter != null)
+                    {
+                        foreach (var ExportEntry in ExportEntries)
+                        {
+                            string line = "'";
+                            foreach (var elem in ExportFilter)
+                            {
+                                try
+                                {
+                                    var property = ExportEntry.GetType().GetProperty(elem);
+                                    line += ("" + property.GetValue(ExportEntry).ToString().Replace("\n","").Replace("\r","") + "','");
+                                }
+                                catch
+                                {
+
+                                }
+
+                            }
+                            line += "'";
+                            writer.WriteLine(line);
+                        }
+                    }
+                    else
+                    {
+                        var properties = typeof(Entries).GetProperties();
+                        foreach (var ExportEntry in ExportEntries)
+                        {
+                            csv += String.Join(",", properties.Select(p => p.GetValue(ExportEntry)));
+                            writer.WriteLine(String.Join(",", properties.Select(p => "'" + p.GetValue(ExportEntry) + "'")));
+                        }
+                    }
+                }
+            }
+        }
+
+        public async Task OnGetAsync(string sortOrder, string currentStringFilter, string currentIdFilter, string currentDateFilter, string searchString, string searchId, string searchDate, string Export, string ExportFilter, int? pageIndex)
+        {
             IdSort = sortOrder == "Id" ? "id_desc" : "Id";
             SubjectSort = sortOrder == "subject" ? "subject_desc" : "subject";
             OwnerSort = sortOrder == "owner" ? "owner_desc" : "owner";
             ExpirationDateSort = sortOrder == "expirationdate" ? "expirationdate_desc" : "expirationdate";
 
-            if (searchString != null || searchId != null || searchDate != null)
+            AvailableOptions = new List<SelectListItem>();
+            PropertyInfo[] properties = typeof(Entries).GetProperties();
+            foreach (var property in properties)
+            {
+                AvailableOptions.Add(new SelectListItem { Value = property.Name, Text = property.Name });
+            }
+
+            if (searchString != null || searchId != null || searchDate != null )
             {
                 pageIndex = 1;
             }
@@ -55,9 +109,21 @@ namespace WebGUICertManager.Pages.Certificate
                 searchDate = currentDateFilter;
             }
 
+            if(ExportFilter != null)
+            {
+                searchString = currentStringFilter;
+                searchId = currentIdFilter;
+                searchDate = currentDateFilter;
+                sortOrder = CurrentSort;
+            }
+
             CurrentStringFilter = searchString;
             CurrentIdFilter = searchId;
             CurrentDateFilter = searchDate;
+            CurrentSort = sortOrder;
+
+                
+            
 
             IQueryable<Entries> SortEntries = from Entry in context.Entries
                                              select Entry;
@@ -78,6 +144,21 @@ namespace WebGUICertManager.Pages.Certificate
                 SortEntries = SortEntries.Where(Entry => Entry.CertificateExpirationDate < timestamp);
                 
             }
+
+            if ((Export != null) && (ExportFilter != null))
+            {
+                string[] ExportProperties = ExportFilter.Split(",");
+                var ExportEntries = new List<Entries>();
+                ExportEntries.AddRange(SortEntries);
+                DownloadExport(ExportEntries, ExportProperties);
+            }
+            else if (Export != null)
+            {
+                var ExportEntries = new List<Entries>();
+                ExportEntries.AddRange(SortEntries);
+                DownloadExport(ExportEntries, null);
+            }
+
 
             switch (sortOrder)
             {

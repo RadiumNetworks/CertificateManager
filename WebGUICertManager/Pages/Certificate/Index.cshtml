@@ -12,12 +12,19 @@
             Search String:
             <input type="text" name="SearchString" value="@Model.CurrentStringFilter" />
             <input type="submit" value="Search" class="btn btn-primary" /> |
-            <a asp-page="./Index">Back to full List</a>
         </p>
         <p>
             Search ID:
             <input type="text" name="SearchID" value="@Model.CurrentIdFilter" />
             <input type="submit" value="Search" class="btn btn-primary" /> |
+        </p>
+        <p>
+            max Expirationdate:
+            <input type="date" name="SearchDate" value="@Model.CurrentDateFilter" format="yyyy-MM-dd" />
+            <input type="submit" value="Search" class="btn btn-primary" /> |
+            
+        </p>
+        <p>
             <a asp-page="./Index">Back to full List</a>
         </p>
     </div>
@@ -28,17 +35,37 @@
             <th>@Html.DisplayNameFor(model => model.Entries[0].CAConfig)</th>
             <th>
                 <a asp-page="./Index" asp-route-sortOrder="@Model.IdSort"
-                   asp-route-currentIdFilter="@Model.CurrentIdFilter">
-                        @Html.DisplayNameFor(model => model.Entries[0].RequestId)
+                   asp-route-currentIdFilter="@Model.CurrentIdFilter"
+                   asp-route-currentStringFilter="@Model.CurrentStringFilter"
+                   asp-route-currentDateFilter="@Model.CurrentDateFilter">
+                   @Html.DisplayNameFor(model => model.Entries[0].RequestId)
                 </a>
             </th>
             <th>
                 <a asp-page="./Index" asp-route-sortOrder="@Model.SubjectSort"
-                   asp-route-currentStringFilter="@Model.CurrentStringFilter">
+                   asp-route-currentIdFilter="@Model.CurrentIdFilter"
+                   asp-route-currentStringFilter="@Model.CurrentStringFilter"
+                   asp-route-currentDateFilter="@Model.CurrentDateFilter">
                     @Html.DisplayNameFor(model => model.Entries[0].RequestCommonName)
                 </a>
             </th>
-            <th>@Html.DisplayNameFor(model => model.Entries[0].Owner)</th>
+            <th>@Html.DisplayNameFor(model => model.Entries[0].CertificateEffectiveDate)</th>
+            <th>
+                <a asp-page="./Index" asp-route-sortOrder="@Model.ExpirationDateSort"
+                   asp-route-currentIdFilter="@Model.CurrentIdFilter"
+                   asp-route-currentStringFilter="@Model.CurrentStringFilter"
+                   asp-route-currentDateFilter="@Model.CurrentDateFilter">
+                    @Html.DisplayNameFor(model => model.Entries[0].CertificateExpirationDate)
+                </a>
+            </th>
+            <th>
+                <a asp-page="./Index" asp-route-sortOrder="@Model.OwnerSort"
+                   asp-route-currentIdFilter="@Model.CurrentIdFilter"
+                   asp-route-currentStringFilter="@Model.CurrentStringFilter"
+                   asp-route-currentDateFilter="@Model.CurrentDateFilter">
+                    @Html.DisplayNameFor(model => model.Entries[0].Owner)
+                </a>
+            </th>
             <th>@Html.DisplayNameFor(model => model.Entries[0].Notes)</th>
             <th>Actions</th>
         </tr>
@@ -51,6 +78,8 @@
                 <td>@Html.DisplayFor(model => entry.CAConfig)</td>
                 <td>@Html.DisplayFor(model => entry.RequestId)</td>
                 <td>@Html.DisplayFor(model => entry.RequestCommonName)</td>
+                <td>@Html.DisplayFor(model => entry.CertificateEffectiveDate)</td>
+                <td>@Html.DisplayFor(model => entry.CertificateExpirationDate)</td>
                 <td>@Html.DisplayFor(model => entry.Owner)</td>
                 <td>@Html.DisplayFor(model => entry.Notes)</td>
                 <td>
@@ -59,6 +88,7 @@
             </tr>
 
         }
+        <tr><td>@Model.Entries.PageIndex of @Model.Entries.TotalPages</td></tr>
     </tbody>
 
 </table>
@@ -73,6 +103,7 @@
    asp-route-pageIndex="@(Model.Entries.PageIndex - 1)"
    asp-route-currentIdFilter="@Model.CurrentIdFilter"
    asp-route-currentStringFilter="@Model.CurrentStringFilter"
+   asp-route-currentDateFilter="@Model.CurrentDateFilter"
    class="btn btn-primary @prevDisabled">
     Previous
 </a>
@@ -81,6 +112,59 @@
    asp-route-pageIndex="@(Model.Entries.PageIndex + 1)"
    asp-route-currentIdFilter="@Model.CurrentIdFilter"
    asp-route-currentStringFilter="@Model.CurrentStringFilter"
+   asp-route-currentDateFilter="@Model.CurrentDateFilter"
    class="btn btn-primary @nextDisabled">
     Next
 </a>
+
+<form method="post">
+    <label for="SelectedOptions">Select multiple options:</label>
+    <select id="SelectedOptions" asp-for="SelectedOption" asp-items="Model.AvailableOptions" multiple value="0" class="form-control" size="4">Select</select>
+    <input type="text" id="SelectedOptionsText" class="form-control" placeholder="" />
+    <input type="text" id="SelectedExportFilter" class="form-control" placeholder="" />
+    <a asp-page="./Index"
+       id="ExportBtn"
+       asp-route-sortOrder="@Model.CurrentSort"
+       asp-route-pageIndex="@Model.Entries.PageIndex"
+       asp-route-currentIdFilter="@Model.CurrentIdFilter"
+       asp-route-currentStringFilter="@Model.CurrentStringFilter"
+       asp-route-currentDateFilter="@Model.CurrentDateFilter"
+       asp-route-Export="true"
+       class="btn btn-primary">
+        Export
+    </a>
+</form>
+@*
+@section Scripts {
+    <script>
+        // When dropdown changes, copy selected text to textbox
+        document.getElementById("SelectedOptions").addEventListener("change", function () {
+            const dropdown = this;
+            const selectedText = dropdown.options[dropdown.selectedIndex].text; // Get visible text
+            // const selectedValue = dropdown.value; // If you want the value instead
+            document.getElementById("SelectedOptionsText").value = selectedText;
+        });
+    </script>
+}
+*@
+
+
+@section Scripts {
+    <script>
+        // When dropdown changes, copy selected text to textbox
+        document.getElementById("SelectedOptionsText").value = ExportBtn.href
+        document.getElementById("SelectedOptions").addEventListener("change", function () {
+            const dropdown = this;
+            const selectedValues = Array.from(dropdown.selectedOptions).map(option => option.value);
+
+            if(selectedValues.join(",").length > 2)
+            {
+                var ExportBtn = document.getElementById("ExportBtn")
+                
+                document.getElementById("SelectedExportFilter").value = "ExportFilter=" + selectedValues.join(",")
+                ExportBtn.href = document.getElementById("SelectedOptionsText").value + "&ExportFilter=" + selectedValues.join(",")
+            }
+        });
+    </script>
+}
+
