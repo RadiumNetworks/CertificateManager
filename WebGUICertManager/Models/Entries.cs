@@ -42,9 +42,9 @@ namespace WebGUICertManager.Models
 
         public string? CertificateTemplate { get; set; } = string.Empty;
 
-        public string? CertificateEffectiveDate { get; set; } = string.Empty;
+        public DateTime? CertificateEffectiveDate { get; set; }
 
-        public string? CertificateExpirationDate { get; set; } = string.Empty;
+        public DateTime? CertificateExpirationDate { get; set; }
 
         public string? PublicKeyLength { get; set; } = string.Empty;
 
@@ -72,7 +72,7 @@ namespace WebGUICertManager.Models
 
         public string? PublicKeyAlgorithmParameters { get; set; } = string.Empty;
 
-        public string? RevocationDate { get; set; } = string.Empty;
+        public DateTime? RevocationDate { get; set; }
 
         public string? RevocationReason { get; set; } = string.Empty;
 

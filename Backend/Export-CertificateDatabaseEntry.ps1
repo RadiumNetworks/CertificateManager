@@ -141,6 +141,30 @@
         }
         if ($Row.RequestID)
         {
+            if($Row.CertificateEffectiveDate)
+            {
+                $CertificateEffectiveDate = [DateTime]::Parse($Row.CertificateEffectiveDate,[System.Globalization.CultureInfo]::InvariantCulture).tostring("yyyy-MM-dd hh:mm:ss")
+            }
+            else
+            {
+                $CertificateEffectiveDate = $null
+            }
+            if($Row.CertificateExpirationDate)
+            {
+                $CertificateExpirationDate = [DateTime]::Parse($Row.CertificateExpirationDate,[System.Globalization.CultureInfo]::InvariantCulture).tostring("yyyy-MM-dd hh:mm:ss")
+            }
+            else
+            {
+                $CertificateExpirationDate = $null
+            }
+            if($Row.RevocationDate)
+            {
+                $RevocationDate = [DateTime]::Parse($Row.RevocationDate,[System.Globalization.CultureInfo]::InvariantCulture).tostring("yyyy-mm-dd hh:MM:ss")
+            }
+            else
+            {
+                $RevocationDate = $null
+            }
             $Statement = "
             Update Entries set Base64Certificate='{1}',Base64Request='{2}',SerialNumber='{3}',RequestDisposition='{4}',RequesterName='{5}',
             CallerName='{6}',CertificateHash='{7}',CertificateTemplate='{8}',CertificateEffectiveDate='{9}',CertificateExpirationDate='{10}',
@@ -161,12 +185,12 @@
               ('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}','{11}','{12}','{13}','{14}','{15}','{16}',
               '{17}','{18}','{19}','{21}','{22}','{23}','{24}','{25}','{26}','{27}','{28}','{29}','{30}','{31}','{32}','{33}')
             " -f $Row.RequestID,$Row.BinaryCertificate,$Row.BinaryRequest,$Row.SerialNumber,$Row.RequestDisposition,
-            $Row.RequesterName,$Row.CallerName,$Row.CertificateHash,$Row.CertificateTemplate,$Row.CertificateEffectiveDate,
-            $Row.CertificateExpirationDate,$Row.IssuedEmailAddress,$Row.IssuedCommonName,$Row.IssuedCountryRegion,
+            $Row.RequesterName,$Row.CallerName,$Row.CertificateHash,$Row.CertificateTemplate,$CertificateEffectiveDate,
+            $CertificateExpirationDate,$Row.IssuedEmailAddress,$Row.IssuedCommonName,$Row.IssuedCountryRegion,
             $Row.IssuedOrganization,$Row.IssuedOrganizationUnit,$Row.RequestType,$Row.PublicKeyLength,$Row.PublicKeyAlgorithm,$Config.CAConfig,$GUID,
             $Row.RequestCountryRegion,$Row.RequestOrganization,$Row.RequestOrganizationUnit,$Row.RequestCommonName,$Row.RequestCity,
             $Row.RequestTitle,$Row.RequestEmailAddress,$Row.TemplateEnrollmentFlags,$Row.TemplateGeneralFlags,$Row.TemplatePrivateKeyFlags,
-            $Row.PublicKeyAlgorithmParameters,$Row.RevocationDate,$Row.RevocationReason
+            $Row.PublicKeyAlgorithmParameters,$RevocationDate,$Row.RevocationReason
         }
         elseif ($Row.CRLRowID)
         {
