@@ -73,6 +73,7 @@
    asp-route-pageIndex="@(Model.Entries.PageIndex - 1)"
    asp-route-currentIdFilter="@Model.CurrentIdFilter"
    asp-route-currentStringFilter="@Model.CurrentStringFilter"
+   asp-route-currentDateFilter="@Model.CurrentDateFilter"
    class="btn btn-primary @prevDisabled">
     Previous
 </a>
@@ -81,6 +82,7 @@
    asp-route-pageIndex="@(Model.Entries.PageIndex + 1)"
    asp-route-currentIdFilter="@Model.CurrentIdFilter"
    asp-route-currentStringFilter="@Model.CurrentStringFilter"
+   asp-route-currentDateFilter="@Model.CurrentDateFilter"
    class="btn btn-primary @nextDisabled">
     Next
 </a>
