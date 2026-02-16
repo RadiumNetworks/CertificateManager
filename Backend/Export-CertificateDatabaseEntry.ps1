@@ -159,7 +159,7 @@
             }
             if($Row.RevocationDate)
             {
-                $RevocationDate = [DateTime]::Parse($Row.RevocationDate,[System.Globalization.CultureInfo]::InvariantCulture).tostring("yyyy-mm-dd hh:MM:ss")
+                $RevocationDate = [DateTime]::Parse($Row.RevocationDate,[System.Globalization.CultureInfo]::InvariantCulture).tostring("yyyy-MM-dd hh:mm:ss")
             }
             else
             {
@@ -194,12 +194,27 @@
         }
         elseif ($Row.CRLRowID)
         {
+            if($Row.CRLThisUpdate)
+            {
+                $CRLThisUpdate = [DateTime]::Parse($Row.CRLThisUpdate,[System.Globalization.CultureInfo]::InvariantCulture).tostring("yyyy-MM-dd hh:mm:ss")
+            }
+            if($Row.CRLNextUpdate)
+            {
+                $CRLThisUpdate = [DateTime]::Parse($Row.CRLNextUpdate,[System.Globalization.CultureInfo]::InvariantCulture).tostring("yyyy-MM-dd hh:mm:ss")
+            }
+            if($Row.CRLNextPublish)
+            {
+                $CRLThisUpdate = [DateTime]::Parse($Row.CRLNextPublish,[System.Globalization.CultureInfo]::InvariantCulture).tostring("yyyy-MM-dd hh:mm:ss")
+            }
             $Statement = "
+            Update CRLs set CRLRawCRL='{2}',CRLThisUpdate='{3}',CRLNextUpdate='{4}',CRLNextPublish='{5}'
+            where CRLRowID='{0}' and CRLNumber='{1}' and CAConfig='{6}'
+            IF @@ROWCOUNT=0
             INSERT INTO CRLs
             ( CRLRowID,CRLNumber,CRLRawCRL,CRLThisUpdate,CRLNextUpdate,CRLNextPublish,CAConfig )
             VALUES
               ('{0}','{1}','{2}','{3}','{4}','{5}','{6}')
-            " -f $Row.CRLRowID,$Row.CRLNumber,$Row.CRLRawCRL,$Row.CRLThisUpdate,$Row.CRLNextUpdate,$Row.CRLNextPublish,$Config.CAConfig
+            " -f $Row.CRLRowID,$Row.CRLNumber,$Row.CRLRawCRL,$CRLThisUpdate,$CRLThisUpdate,$CRLThisUpdate,$Config.CAConfig
 
             $CRL =  New-Object -ComObject x509enrollment.cx509certificaterevocationlist
             $CRL.InitializeDecode($Row.CRLRawCRL, "6");
@@ -215,6 +230,8 @@
                 if($SAN)
                 {
                     $Statement = "
+                    Update SANs set SubjectAlternativeName='{2}' where RequestID='{0}' and CAConfig='{1}' and SubjectAlternativeName='{2}'
+                    IF @@ROWCOUNT=0
                     INSERT INTO SANs (RequestID,CAConfig,SubjectAlternativeName) VALUES ('{0}','{1}','{2}')" -f $Row.RequestID,$Config.CAConfig,$SAN
 
                     $SQLCommand = New-object System.Data.SqlClient.SqlCommand $Statement, $SQLConnection
@@ -227,6 +244,8 @@
                 if($EKU)
                 {
                     $Statement = "
+                    Update EKUs set Name='{2}' where RequestID='{0}' and CAConfig='{1}' and Name='{2}'
+                    IF @@ROWCOUNT=0
                     INSERT INTO EKUs (RequestID,CAConfig,Name) VALUES ('{0}','{1}','{2}')" -f $Row.RequestID,$Config.CAConfig,$EKU
                     $SQLCommand = New-object System.Data.SqlClient.SqlCommand $Statement, $SQLConnection
                     [void]$SQLCommand.ExecuteNonQuery()
@@ -237,7 +256,16 @@
                 $CRLEntry = $_
                 if($CRLEntry)
                 {
-                    $Statement = "INSERT INTO RevokedCerts (CRLRowID,CAConfig,SerialNumber,Reason,RevocationDate) VALUES ('{0}','{1}','{2}','{3}','{4}')" -f $Row.CRLRowID, $Config.CAConfig, $CRLEntry.SerialNumber(), $CRLEntry.RevocationReason, $CRLEntry.RevocationDate
+                    if($CRLEntry.RevocationDate)
+                    {
+                        $RevocationDate = [DateTime]::Parse($CRLEntry.RevocationDate,[System.Globalization.CultureInfo]::InvariantCulture).tostring("yyyy-MM-dd hh:mm:ss")
+                    }
+                    $Statement = "
+                    Update RevokedCerts set SerialNumber='{2}',Reason='{3}',RevocationDate='{4}'
+                    where CRLRowID = '{0}' and CAConfig = '{1}'
+                    IF @@ROWCOUNT=0
+                    INSERT INTO RevokedCerts (CRLRowID,CAConfig,SerialNumber,Reason,RevocationDate) 
+                    VALUES ('{0}','{1}','{2}','{3}','{4}')" -f $Row.CRLRowID, $Config.CAConfig, $CRLEntry.SerialNumber(), $CRLEntry.RevocationReason, $RevocationDate
                     $SQLCommand = New-object System.Data.SqlClient.SqlCommand $Statement, $SQLConnection
                     [void]$SQLCommand.ExecuteNonQuery()
                 }
