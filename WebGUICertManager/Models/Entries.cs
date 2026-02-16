@@ -79,5 +79,9 @@ namespace WebGUICertManager.Models
         public string? Owner { get; set; } = string.Empty;
 
         public string? Notes { get; set; } = string.Empty;
+
+        public ICollection<SANs> SANs { get; set; }
+
+        public ICollection<EKUs> EKUs { get; set; }
     }
 }
