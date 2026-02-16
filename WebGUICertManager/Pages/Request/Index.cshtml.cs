@@ -14,7 +14,7 @@ using System.Text;
 using WebGUICertManager.Data;
 using WebGUICertManager.Models;
 
-namespace WebGUICertManager.Pages.Certificate
+namespace WebGUICertManager.Pages.Request
 {
     public class IndexModel : PageModel
     {
@@ -35,13 +35,13 @@ namespace WebGUICertManager.Pages.Certificate
         public string CurrentIdFilter { get; set; }
         public string CurrentDateFilter { get; set; }
         public string CurrentSort { get; set; }
-        public string CurrentDisposition { get; set; } = "20";
-        public string DispositionOption { get; set; } = "20";
+        public string CurrentDisposition {  get; set; } = "9";
+        public string DispositionOption { get; set; } = "9";
 
         public List<SelectListItem> AvailableOptions { get; set; }
         public List<SelectListItem> DispositionOptions { get; set; }
 
-        public string SelectedOption { get; set; } 
+        public string SelectedOption { get; set; }
 
         public PaginatedList<Entries> Entries { get; set; } = default!;
 
@@ -113,12 +113,8 @@ namespace WebGUICertManager.Pages.Certificate
 
             DispositionOptions = new List<SelectListItem>();
             DispositionOptions.Add(new SelectListItem { Value = "9", Text = "Request under review" });
-            DispositionOptions.Add(new SelectListItem { Value = "20", Text = "Certificate issued" });
-            DispositionOptions.Add(new SelectListItem { Value = "21", Text = "Certificate revoked" });
-            DispositionOptions.Add(new SelectListItem { Value = "30", Text = "Request failed" });
-            DispositionOptions.Add(new SelectListItem { Value = "31", Text = "Request denied" });
 
-            if (searchString != null || searchId != null || searchDate != null )
+            if (searchString != null || searchId != null || searchDate != null)
             {
                 pageIndex = 1;
             }
@@ -129,7 +125,7 @@ namespace WebGUICertManager.Pages.Certificate
                 searchDate = currentDateFilter;
             }
 
-            if(ExportFilter != null)
+            if (ExportFilter != null)
             {
                 searchString = currentStringFilter;
                 searchId = currentIdFilter;
@@ -142,16 +138,16 @@ namespace WebGUICertManager.Pages.Certificate
             CurrentDateFilter = searchDate;
             CurrentSort = sortOrder;
 
-                
-            
+
+
 
             IQueryable<Entries> SortEntries = from Entry in context.Entries
-                                             select Entry;
+                                              select Entry;
 
             if (!String.IsNullOrEmpty(searchString))
             {
-                SortEntries = SortEntries.Where(Entry => (Entry.RequestCommonName.ToUpper().Contains(searchString.ToUpper()) 
-                || Entry.Owner.ToUpper().Contains(searchString.ToUpper()) 
+                SortEntries = SortEntries.Where(Entry => (Entry.RequestCommonName.ToUpper().Contains(searchString.ToUpper())
+                || Entry.Owner.ToUpper().Contains(searchString.ToUpper())
                 || Entry.Notes.ToUpper().Contains(searchString.ToUpper())));
             }
             if (!String.IsNullOrEmpty(searchId))
@@ -162,7 +158,6 @@ namespace WebGUICertManager.Pages.Certificate
             {
                 DateTime timestamp = DateTime.Parse(searchDate);
                 SortEntries = SortEntries.Where(Entry => Entry.CertificateExpirationDate < timestamp);
-                
             }
             if (!String.IsNullOrEmpty(DispositionOption))
             {
