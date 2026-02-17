@@ -7,6 +7,9 @@ Here for filtering, exporting, editing owner information or revocation
 
 Here for approval or to deny new requests
 ![Header](./certificaterequestview.png)
+
+The used database has the following tables
+![Header](./database.png)
 Important
 
 To run the tool with the certificate revocation / request approval function on a new system
