@@ -117,7 +117,7 @@
                     <a asp-page="Edit" asp-route-id="@entry.RequestId" asp-route-config="@entry.CAConfig" class="btn btn-primary">Edit</a>
                 </td>
                 <td>
-                    <a asp-page="Revoke" asp-route-id="@entry.RequestId" asp-route-config="@entry.CAConfig" class="btn btn-primary">Revoke</a>
+                    <a asp-page="Revoke" asp-route-id="@entry.RequestId" asp-route-config="@entry.CAConfig" asp-route-serialnumber="@entry.SerialNumber" class="btn btn-primary">Revoke</a>
                 </td>
             </tr>
 
