@@ -1,10 +1,11 @@
-using WebGUICertManager.Data;
-using WebGUICertManager.Models;
+using CERTADMINLib;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using CERTADMINLib;
 using System.Runtime.InteropServices.Marshalling;
+using WebGUICertManager.Data;
+using WebGUICertManager.Models;
 
 namespace WebGUICertManager.Pages.Certificate
 {
@@ -21,6 +22,10 @@ namespace WebGUICertManager.Pages.Certificate
 
         public string currentserialnumber { get; set; }
 
+        public string CurrentRevocation { get; set; } = "0";
+        public string RevocationOption { get; set; } = "0";
+        public List<SelectListItem> RevocationOptions { get; set; }
+
         [BindProperty]
         public Entries Entries { get; set; } = default!;
 
@@ -28,6 +33,15 @@ namespace WebGUICertManager.Pages.Certificate
 
         public async Task<IActionResult> OnGetAsync(int? id, string? config, string caconfig, string? serialnumber, int reason)
         {
+            RevocationOptions = new List<SelectListItem>();
+            RevocationOptions.Add(new SelectListItem { Value = "0", Text = "Unspecified" });
+            RevocationOptions.Add(new SelectListItem { Value = "1", Text = "Key compromise" });
+            RevocationOptions.Add(new SelectListItem { Value = "2", Text = "CA compromise" });
+            RevocationOptions.Add(new SelectListItem { Value = "3", Text = "Affiliation changed" });
+            RevocationOptions.Add(new SelectListItem { Value = "4", Text = "Superseded" });
+            RevocationOptions.Add(new SelectListItem { Value = "5", Text = "Cessation of Operation" });
+            RevocationOptions.Add(new SelectListItem { Value = "6", Text = "Certificate Hold" });
+
             if (id != null && config != null && serialnumber != null)
             {
                 currentcaconfig = config;

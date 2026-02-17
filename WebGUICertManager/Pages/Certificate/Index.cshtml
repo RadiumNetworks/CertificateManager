@@ -156,8 +156,8 @@
 <form method="post">
     <label for="SelectedOptions">Select multiple options:</label>
     <select id="SelectedOptions" asp-for="SelectedOption" asp-items="Model.AvailableOptions" multiple value="0" class="form-control" size="4">Select</select>
-    <input type="text" id="SelectedOptionsText" class="form-control" placeholder="" />
-    <input type="text" id="SelectedExportFilter" class="form-control" placeholder="" />
+    <input type="text" id="SelectedOptionsText" class="form-control" placeholder="" hidden/>
+    <input type="text" id="SelectedExportFilter" class="form-control" placeholder="" hidden/>
     <a asp-page="./Index"
        id="ExportBtn"
        asp-route-sortOrder="@Model.CurrentSort"
@@ -171,19 +171,6 @@
         Export
     </a>
 </form>
-@*
-@section Scripts {
-    <script>
-        // When dropdown changes, copy selected text to textbox
-        document.getElementById("SelectedOptions").addEventListener("change", function () {
-            const dropdown = this;
-            const selectedText = dropdown.options[dropdown.selectedIndex].text; // Get visible text
-            // const selectedValue = dropdown.value; // If you want the value instead
-            document.getElementById("SelectedOptionsText").value = selectedText;
-        });
-    </script>
-}
-*@
 
 
 @section Scripts {

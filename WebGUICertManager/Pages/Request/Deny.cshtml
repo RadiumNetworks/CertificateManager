@@ -1,10 +1,10 @@
 ﻿@page
-@model WebGUICertManager.Pages.Certificate.RevokeModel
+@model WebGUICertManager.Pages.Request.DenyModel
 @{
-    ViewData["Title"] = "Revoke certificate";
+    ViewData["Title"] = "Deny certificate request";
 }
 
-<h1>Revoke certificate</h1>
+<h1>Deny certificate request</h1>
 <hr />
 
 <div class="row">
@@ -52,46 +52,29 @@
                 <span asp-validation-for="Entries.CAConfig" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="Entries.SerialNumber" class="control-label"></label>
-                <input asp-for="Entries.SerialNumber" class="form-control" readonly/>
-                <span asp-validation-for="Entries.SerialNumber" class="text-danger"></span>
+                <label asp-for="Entries.RequestId" class="control-label"></label>
+                <input asp-for="Entries.RequestId" class="form-control" readonly />
+                <span asp-validation-for="Entries.RequestId" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="Entries.IssuedCommonName" class="control-label"></label>
-                <input asp-for="Entries.IssuedCommonName" class="form-control" readonly />
-                <span asp-validation-for="Entries.IssuedCommonName" class="text-danger"></span>
+                <label asp-for="Entries.RequestCommonName" class="control-label"></label>
+                <input asp-for="Entries.RequestCommonName" class="form-control" readonly />
+                <span asp-validation-for="Entries.RequestCommonName" class="text-danger"></span>
             </div>
-            
-            Revocation reason:
-            <select id="RevocationOption" asp-for="@Model.RevocationOption" asp-items="Model.RevocationOptions" value="@Model.CurrentRevocation" class="form-control" size="4">Select</select>
-            <input type="text" id="SelectedOptionText" class="form-control" placeholder="" hidden/>
-            <input type="text" id="SelectedRevokeOption" class="form-control" placeholder="" hidden />
             <div class="form-group mt-2">
                 <a asp-page="./Index" class="btn btn-danger">Back</a>
-                <a asp-page="./Revoke"
-                    id="RevokeBtn"
-                    asp-route-caconfig="@Model.currentcaconfig"
-                    asp-route-serialnumber="@Model.currentserialnumber"
-                   class="btn btn-primary" />Revoke certificate</a>
-                       
+                <a asp-page="./Deny"
+                   asp-route-caconfig="@Model.currentcaconfig"
+                   asp-route-requestid="@Model.currentrequestid"
+                   class="btn btn-primary" />Deny certificate request</a>
+
             </div>
         </form>
     </div>
 </div>
 
 @section Scripts {
-    <script>
-        // When dropdown changes, copy selected text to textbox
-        document.getElementById("SelectedOptionText").value = RevokeBtn.href
-        document.getElementById("RevocationOption").addEventListener("change", function () {
-            const dropdown = this;
-            const selectedValue = Array.from(dropdown.selectedOptions).map(option => option.value);
-
-            var ExportBtn = document.getElementById("RevokeBtn")
-
-            document.getElementById("SelectedRevokeOption").value = "Reason=" + selectedValue
-            ExportBtn.href = document.getElementById("SelectedOptionText").value + "&Reason=" + selectedValue
-            
-        });
-    </script>
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }
