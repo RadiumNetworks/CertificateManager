@@ -78,7 +78,8 @@
                     @Html.DisplayNameFor(model => model.Entries[0].RequestCommonName)
                 </a>
             </th>
-            <th>@Html.DisplayNameFor(model => model.Entries[0].CertificateEffectiveDate)</th>
+            <th>RequesterInformation</th>
+            <th>SubjectAlternateNames</th>
             <th>
                 <a asp-page="./Index" asp-route-sortOrder="@Model.ExpirationDateSort"
                    asp-route-currentIdFilter="@Model.CurrentIdFilter"
@@ -109,7 +110,45 @@
                 <td>@Html.DisplayFor(model => entry.CAConfig)</td>
                 <td>@Html.DisplayFor(model => entry.RequestId)</td>
                 <td>@Html.DisplayFor(model => entry.RequestCommonName)</td>
-                <td>@Html.DisplayFor(model => entry.CertificateEffectiveDate)</td>
+                <td>
+                    @if (entry.RequestCommonName != "" && entry.RequestCommonName != null)
+                    {
+                        @Html.DisplayName("CN = ") @Html.DisplayFor(model => entry.RequestCommonName) 
+                        <br /> 
+                    }
+                    @if (entry.RequestCountryRegion != "" && entry.RequestCountryRegion != null)
+                    {
+                        @Html.DisplayName("C = ") @Html.DisplayFor(model => entry.RequestCountryRegion)
+                        <br />
+                    }
+                    @if (entry.RequestCity != "" && entry.RequestCity != null)
+                    {
+                        @Html.DisplayName("L = ") @Html.DisplayFor(model => entry.RequestCity)
+                        <br />
+                    }
+                    @if (entry.RequestOrganization != "" && entry.RequestOrganization != null)
+                    {
+                        @Html.DisplayName("O = ") @Html.DisplayFor(model => entry.RequestOrganization)
+                        <br />
+                    }
+                    @if (entry.RequestOrganizationUnit != "" && entry.RequestOrganizationUnit != null)
+                    {
+                        @Html.DisplayName("OU = ") @Html.DisplayFor(model => entry.RequestOrganizationUnit)
+                        <br />
+                    }
+                    @if (entry.RequestEmailAddress != "" && entry.RequestEmailAddress != null)
+                    {
+                        @Html.DisplayName("E = ") @Html.DisplayFor(model => entry.RequestEmailAddress)
+                        <br />
+                    }
+                </td>
+                <td>
+                @foreach (var san in entry.SANs)
+                {
+                        @san.SubjectAlternativeName.Split('=')[1]
+                        <br />
+                }
+                </td>
                 <td>@Html.DisplayFor(model => entry.CertificateExpirationDate)</td>
                 <td>@Html.DisplayFor(model => entry.Owner)</td>
                 <td>@Html.DisplayFor(model => entry.Notes)</td>

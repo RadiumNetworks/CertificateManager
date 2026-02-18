@@ -40,10 +40,10 @@ namespace WebGUICertManager.Pages.Certificate
 
         public async Task<IActionResult> OnPostAsync()
         {
-            if(!ModelState.IsValid)
-            {
-                return Page();
-            }
+            //if(!ModelState.IsValid)
+            //{
+            //     return Page();
+            //}
 
             context.Entries.Update(Entries);
             await context.SaveChangesAsync();

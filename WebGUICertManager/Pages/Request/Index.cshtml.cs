@@ -140,9 +140,8 @@ namespace WebGUICertManager.Pages.Request
 
 
 
-
-            IQueryable<Entries> SortEntries = from Entry in context.Entries
-                                              select Entry;
+            IQueryable<Entries> SortEntries = context.Entries
+                .Include(entry => entry.SANs);
 
             if (!String.IsNullOrEmpty(searchString))
             {
