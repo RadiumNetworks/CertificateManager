@@ -41,8 +41,10 @@ In der IL Datei müssen die Funktionen GetRequestProperty und GetCertificateProp
 
 *[out] native int pvarPropertyValue) runtime managed internalcall*
 
-Ausführlicher ist es hier "noch" als archivierter Artikel geschrieben. https://learn.microsoft.com/en-us/archive/blogs/alejacma/how-to-modify-an-interop-assembly-to-change-the-return-type-of-a-method-vb-net
 
 *GetCertificateProperty([in] string  marshal( bstr) strPropertyName,[in] int32 PropertyType,*
 
 *[out] native int pvarPropertyValue) runtime managed internalcall*
+
+
+Ausführlicher ist es hier "noch" als archivierter Artikel geschrieben. https://learn.microsoft.com/en-us/archive/blogs/alejacma/how-to-modify-an-interop-assembly-to-change-the-return-type-of-a-method-vb-net
