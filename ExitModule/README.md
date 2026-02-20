@@ -1,6 +1,10 @@
 Um das exit modul nutzen zu können werden 2 dlls benötigt die auf dem client unter c:\Windows\system32 gefunden werden können.
 
-certxds.dll und certcli.dll
+certxds.dll 
+
+certcli.dll
+
+certenroll.dll
 
 Um die Funktionen im Programcode einzubetten müssen die runtime metadaten über tlbimp in einem definierten Format extrahiert werden.
 
@@ -9,6 +13,8 @@ https://learn.microsoft.com/en-us/dotnet/framework/tools/tlbimp-exe-type-library
 *tlbimp certxds.dll*
 
 *tlbimp certcli.dll*
+
+*tlbimp certenroll.dll*
 
 Die Konvertierung erzeugt jedoch Fehler da die benötigten Funktionen keine out Parameter haben
 
