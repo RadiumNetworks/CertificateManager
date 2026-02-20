@@ -10,4 +10,3 @@ Here for approval or to deny new requests
 
 The used database has the following tables
 ![Header](./database.png)
-Important
