@@ -48,3 +48,17 @@ In der IL Datei müssen die Funktionen GetRequestProperty und GetCertificateProp
 
 
 Ausführlicher ist es hier "noch" als archivierter Artikel geschrieben. https://learn.microsoft.com/en-us/archive/blogs/alejacma/how-to-modify-an-interop-assembly-to-change-the-return-type-of-a-method-vb-net
+
+
+
+**Registry Values for the Exit Module**
+
+To configure the Exit module on the certificate authority to current Settings are
+
+HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\CertSvc\Configuration\<CASanitizedName>\ExitModules\SendToSQL
+SQLConfig <ConfigurationString>
+DebugFlag <Value>
+DebugLog <Log Path e.g. c:\temp\debug.log>
+CertificateFolder <Folder to place issued certificates e.g. c:\temp\>
+RequestFolder <Folder to place requests e.g. c:\temp\>
+

@@ -25,6 +25,9 @@ namespace SendToSQL
     {
         private string SQLConfig = null;
         private string DebugFlag = null;
+        private string DebugLog = null;
+        private string CertificateFolder = null;
+        private string RequestFolder = null; 
 
         //https://learn.microsoft.com/en-us/windows/win32/api/certexit/nf-certexit-icertexit-notify
         internal enum ExitEvents : int
@@ -38,6 +41,7 @@ namespace SendToSQL
             CRLIssued = 0x20,
             Shutdown = 0x40
         }
+        //https://learn.microsoft.com/en-us/windows/win32/api/certif/nf-certif-icertserverexit-getcertificateproperty
         internal enum PropertyType : int
         {
             PROPTYPE_LONG = 1,
@@ -46,6 +50,7 @@ namespace SendToSQL
             PROPTYPE_STRING = 4,
             PROPTYPE_ANSI = 5
         }
+        //https://learn.microsoft.com/en-us/windows/win32/api/certif/nf-certif-icertserverexit-getrequestproperty
         internal enum RequestType : int
         {
             CR_IN_PKCS10 = 0x100,
@@ -57,24 +62,44 @@ namespace SendToSQL
         {
 
         }
-        public class Certificate
+
+        //https://learn.microsoft.com/en-us/windows/win32/api/certif/nf-certif-icertserverexit-getcertificateproperty
+        public class CAInfo
+        {
+            public byte[] RawCACertificate { get; set; } = null;
+            public byte[] RawCRL { get; set; } = null;
+            public string SanitizedCAName { get; set; } = null;
+        }
+
+            //https://learn.microsoft.com/en-us/windows/win32/api/certif/nf-certif-icertserverexit-getcertificateproperty
+            public class Certificate
         {
             public int RequestId { get; set; } = 0;
-            public string RequesterName { get; set; } = null;
             public int PublicKeyLength { get; set; } = 0;
             public string PublicKeyAlgorithm { get; set; } = null;
-            public string Issuer { get; set; } = null;
             public string SerialNumber { get; set; } = null;
             public string CertificateTemplate { get; set; } = null;
             public DateTime NotBefore { get; set; }
             public DateTime NotAfter { get; set; }
             public byte[] RawCertificate { get; set; } = null;
+            public byte[] RawPublicKey { get; set; } = null;
+            public byte[] RawPublicKeyAlgorithmParameters { get; set; } = null;
             public int RequestType { get; set; }
         }
 
+        //https://learn.microsoft.com/en-us/windows/win32/api/certif/nf-certif-icertserverexit-getrequestproperty
         public class Request
         {
             public int RequestId { get; set; } = 0;
+            public int RequestType { get; set; } = 0;
+            public int StatusCode { get; set; } = 0;
+            public int Disposition { get; set; } = 0;
+            public string DispositionMessage { get; set; } = null;
+            public DateTime ResolvedWhen { get; set; }
+            public DateTime SubmittedWhen { get; set; }
+            public byte[] RawCertificate { get; set; } = null;
+            public string RequesterName { get; set; } = null;
+            public string RequestAttributes { get; set; } = null;
             public string CommonName { get; set; } = null;
             public string Organization { get; set; } = null;
             public string OrgUnit { get; set; } = null;
@@ -104,6 +129,10 @@ namespace SendToSQL
             {
                 SQLConfig = (string)configRegistryKey.GetValue("SQLConfig");
                 DebugFlag = (string)configRegistryKey.GetValue("DebugFlag");
+                DebugLog = (string)configRegistryKey.GetValue("DebugLog");
+                CertificateFolder = (string)configRegistryKey.GetValue("CertificateFolder");
+                RequestFolder = (string)configRegistryKey.GetValue("CertificateFolder");
+
             }
             
             // Subscribe to the Events we want to process
@@ -186,7 +215,11 @@ namespace SendToSQL
             }
             catch
             {
-                System.IO.File.AppendAllText(@"c:\temp\log.txt", "Error reading value for " + name + Environment.NewLine);
+                if(DebugFlag != null && DebugLog != null)
+                {
+                    System.IO.File.AppendAllText(DebugLog, "Error reading value for " + name + Environment.NewLine);
+                }
+                
                 switch (returntype)
                 {
                     case "date":
@@ -212,18 +245,91 @@ namespace SendToSQL
             switch (ExitEvent)
             {
                 //case (int)ExitEvents.CertIssued:
+                //case (int)ExitEvents.CertPending:
+                //case (int)ExitEvents.CertRevoked:
+                //case (int)ExitEvents.CertRetrievePending:
+                //case (int)ExitEvents.CertDenied:
                 default:
                     var CertServer = new CCertServerExit();
+                    var CAInfo = new CAInfo();
                     var CertificateInfo = new Certificate();
                     var RequestInfo = new Request();
 
                     //https://docs.microsoft.com/en-us/windows/win32/api/certif/nf-certif-icertserverexit-setcontext
+                    //https://learn.microsoft.com/en-us/windows/win32/api/certif/nf-certif-icertserverexit-getcertificateproperty
                     CertServer.SetContext(0);
-                    CertificateInfo.Issuer = (string)GetProperty(ref CertServer, "SanitizedCAName", "certificate", "string");
+                    if (DebugFlag != null && DebugLog != null)
+                    {
+                        System.IO.File.AppendAllText(DebugLog, Environment.NewLine + "Seen eventtype " + ExitEvent + Environment.NewLine);
+                        System.IO.File.AppendAllText(DebugLog, "Logging CA Infos" + Environment.NewLine);
+                    }
+                    foreach (PropertyInfo prop in typeof(CAInfo).GetProperties(BindingFlags.Public | BindingFlags.Instance))
+                    {
+                        if (prop.PropertyType == typeof(string))
+                        {
+                            try
+                            {
+                                prop.SetValue(CAInfo, (string)GetProperty(ref CertServer, prop.Name, "certificate", "string"));
+                            }
+                            catch
+                            {
+
+                            }
+                        }
+                        else if (prop.PropertyType == typeof(int))
+                        {
+                            try
+                            {
+                                prop.SetValue(CAInfo, (int)GetProperty(ref CertServer, prop.Name, "certificate", "int"));
+
+                            }
+                            catch
+                            {
+
+                            }
+                        }
+                        else if (prop.PropertyType == typeof(DateTime))
+                        {
+                            try
+                            {
+                                prop.SetValue(CAInfo, (DateTime)GetProperty(ref CertServer, prop.Name, "certificate", "date"));
+                            }
+                            catch
+                            {
+
+                            }
+                        }
+                        else if (prop.PropertyType == typeof(byte[]))
+                        {
+                            try
+                            {
+                                prop.SetValue(CAInfo, (byte[])GetProperty(ref CertServer, prop.Name, "certificate", "bytearr"));
+                            }
+                            catch
+                            {
+
+                            }
+                        }
+                        if (DebugFlag != null && DebugLog != null)
+                        {
+                            try
+                            {
+                                System.IO.File.AppendAllText(DebugLog, prop.Name + " = " + prop.GetValue(CAInfo).ToString() + Environment.NewLine);
+                            }
+                            catch
+                            {
+                                System.IO.File.AppendAllText(DebugLog, prop.Name + " = error " + Environment.NewLine);
+                            }
+                        }
+
+                    }
 
                     CertServer.SetContext(Context);
 
-                    System.IO.File.AppendAllText(@"c:\temp\log.txt", Environment.NewLine + "Logging Certificate Infos" + Environment.NewLine);
+                    if (DebugFlag != null && DebugLog != null)
+                    {
+                        System.IO.File.AppendAllText(DebugLog, Environment.NewLine + "Logging Certificate Infos" + Environment.NewLine);
+                    }
                     foreach (PropertyInfo prop in typeof(Certificate).GetProperties(BindingFlags.Public | BindingFlags.Instance))
                     {
                         if (prop.PropertyType == typeof(string))
@@ -271,18 +377,27 @@ namespace SendToSQL
 
                             }
                         }
-                        try
+                        if (DebugFlag != null && DebugLog != null)
                         {
-                            System.IO.File.AppendAllText(@"c:\temp\log.txt", prop.Name + " = " + prop.GetValue(CertificateInfo).ToString() + Environment.NewLine);
-                        }
-                        catch
-                        {
-                            System.IO.File.AppendAllText(@"c:\temp\log.txt", prop.Name + " = error " + Environment.NewLine);
+                            try
+                            {
+
+                                System.IO.File.AppendAllText(DebugLog, prop.Name + " = " + prop.GetValue(CertificateInfo).ToString() + Environment.NewLine);
+
+                            }
+                            catch
+                            {
+
+                                System.IO.File.AppendAllText(DebugLog, prop.Name + " = error " + Environment.NewLine);
+                            }
                         }
                         
                     }
 
-                    System.IO.File.AppendAllText(@"c:\temp\log.txt", Environment.NewLine + "Logging Request Infos" + Environment.NewLine);
+                    if (DebugFlag != null && DebugLog != null)
+                    {
+                        System.IO.File.AppendAllText(DebugLog, Environment.NewLine + "Logging Request Infos" + Environment.NewLine);
+                    }
                     foreach (PropertyInfo prop in typeof(Request).GetProperties(BindingFlags.Public | BindingFlags.Instance))
                     {
                         if (prop.PropertyType == typeof(string))
@@ -330,23 +445,33 @@ namespace SendToSQL
 
                             }
                         }
-                        try
+                        if (DebugFlag != null && DebugLog != null)
                         {
-                            System.IO.File.AppendAllText(@"c:\temp\log.txt", prop.Name + " = " + prop.GetValue(RequestInfo).ToString() + Environment.NewLine);
-                        }
-                        catch
-                        {
-                            System.IO.File.AppendAllText(@"c:\temp\log.txt", prop.Name + " = error " + Environment.NewLine);
+                            try
+                            {
+                                System.IO.File.AppendAllText(DebugLog, prop.Name + " = " + prop.GetValue(RequestInfo).ToString() + Environment.NewLine);
+                            }
+                            catch
+                            {
+                                System.IO.File.AppendAllText(DebugLog, prop.Name + " = error " + Environment.NewLine);
+                            }
                         }
                     }
-
-                    var OutputFileName = @"c:\temp\_" + CertificateInfo.RequestId.ToString() + ".cer";
-                    System.IO.File.WriteAllText(OutputFileName, Convert.ToBase64String(CertificateInfo.RawCertificate, Base64FormattingOptions.None));
-
-                    OutputFileName = @"c:\temp\_" + CertificateInfo.RequestId.ToString() + ".req";
-                    System.IO.File.WriteAllText(OutputFileName, Convert.ToBase64String(RequestInfo.RawRequest, Base64FormattingOptions.None));
-
-                    System.IO.File.AppendAllText(@"c:\temp\log.txt", Environment.NewLine);
+                    string OutputFileName = null;
+                    if (CertificateFolder != null)
+                    {
+                        OutputFileName = CertificateFolder + CertificateInfo.RequestId.ToString() + ".cer";
+                        System.IO.File.WriteAllText(OutputFileName, Convert.ToBase64String(CertificateInfo.RawCertificate, Base64FormattingOptions.None));
+                    }
+                    if (RequestFolder != null)
+                    {
+                        OutputFileName = CertificateFolder + CertificateInfo.RequestId.ToString() + ".req";
+                        System.IO.File.WriteAllText(OutputFileName, Convert.ToBase64String(RequestInfo.RawRequest, Base64FormattingOptions.None));
+                    }
+                    if (DebugFlag != null && DebugLog != null)
+                    {
+                        System.IO.File.AppendAllText(DebugLog, Environment.NewLine);
+                    }
                     break;
             }
         }
