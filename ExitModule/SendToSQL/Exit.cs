@@ -11,6 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
+using CERTENROLLLib;
 
 namespace SendToSQL
 {
@@ -27,7 +28,28 @@ namespace SendToSQL
         private string DebugFlag = null;
         private string DebugLog = null;
         private string CertificateFolder = null;
-        private string RequestFolder = null; 
+        private string RequestFolder = null;
+
+        //ExtensionOIDs
+        private string AlternativeNames = "2.5.29.17";
+        private string AuthorityInformationAccess = "1.3.6.1.5.5.7.1.1";
+        private string AuthorityKeyIdentifier = "2.5.29.35";
+        private string BasicConstraints = "2.5.29.19";
+        private string CertificatePolicies = "2.5.29.32";
+        private string CRLDistributionPoints = "2.5.29.31";
+        private string EnhancedKeyUsage = "2.5.29.37";
+        private string FreshestCRL = "2.5.29.46";
+        private string KeyUsage = "2.5.29.15";
+        private string MSApplicationPolicies = "1.3.6.1.4.1.311.21.10";
+        private string NameConstraints = "2.5.29.30";
+        private string PolicyConstraints = "2.5.29.36";
+        private string PolicyMappings = "2.5.29.33";
+        private string PrivateKeyUsagePeriod = "2.5.29.16";
+        private string SMimeCapabilities = "1.2.840.113549.1.9.15";
+        private string SubjectDirectoryAttributes = "2.5.29.9";
+        private string SubjectKeyIdentifier = "2.5.29.14";
+        private string Template = "1.3.6.1.4.1.311.21.7";
+        private string TemplateName = "1.3.6.1.4.1.311.20.2";
 
         //https://learn.microsoft.com/en-us/windows/win32/api/certexit/nf-certexit-icertexit-notify
         internal enum ExitEvents : int
@@ -255,6 +277,7 @@ namespace SendToSQL
                     var CertificateInfo = new Certificate();
                     var RequestInfo = new Request();
 
+
                     //https://docs.microsoft.com/en-us/windows/win32/api/certif/nf-certif-icertserverexit-setcontext
                     //https://learn.microsoft.com/en-us/windows/win32/api/certif/nf-certif-icertserverexit-getcertificateproperty
                     CertServer.SetContext(0);
@@ -467,6 +490,71 @@ namespace SendToSQL
                     {
                         OutputFileName = CertificateFolder + CertificateInfo.RequestId.ToString() + ".req";
                         System.IO.File.WriteAllText(OutputFileName, Convert.ToBase64String(RequestInfo.RawRequest, Base64FormattingOptions.None));
+                    }
+
+                    switch (RequestInfo.RequestType )
+                    {
+
+                        case 263168:
+
+                            if (DebugFlag != null && DebugLog != null)
+                            {
+                                var CX509CertificateRequestCMC = new CERTENROLLLib.CX509CertificateRequestCmc();
+                                try
+                                {
+                                    string request = Convert.ToBase64String(RequestInfo.RawRequest, Base64FormattingOptions.None);
+                                    CX509CertificateRequestCMC.InitializeDecode(
+                                        request, 
+                                        CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64_ANY);
+                                    var CX509CertificateRequest = CX509CertificateRequestCMC.GetInnerRequest(0);
+                                    var CX509CertificateRequestPkcs10 = new CERTENROLLLib.CX509CertificateRequestPkcs10();
+                                    
+                                    System.IO.File.AppendAllText(DebugLog, CX509CertificateRequest.Type + Environment.NewLine);
+                                    System.IO.File.AppendAllText(DebugLog, CX509CertificateRequest.RawData + Environment.NewLine);
+                                    System.IO.File.AppendAllText(DebugLog, "Cmc successfully parsed" + Environment.NewLine);
+                                }
+                                catch
+                                {
+                                    System.IO.File.AppendAllText(DebugLog, "Error reading Cmc" + Environment.NewLine);
+                                }
+                            }
+                            break;
+                        case 262912:
+                            if (DebugFlag != null && DebugLog != null)
+                            {
+                                var CX509CertificateRequestPkcs7 = new CERTENROLLLib.CX509CertificateRequestPkcs7();
+                                try
+                                {
+                                    string request = Convert.ToBase64String(RequestInfo.RawRequest, Base64FormattingOptions.None);
+                                    CX509CertificateRequestPkcs7.InitializeDecode(
+                                        Convert.ToBase64String(RequestInfo.RawRequest, Base64FormattingOptions.None), 
+                                        CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64HEADER);
+                                    System.IO.File.AppendAllText(DebugLog, "PKCS7 successfully parsed" + Environment.NewLine);
+                                }
+                                catch
+                                {
+                                    System.IO.File.AppendAllText(DebugLog, "Error reading PKCS7" + Environment.NewLine);
+                                }
+                            }
+                            break;
+                        case 262400:
+                            if (DebugFlag != null && DebugLog != null)
+                            {
+                                var CX509CertificateRequestPkcs10 = new CERTENROLLLib.CX509CertificateRequestPkcs10();
+                                try
+                                {
+                                    string request = Convert.ToBase64String(RequestInfo.RawRequest, Base64FormattingOptions.None);
+                                    CX509CertificateRequestPkcs10.InitializeDecode(
+                                        request,
+                                        CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64HEADER);
+                                    System.IO.File.AppendAllText(DebugLog, "PKCS10 successfully parsed" + Environment.NewLine);
+                                }
+                                catch
+                                {
+                                    System.IO.File.AppendAllText(DebugLog, "Error reading PKCS10" + Environment.NewLine);
+                                }
+                            }
+                            break;
                     }
                     if (DebugFlag != null && DebugLog != null)
                     {
