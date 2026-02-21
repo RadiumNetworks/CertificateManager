@@ -31,25 +31,25 @@ namespace SendToSQL
         private string RequestFolder = null;
 
         //ExtensionOIDs
-        private string AlternativeNames = "2.5.29.17";
-        private string AuthorityInformationAccess = "1.3.6.1.5.5.7.1.1";
-        private string AuthorityKeyIdentifier = "2.5.29.35";
-        private string BasicConstraints = "2.5.29.19";
-        private string CertificatePolicies = "2.5.29.32";
-        private string CRLDistributionPoints = "2.5.29.31";
-        private string EnhancedKeyUsage = "2.5.29.37";
-        private string FreshestCRL = "2.5.29.46";
-        private string KeyUsage = "2.5.29.15";
-        private string MSApplicationPolicies = "1.3.6.1.4.1.311.21.10";
-        private string NameConstraints = "2.5.29.30";
-        private string PolicyConstraints = "2.5.29.36";
-        private string PolicyMappings = "2.5.29.33";
-        private string PrivateKeyUsagePeriod = "2.5.29.16";
-        private string SMimeCapabilities = "1.2.840.113549.1.9.15";
-        private string SubjectDirectoryAttributes = "2.5.29.9";
-        private string SubjectKeyIdentifier = "2.5.29.14";
-        private string Template = "1.3.6.1.4.1.311.21.7";
-        private string TemplateName = "1.3.6.1.4.1.311.20.2";
+        private const string AlternativeNames = "2.5.29.17";
+        private const string AuthorityInformationAccess = "1.3.6.1.5.5.7.1.1";
+        private const string AuthorityKeyIdentifier = "2.5.29.35";
+        private const string BasicConstraints = "2.5.29.19";
+        private const string CertificatePolicies = "2.5.29.32";
+        private const string CRLDistributionPoints = "2.5.29.31";
+        private const string EnhancedKeyUsage = "2.5.29.37";
+        private const string FreshestCRL = "2.5.29.46";
+        private const string KeyUsage = "2.5.29.15";
+        private const string MSApplicationPolicies = "1.3.6.1.4.1.311.21.10";
+        private const string NameConstraints = "2.5.29.30";
+        private const string PolicyConstraints = "2.5.29.36";
+        private const string PolicyMappings = "2.5.29.33";
+        private const string PrivateKeyUsagePeriod = "2.5.29.16";
+        private const string SMimeCapabilities = "1.2.840.113549.1.9.15";
+        private const string SubjectDirectoryAttributes = "2.5.29.9";
+        private const string SubjectKeyIdentifier = "2.5.29.14";
+        private const string Template = "1.3.6.1.4.1.311.21.7";
+        private const string TemplateName = "1.3.6.1.4.1.311.20.2";
 
         //https://learn.microsoft.com/en-us/windows/win32/api/certexit/nf-certexit-icertexit-notify
         internal enum ExitEvents : int
@@ -483,18 +483,33 @@ namespace SendToSQL
                     string OutputFileName = null;
                     if (CertificateFolder != null)
                     {
-                        OutputFileName = CertificateFolder + CertificateInfo.RequestId.ToString() + ".cer";
-                        System.IO.File.WriteAllText(OutputFileName, Convert.ToBase64String(CertificateInfo.RawCertificate, Base64FormattingOptions.None));
+                        try
+                        {
+                            OutputFileName = CertificateFolder + CertificateInfo.RequestId.ToString() + ".cer";
+                            System.IO.File.WriteAllText(OutputFileName, Convert.ToBase64String(CertificateInfo.RawCertificate, Base64FormattingOptions.None));
+                        }
+                        catch
+                        { 
+                        
+                        }
+                        
                     }
                     if (RequestFolder != null)
                     {
-                        OutputFileName = CertificateFolder + CertificateInfo.RequestId.ToString() + ".req";
-                        System.IO.File.WriteAllText(OutputFileName, Convert.ToBase64String(RequestInfo.RawRequest, Base64FormattingOptions.None));
+                        try
+                        {
+                            OutputFileName = CertificateFolder + CertificateInfo.RequestId.ToString() + ".req";
+                            System.IO.File.WriteAllText(OutputFileName, Convert.ToBase64String(RequestInfo.RawRequest, Base64FormattingOptions.None));
+                        }
+                        catch
+                        {
+
+                        }
+                        
                     }
 
                     switch (RequestInfo.RequestType )
                     {
-
                         case 263168:
 
                             if (DebugFlag != null && DebugLog != null)
@@ -506,11 +521,147 @@ namespace SendToSQL
                                     CX509CertificateRequestCMC.InitializeDecode(
                                         request, 
                                         CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64_ANY);
-                                    var CX509CertificateRequest = CX509CertificateRequestCMC.GetInnerRequest(0);
-                                    var CX509CertificateRequestPkcs10 = new CERTENROLLLib.CX509CertificateRequestPkcs10();
-                                    
-                                    System.IO.File.AppendAllText(DebugLog, CX509CertificateRequest.Type + Environment.NewLine);
-                                    System.IO.File.AppendAllText(DebugLog, CX509CertificateRequest.RawData + Environment.NewLine);
+                                    var CX509CertificateRequestPkcs10 = (IX509CertificateRequestPkcs10)CX509CertificateRequestCMC.GetInnerRequest(0);
+
+                                    var CX509ExtensionAlternativeNames = new CX509ExtensionAlternativeNames();
+                                    var CX509ExtensionBasicConstraints = new CX509ExtensionBasicConstraints();
+                                    var CX509ExtensionTemplate = new CX509ExtensionTemplate();
+                                    var CX509ExtensionEnhancedKeyUsage = new CX509ExtensionEnhancedKeyUsage();
+                                    var CX509ExtensionKeyUsage = new CX509ExtensionKeyUsage();
+                                    var CX509ExtensionMSApplicationPolicies = new CX509ExtensionMSApplicationPolicies();
+                                    var CX509ExtensionSubjectKeyIdentifier = new CX509ExtensionSubjectKeyIdentifier();
+
+                                    for (var i = 0; i < CX509CertificateRequestPkcs10.X509Extensions.Count; i++)
+                                    {
+                                        switch(CX509CertificateRequestPkcs10.X509Extensions[i].ObjectId.Value)
+                                        {
+                                            case AlternativeNames:
+                                                try
+                                                {
+                                                    System.IO.File.AppendAllText(DebugLog, "AlternativeNames" + Environment.NewLine);
+                                                    string sAlternativeNames = (CX509CertificateRequestPkcs10.X509Extensions[i].RawData[CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64]);
+
+                                                    CX509ExtensionAlternativeNames.InitializeDecode(EncodingType.XCN_CRYPT_STRING_BASE64, sAlternativeNames);
+                                                    foreach (CAlternativeName san in CX509ExtensionAlternativeNames.AlternativeNames)
+                                                    {
+                                                        System.IO.File.AppendAllText(DebugLog, " " + san.Type + Environment.NewLine);
+                                                        System.IO.File.AppendAllText(DebugLog, "  " + san.strValue + Environment.NewLine);
+                                                    }
+                                                }
+                                                catch
+                                                {
+
+                                                }
+                                                
+
+                                                break;
+                                            case KeyUsage:
+                                                try
+                                                {
+                                                    System.IO.File.AppendAllText(DebugLog, "KeyUsage:" + Environment.NewLine);
+                                                    string sKeyUsage = (CX509CertificateRequestPkcs10.X509Extensions[i].RawData[CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64]);
+
+                                                    CX509ExtensionKeyUsage.InitializeDecode(EncodingType.XCN_CRYPT_STRING_BASE64 , sKeyUsage);
+                                                    System.IO.File.AppendAllText(DebugLog, " " + CX509ExtensionKeyUsage.KeyUsage.ToString() + Environment.NewLine); 
+                                                }
+                                                catch
+                                                {
+
+                                                }
+
+                                                break;
+
+                                            case EnhancedKeyUsage:
+                                                try
+                                                {
+                                                    System.IO.File.AppendAllText(DebugLog, "EnhancedKeyUsage:" + Environment.NewLine);
+                                                    string sEnhancedKeyUsage = (CX509CertificateRequestPkcs10.X509Extensions[i].RawData[CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64]);
+
+                                                    CX509ExtensionEnhancedKeyUsage.InitializeDecode(EncodingType.XCN_CRYPT_STRING_BASE64, sEnhancedKeyUsage);
+                                                    foreach (CObjectId objectid in CX509ExtensionEnhancedKeyUsage.EnhancedKeyUsage)
+                                                    {
+                                                        System.IO.File.AppendAllText(DebugLog, " " + objectid.Name + Environment.NewLine);
+                                                        System.IO.File.AppendAllText(DebugLog, "  " + objectid.Value + Environment.NewLine);
+                                                    }
+                                                }
+                                                catch
+                                                {
+
+                                                }
+
+                                                break;
+
+                                            case MSApplicationPolicies:
+                                                try
+                                                {
+                                                    System.IO.File.AppendAllText(DebugLog, "MSApplicationPolicies:" + Environment.NewLine);
+                                                    string sMSApplicationPolicies = (CX509CertificateRequestPkcs10.X509Extensions[i].RawData[CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64]);
+
+                                                    CX509ExtensionMSApplicationPolicies.InitializeDecode(EncodingType.XCN_CRYPT_STRING_BASE64, sMSApplicationPolicies);
+                                                    foreach (CCertificatePolicy certificatepolicy in CX509ExtensionMSApplicationPolicies.Policies)
+                                                    {
+                                                        System.IO.File.AppendAllText(DebugLog, " " + certificatepolicy.ObjectId.Name + Environment.NewLine);
+                                                        System.IO.File.AppendAllText(DebugLog, "  " + certificatepolicy.ObjectId.Value + Environment.NewLine);
+                                                    }
+                                                }
+                                                catch
+                                                {
+
+                                                }
+
+                                                break;
+
+                                            case Template:
+                                                try
+                                                {
+                                                    System.IO.File.AppendAllText(DebugLog, "Template:" + Environment.NewLine);
+                                                    string sTemplate = (CX509CertificateRequestPkcs10.X509Extensions[i].RawData[CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64]);
+
+                                                    CX509ExtensionTemplate.InitializeDecode(EncodingType.XCN_CRYPT_STRING_BASE64, sTemplate);
+                                                    System.IO.File.AppendAllText(DebugLog, " " + CX509ExtensionTemplate.TemplateOid.Value + Environment.NewLine);
+                                                    System.IO.File.AppendAllText(DebugLog, "  " + CX509ExtensionTemplate.MajorVersion + Environment.NewLine);
+                                                    System.IO.File.AppendAllText(DebugLog, "  " + CX509ExtensionTemplate.MinorVersion + Environment.NewLine);
+
+                                                }
+                                                catch
+                                                {
+
+                                                }
+                                                break;
+                                            case SubjectKeyIdentifier:
+                                                try
+                                                {
+                                                    System.IO.File.AppendAllText(DebugLog, "SubjectKeyIdentifier" + Environment.NewLine);
+                                                    string sSubjectKeyIdentifier = (CX509CertificateRequestPkcs10.X509Extensions[i].RawData[CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64]);
+
+                                                    CX509ExtensionSubjectKeyIdentifier.InitializeDecode(EncodingType.XCN_CRYPT_STRING_BASE64, sSubjectKeyIdentifier);
+                                                    System.IO.File.AppendAllText(DebugLog, " " + CX509ExtensionSubjectKeyIdentifier.SubjectKeyIdentifier[EncodingType.XCN_CRYPT_STRING_BASE64] + Environment.NewLine);
+                                                }
+                                                catch
+                                                {
+
+                                                }
+                                                break;
+                                            default:
+                                                try
+                                                {
+                                                    System.IO.File.AppendAllText(DebugLog, "Default:" + Environment.NewLine);
+                                                    System.IO.File.AppendAllText(DebugLog, CX509CertificateRequestPkcs10.X509Extensions[i].ObjectId.Value + Environment.NewLine);
+                                                    string ssdef = (CX509CertificateRequestPkcs10.X509Extensions[i].RawData[CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64]);
+                                                    System.IO.File.AppendAllText(DebugLog, " " + ssdef + Environment.NewLine);
+                                                }
+                                                catch
+                                                {
+
+                                                }
+
+                                                break;
+
+                                        }
+                                    }  
+
+
+                                    System.IO.File.AppendAllText(DebugLog, CX509CertificateRequestPkcs10.RawData + Environment.NewLine);
                                     System.IO.File.AppendAllText(DebugLog, "Cmc successfully parsed" + Environment.NewLine);
                                 }
                                 catch

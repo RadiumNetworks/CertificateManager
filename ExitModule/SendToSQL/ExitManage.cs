@@ -46,11 +46,11 @@ namespace SendToSQL
                     break;
 
                 case "File Version":
-                    strMsg = "1.0.0.1";
+                    strMsg = "1.0.0.3";
                     break;
 
                 case "Product Version":
-                    strMsg = "1.0.0.1";
+                    strMsg = "1.0.0.3";
                     break;
 
                 default:
