@@ -1,8 +1,10 @@
 ﻿using CERTCLILib;
+using CERTENROLLLib;
 using CERTEXITLib;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -11,7 +13,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
-using CERTENROLLLib;
 
 namespace SendToSQL
 {
@@ -29,6 +30,7 @@ namespace SendToSQL
         private string DebugLog = null;
         private string CertificateFolder = null;
         private string RequestFolder = null;
+        private string CAConfig = null;
 
         //ExtensionOIDs
         private const string AlternativeNames = "2.5.29.17";
@@ -162,6 +164,62 @@ namespace SendToSQL
                 ExitEvents.CertIssued | ExitEvents.CertPending | ExitEvents.CertDenied | ExitEvents.CertRevoked | ExitEvents.CertRetrievePending
             );
 
+        }
+
+        private void Log(string DebugFlag, string DebugLog, string Message)
+        {
+            if (DebugFlag == "Debug")
+            {
+                try
+                {
+                    System.IO.File.AppendAllText(DebugLog, Message + Environment.NewLine);
+                }
+                catch
+                {
+
+                }
+            }
+        }
+
+        private void SendToSQLDB(string SQLConfig, CAInfo CAInfo, Certificate Certificate, Request Request)
+        {
+            Log(DebugFlag, DebugLog, "Start SQL Mode");
+            Log(DebugFlag, DebugLog, SQLConfig);
+            Log(DebugFlag, DebugLog, CAConfig);
+            Log(DebugFlag, DebugLog, Certificate.RequestId.ToString());
+            Log(DebugFlag, DebugLog, Convert.ToBase64String(Request.RawRequest, Base64FormattingOptions.None));
+
+            string requestid = Certificate.RequestId.ToString();
+            string base64request = Convert.ToBase64String(Request.RawRequest, Base64FormattingOptions.None);
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(SQLConfig))
+                {
+                    String sql = $@"Update Entries set Base64Request='{base64request}' 
+                where RequestID='{requestid}' and CAConfig='{CAConfig}' 
+                If @@ROWCOUNT=0 
+                Insert into Entries (Base64Request, RequestId, CAConfig) 
+                VALUES ('{base64request}','{requestid}','{CAConfig}')";
+                    Log(DebugFlag, DebugLog, sql);
+
+                    using (SqlCommand command = new SqlCommand(sql, connection))
+                    {
+                        Log(DebugFlag, DebugLog, "Open Connection");
+                        connection.Open();
+                        Log(DebugFlag, DebugLog, "Connection opened");
+                        command.ExecuteNonQuery();
+                        Log(DebugFlag, DebugLog, "Statement executed");
+                    }
+                    Log(DebugFlag, DebugLog, "Update or Import successful");
+
+                }
+            }
+            catch (Exception e)
+            {
+                Log(DebugFlag, DebugLog, e.Message);
+            }
+
 
         }
 
@@ -235,12 +293,9 @@ namespace SendToSQL
                         return bytearrresult;
                 }
             }
-            catch
+            catch (Exception e)
             {
-                if(DebugFlag != null && DebugLog != null)
-                {
-                    System.IO.File.AppendAllText(DebugLog, "Error reading value for " + name + Environment.NewLine);
-                }
+                Log(DebugFlag, DebugLog, e.Message);
                 
                 switch (returntype)
                 {
@@ -272,19 +327,34 @@ namespace SendToSQL
                 //case (int)ExitEvents.CertRetrievePending:
                 //case (int)ExitEvents.CertDenied:
                 default:
+                    var CertConfig = new CCertConfig();
                     var CertServer = new CCertServerExit();
                     var CAInfo = new CAInfo();
                     var CertificateInfo = new Certificate();
                     var RequestInfo = new Request();
 
+                    IntPtr istrOut = Marshal.AllocHGlobal(2048);
+
+                    try
+                    {
+                        CAConfig = CertConfig.GetConfig(0, istrOut);
+                        string sstrOut = Marshal.PtrToStringBSTR(istrOut);
+                        Log(DebugFlag, DebugLog, sstrOut);
+                    }
+                    catch (Exception e)
+                    {
+                        CAConfig = @"CA01.cool.ice.corp.com\SECURECA01";
+                        Log(DebugFlag, DebugLog, e.Message);
+                    }
 
                     //https://docs.microsoft.com/en-us/windows/win32/api/certif/nf-certif-icertserverexit-setcontext
                     //https://learn.microsoft.com/en-us/windows/win32/api/certif/nf-certif-icertserverexit-getcertificateproperty
                     CertServer.SetContext(0);
+
                     if (DebugFlag != null && DebugLog != null)
                     {
-                        System.IO.File.AppendAllText(DebugLog, Environment.NewLine + "Seen eventtype " + ExitEvent + Environment.NewLine);
-                        System.IO.File.AppendAllText(DebugLog, "Logging CA Infos" + Environment.NewLine);
+                        Log(DebugFlag, DebugLog, Environment.NewLine + "Seen eventtype " + ExitEvent);
+                        Log(DebugFlag, DebugLog, Environment.NewLine + "Logging CA Infos");
                     }
                     foreach (PropertyInfo prop in typeof(CAInfo).GetProperties(BindingFlags.Public | BindingFlags.Instance))
                     {
@@ -337,21 +407,28 @@ namespace SendToSQL
                         {
                             try
                             {
-                                System.IO.File.AppendAllText(DebugLog, prop.Name + " = " + prop.GetValue(CAInfo).ToString() + Environment.NewLine);
+                                if (prop.GetValue(CAInfo).ToString() == "System.Byte[]")
+                                {
+                                    Log(DebugFlag, DebugLog, prop.Name + " = " + Convert.ToBase64String((byte[])prop.GetValue(CAInfo), Base64FormattingOptions.None));
+                                }
+                                else
+                                {
+                                    Log(DebugFlag, DebugLog, prop.Name + " = " + prop.GetValue(CAInfo).ToString());
+                                }
+
                             }
                             catch
                             {
-                                System.IO.File.AppendAllText(DebugLog, prop.Name + " = error " + Environment.NewLine);
+
                             }
                         }
-
                     }
 
                     CertServer.SetContext(Context);
 
                     if (DebugFlag != null && DebugLog != null)
                     {
-                        System.IO.File.AppendAllText(DebugLog, Environment.NewLine + "Logging Certificate Infos" + Environment.NewLine);
+                        Log(DebugFlag, DebugLog, Environment.NewLine + "Logging Certificate Infos");
                     }
                     foreach (PropertyInfo prop in typeof(Certificate).GetProperties(BindingFlags.Public | BindingFlags.Instance))
                     {
@@ -371,7 +448,7 @@ namespace SendToSQL
                             try
                             {
                                 prop.SetValue(CertificateInfo, (int)GetProperty(ref CertServer, prop.Name, "certificate", "int"));
-                                
+
                             }
                             catch
                             {
@@ -404,22 +481,26 @@ namespace SendToSQL
                         {
                             try
                             {
-
-                                System.IO.File.AppendAllText(DebugLog, prop.Name + " = " + prop.GetValue(CertificateInfo).ToString() + Environment.NewLine);
-
+                                if (prop.GetValue(CertificateInfo).ToString() == "System.Byte[]")
+                                {
+                                    Log(DebugFlag, DebugLog, prop.Name + " = " + Convert.ToBase64String((byte[])prop.GetValue(CertificateInfo), Base64FormattingOptions.None));
+                                }
+                                else
+                                {
+                                    Log(DebugFlag, DebugLog, prop.Name + " = " + prop.GetValue(CertificateInfo).ToString());
+                                }
                             }
                             catch
                             {
 
-                                System.IO.File.AppendAllText(DebugLog, prop.Name + " = error " + Environment.NewLine);
                             }
                         }
-                        
+
                     }
 
                     if (DebugFlag != null && DebugLog != null)
                     {
-                        System.IO.File.AppendAllText(DebugLog, Environment.NewLine + "Logging Request Infos" + Environment.NewLine);
+                        Log(DebugFlag, DebugLog, Environment.NewLine + "Logging Request Infos");
                     }
                     foreach (PropertyInfo prop in typeof(Request).GetProperties(BindingFlags.Public | BindingFlags.Instance))
                     {
@@ -472,11 +553,18 @@ namespace SendToSQL
                         {
                             try
                             {
-                                System.IO.File.AppendAllText(DebugLog, prop.Name + " = " + prop.GetValue(RequestInfo).ToString() + Environment.NewLine);
+                                if (prop.GetValue(RequestInfo).ToString() == "System.Byte[]")
+                                {
+                                    Log(DebugFlag, DebugLog, prop.Name + " = " + Convert.ToBase64String((byte[])prop.GetValue(RequestInfo), Base64FormattingOptions.None));
+                                }
+                                else
+                                {
+                                    Log(DebugFlag, DebugLog, prop.Name + " = " + prop.GetValue(RequestInfo).ToString());
+                                }
                             }
                             catch
                             {
-                                System.IO.File.AppendAllText(DebugLog, prop.Name + " = error " + Environment.NewLine);
+
                             }
                         }
                     }
@@ -489,10 +577,10 @@ namespace SendToSQL
                             System.IO.File.WriteAllText(OutputFileName, Convert.ToBase64String(CertificateInfo.RawCertificate, Base64FormattingOptions.None));
                         }
                         catch
-                        { 
-                        
+                        {
+
                         }
-                        
+
                     }
                     if (RequestFolder != null)
                     {
@@ -505,10 +593,10 @@ namespace SendToSQL
                         {
 
                         }
-                        
+
                     }
 
-                    switch (RequestInfo.RequestType )
+                    switch (RequestInfo.RequestType)
                     {
                         case 263168:
 
@@ -519,7 +607,7 @@ namespace SendToSQL
                                 {
                                     string request = Convert.ToBase64String(RequestInfo.RawRequest, Base64FormattingOptions.None);
                                     CX509CertificateRequestCMC.InitializeDecode(
-                                        request, 
+                                        request,
                                         CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64_ANY);
                                     var CX509CertificateRequestPkcs10 = (IX509CertificateRequestPkcs10)CX509CertificateRequestCMC.GetInnerRequest(0);
 
@@ -533,36 +621,36 @@ namespace SendToSQL
 
                                     for (var i = 0; i < CX509CertificateRequestPkcs10.X509Extensions.Count; i++)
                                     {
-                                        switch(CX509CertificateRequestPkcs10.X509Extensions[i].ObjectId.Value)
+                                        switch (CX509CertificateRequestPkcs10.X509Extensions[i].ObjectId.Value)
                                         {
                                             case AlternativeNames:
                                                 try
                                                 {
-                                                    System.IO.File.AppendAllText(DebugLog, "AlternativeNames" + Environment.NewLine);
+                                                    Log(DebugFlag, DebugLog, "AlternativeNames");
                                                     string sAlternativeNames = (CX509CertificateRequestPkcs10.X509Extensions[i].RawData[CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64]);
 
                                                     CX509ExtensionAlternativeNames.InitializeDecode(EncodingType.XCN_CRYPT_STRING_BASE64, sAlternativeNames);
                                                     foreach (CAlternativeName san in CX509ExtensionAlternativeNames.AlternativeNames)
                                                     {
-                                                        System.IO.File.AppendAllText(DebugLog, " " + san.Type + Environment.NewLine);
-                                                        System.IO.File.AppendAllText(DebugLog, "  " + san.strValue + Environment.NewLine);
+                                                        Log(DebugFlag, DebugLog, " " + san.Type);
+                                                        Log(DebugFlag, DebugLog, "  " + san.strValue);
                                                     }
                                                 }
                                                 catch
                                                 {
 
                                                 }
-                                                
+
 
                                                 break;
                                             case KeyUsage:
                                                 try
                                                 {
-                                                    System.IO.File.AppendAllText(DebugLog, "KeyUsage:" + Environment.NewLine);
+                                                    Log(DebugFlag, DebugLog, "KeyUsage:");
                                                     string sKeyUsage = (CX509CertificateRequestPkcs10.X509Extensions[i].RawData[CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64]);
 
-                                                    CX509ExtensionKeyUsage.InitializeDecode(EncodingType.XCN_CRYPT_STRING_BASE64 , sKeyUsage);
-                                                    System.IO.File.AppendAllText(DebugLog, " " + CX509ExtensionKeyUsage.KeyUsage.ToString() + Environment.NewLine); 
+                                                    CX509ExtensionKeyUsage.InitializeDecode(EncodingType.XCN_CRYPT_STRING_BASE64, sKeyUsage);
+                                                    Log(DebugFlag, DebugLog, " " + CX509ExtensionKeyUsage.KeyUsage.ToString());
                                                 }
                                                 catch
                                                 {
@@ -574,14 +662,14 @@ namespace SendToSQL
                                             case EnhancedKeyUsage:
                                                 try
                                                 {
-                                                    System.IO.File.AppendAllText(DebugLog, "EnhancedKeyUsage:" + Environment.NewLine);
+                                                    Log(DebugFlag, DebugLog, "EnhancedKeyUsage:");
                                                     string sEnhancedKeyUsage = (CX509CertificateRequestPkcs10.X509Extensions[i].RawData[CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64]);
 
                                                     CX509ExtensionEnhancedKeyUsage.InitializeDecode(EncodingType.XCN_CRYPT_STRING_BASE64, sEnhancedKeyUsage);
                                                     foreach (CObjectId objectid in CX509ExtensionEnhancedKeyUsage.EnhancedKeyUsage)
                                                     {
-                                                        System.IO.File.AppendAllText(DebugLog, " " + objectid.Name + Environment.NewLine);
-                                                        System.IO.File.AppendAllText(DebugLog, "  " + objectid.Value + Environment.NewLine);
+                                                        Log(DebugFlag, DebugLog, " " + objectid.Name);
+                                                        Log(DebugFlag, DebugLog, "  " + objectid.Value);
                                                     }
                                                 }
                                                 catch
@@ -594,14 +682,14 @@ namespace SendToSQL
                                             case MSApplicationPolicies:
                                                 try
                                                 {
-                                                    System.IO.File.AppendAllText(DebugLog, "MSApplicationPolicies:" + Environment.NewLine);
+                                                    Log(DebugFlag, DebugLog, "MSApplicationPolicies:");
                                                     string sMSApplicationPolicies = (CX509CertificateRequestPkcs10.X509Extensions[i].RawData[CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64]);
 
                                                     CX509ExtensionMSApplicationPolicies.InitializeDecode(EncodingType.XCN_CRYPT_STRING_BASE64, sMSApplicationPolicies);
                                                     foreach (CCertificatePolicy certificatepolicy in CX509ExtensionMSApplicationPolicies.Policies)
                                                     {
-                                                        System.IO.File.AppendAllText(DebugLog, " " + certificatepolicy.ObjectId.Name + Environment.NewLine);
-                                                        System.IO.File.AppendAllText(DebugLog, "  " + certificatepolicy.ObjectId.Value + Environment.NewLine);
+                                                        Log(DebugFlag, DebugLog, " " + certificatepolicy.ObjectId.Name);
+                                                        Log(DebugFlag, DebugLog, "  " + certificatepolicy.ObjectId.Value);
                                                     }
                                                 }
                                                 catch
@@ -614,13 +702,13 @@ namespace SendToSQL
                                             case Template:
                                                 try
                                                 {
-                                                    System.IO.File.AppendAllText(DebugLog, "Template:" + Environment.NewLine);
+                                                    Log(DebugFlag, DebugLog, "Template:");
                                                     string sTemplate = (CX509CertificateRequestPkcs10.X509Extensions[i].RawData[CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64]);
 
                                                     CX509ExtensionTemplate.InitializeDecode(EncodingType.XCN_CRYPT_STRING_BASE64, sTemplate);
-                                                    System.IO.File.AppendAllText(DebugLog, " " + CX509ExtensionTemplate.TemplateOid.Value + Environment.NewLine);
-                                                    System.IO.File.AppendAllText(DebugLog, "  " + CX509ExtensionTemplate.MajorVersion + Environment.NewLine);
-                                                    System.IO.File.AppendAllText(DebugLog, "  " + CX509ExtensionTemplate.MinorVersion + Environment.NewLine);
+                                                    Log(DebugFlag, DebugLog, " " + CX509ExtensionTemplate.TemplateOid.Value);
+                                                    Log(DebugFlag, DebugLog, "  " + CX509ExtensionTemplate.MajorVersion);
+                                                    Log(DebugFlag, DebugLog, "  " + CX509ExtensionTemplate.MinorVersion);
 
                                                 }
                                                 catch
@@ -631,11 +719,12 @@ namespace SendToSQL
                                             case SubjectKeyIdentifier:
                                                 try
                                                 {
-                                                    System.IO.File.AppendAllText(DebugLog, "SubjectKeyIdentifier" + Environment.NewLine);
+                                                    Log(DebugFlag, DebugLog, "SubjectKeyIdentifier");
                                                     string sSubjectKeyIdentifier = (CX509CertificateRequestPkcs10.X509Extensions[i].RawData[CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64]);
 
                                                     CX509ExtensionSubjectKeyIdentifier.InitializeDecode(EncodingType.XCN_CRYPT_STRING_BASE64, sSubjectKeyIdentifier);
-                                                    System.IO.File.AppendAllText(DebugLog, " " + CX509ExtensionSubjectKeyIdentifier.SubjectKeyIdentifier[EncodingType.XCN_CRYPT_STRING_BASE64] + Environment.NewLine);
+                                                    CObjectId oid = CX509ExtensionSubjectKeyIdentifier.ObjectId;
+                                                    Log(DebugFlag, DebugLog, " " + oid.Value);
                                                 }
                                                 catch
                                                 {
@@ -645,10 +734,10 @@ namespace SendToSQL
                                             default:
                                                 try
                                                 {
-                                                    System.IO.File.AppendAllText(DebugLog, "Default:" + Environment.NewLine);
-                                                    System.IO.File.AppendAllText(DebugLog, CX509CertificateRequestPkcs10.X509Extensions[i].ObjectId.Value + Environment.NewLine);
+                                                    Log(DebugFlag, DebugLog, "Default:");
+                                                    Log(DebugFlag, DebugLog, CX509CertificateRequestPkcs10.X509Extensions[i].ObjectId.Value);
                                                     string ssdef = (CX509CertificateRequestPkcs10.X509Extensions[i].RawData[CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64]);
-                                                    System.IO.File.AppendAllText(DebugLog, " " + ssdef + Environment.NewLine);
+                                                    Log(DebugFlag, DebugLog, " " + ssdef);
                                                 }
                                                 catch
                                                 {
@@ -658,15 +747,12 @@ namespace SendToSQL
                                                 break;
 
                                         }
-                                    }  
-
-
-                                    System.IO.File.AppendAllText(DebugLog, CX509CertificateRequestPkcs10.RawData + Environment.NewLine);
-                                    System.IO.File.AppendAllText(DebugLog, "Cmc successfully parsed" + Environment.NewLine);
+                                    }
+                                    Log(DebugFlag, DebugLog, "Cmc successfully parsed" + Environment.NewLine);
                                 }
                                 catch
                                 {
-                                    System.IO.File.AppendAllText(DebugLog, "Error reading Cmc" + Environment.NewLine);
+                                    Log(DebugFlag, DebugLog, "Error reading Cmc" + Environment.NewLine);
                                 }
                             }
                             break;
@@ -678,13 +764,13 @@ namespace SendToSQL
                                 {
                                     string request = Convert.ToBase64String(RequestInfo.RawRequest, Base64FormattingOptions.None);
                                     CX509CertificateRequestPkcs7.InitializeDecode(
-                                        Convert.ToBase64String(RequestInfo.RawRequest, Base64FormattingOptions.None), 
+                                        Convert.ToBase64String(RequestInfo.RawRequest, Base64FormattingOptions.None),
                                         CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64HEADER);
-                                    System.IO.File.AppendAllText(DebugLog, "PKCS7 successfully parsed" + Environment.NewLine);
+                                    Log(DebugFlag, DebugLog, "PKCS7 successfully parsed");
                                 }
                                 catch
                                 {
-                                    System.IO.File.AppendAllText(DebugLog, "Error reading PKCS7" + Environment.NewLine);
+                                    Log(DebugFlag, DebugLog, "Error reading PKCS7");
                                 }
                             }
                             break;
@@ -698,21 +784,24 @@ namespace SendToSQL
                                     CX509CertificateRequestPkcs10.InitializeDecode(
                                         request,
                                         CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64HEADER);
-                                    System.IO.File.AppendAllText(DebugLog, "PKCS10 successfully parsed" + Environment.NewLine);
+                                    Log(DebugFlag, DebugLog, "PKCS10 successfully parsed");
                                 }
                                 catch
                                 {
-                                    System.IO.File.AppendAllText(DebugLog, "Error reading PKCS10" + Environment.NewLine);
+                                    Log(DebugFlag, DebugLog, "Error reading PKCS10");
                                 }
                             }
                             break;
                     }
                     if (DebugFlag != null && DebugLog != null)
                     {
-                        System.IO.File.AppendAllText(DebugLog, Environment.NewLine);
+                        Log(DebugFlag, DebugLog, Environment.NewLine);
                     }
+                    SendToSQLDB(SQLConfig, CAInfo, CertificateInfo, RequestInfo);
+
                     break;
             }
+
         }
     }
 }
