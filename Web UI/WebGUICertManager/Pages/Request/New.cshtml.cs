@@ -54,6 +54,7 @@ namespace WebGUICertManager.Pages.Request
         public string action { get; set; }
         public string submitbtnactive = "false";
         public List<SelectListItem> RequestOptions { get; set; }
+        
 
         public NewModel(AppDbContext context)
         {
@@ -291,6 +292,7 @@ namespace WebGUICertManager.Pages.Request
 
         public async Task OnGetAsync(string requestoption, string currentrequestoption, string requestdata, string currentrequestdata, string action)
         {
+            
             RequestData = requestdata;
             CurrentRequestData = currentrequestdata;
             RequestOption = requestoption;

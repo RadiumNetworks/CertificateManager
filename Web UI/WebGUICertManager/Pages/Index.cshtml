@@ -3,10 +3,16 @@
 @{
     ViewData["Title"] = "Certificate Manager";
 }
-
+<tbody>
 <div class="text-center">
+    <p>
     <h1>Welcome to the Web Interface of the certificate manager.</h1>
-    <p>Under Certificates, you can filter, change owner information and revoke certificates</p>
-    <p>Under Requests, you can see pending requests and approve or deny them</p>
-    <p>Under New Requests, you can create or upload requests</p>
+            <textarea asp-for="Claims" name="Claims" class="form-control" rows="10" value="@Model.Claims"></textarea>
+    </p>
 </div>
+
+<p>Under Certificates, you can filter, change owner information and revoke certificates</p>
+<p>Under Requests, you can see pending requests and approve or deny them</p>
+<p>Under New Requests, you can create or upload requests</p>
+</tbody>
+
