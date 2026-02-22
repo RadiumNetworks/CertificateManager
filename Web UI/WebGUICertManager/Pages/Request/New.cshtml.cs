@@ -51,7 +51,8 @@ namespace WebGUICertManager.Pages.Request
         public string CurrentRequestOption { get; set; }
         public string RequestData { get; set; }
         public string CurrentRequestData { get; set; }
-
+        public string action { get; set; }
+        public string submitbtnactive = "false";
         public List<SelectListItem> RequestOptions { get; set; }
 
         public NewModel(AppDbContext context)
@@ -155,7 +156,9 @@ namespace WebGUICertManager.Pages.Request
             var CX509ExtensionKeyUsage = new CX509ExtensionKeyUsage();
             var CX509ExtensionMSApplicationPolicies = new CX509ExtensionMSApplicationPolicies();
             var CX509ExtensionSubjectKeyIdentifier = new CX509ExtensionSubjectKeyIdentifier();
-
+            CurrentRequestData += "Subject:" + Environment.NewLine;
+            CurrentRequestData += " " + CX509CertificateRequestPkcs10.Subject.Name + Environment.NewLine;
+            
             for (var i = 0; i < CX509CertificateRequestPkcs10.X509Extensions.Count; i++)
             {
                 switch (CX509CertificateRequestPkcs10.X509Extensions[i].ObjectId.Value)
@@ -175,7 +178,7 @@ namespace WebGUICertManager.Pages.Request
                         }
                         catch
                         {
-
+                            CurrentRequestData = null;
                         }
 
 
@@ -286,7 +289,7 @@ namespace WebGUICertManager.Pages.Request
 
 
 
-        public async Task OnGetAsync(string requestoption, string currentrequestoption, string requestdata, string currentrequestdata)
+        public async Task OnGetAsync(string requestoption, string currentrequestoption, string requestdata, string currentrequestdata, string action)
         {
             RequestData = requestdata;
             CurrentRequestData = currentrequestdata;
@@ -312,14 +315,14 @@ namespace WebGUICertManager.Pages.Request
                                 requestdata,
                                 CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64_ANY);
                             var CX509CertificateRequestPkcs10 = (IX509CertificateRequestPkcs10)CX509CertificateRequestCMC.GetInnerRequest(0);
-
+                            submitbtnactive = "true";
                             ParseRequestExtension(CX509CertificateRequestPkcs10);
-
+                            
 
                         }
                         catch
                         {
-
+                            CurrentRequestData = null;
                         }
 
                     }

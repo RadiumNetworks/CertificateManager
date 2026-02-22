@@ -29,8 +29,9 @@
         <tr>
             <td>
                 <p>
-                    <input type="submit" value="Parse" class="btn btn-primary" />
-                    <input type="submit" value="Submit" class="btn btn-primary" />
+                    <input asp-for="action" type="submit" value="Parse" class="btn btn-primary" />
+                    <input asp-for="action" id="submitbtn" type="submit" value="Submit" class="btn btn-primary" disabled/>
+                    <input type="text" id="submitbtnactive" class="form-control" value="@Model.submitbtnactive" hidden />
                 </p>
             </td>
             <td>
@@ -46,3 +47,18 @@
         <textarea asp-for="CurrentRequestData" name="currentrequestdata" class="form-control" rows="10" value="@Model.CurrentRequestData" readonly></textarea>
     </tbody>
 </table>
+
+@section Scripts {
+    <script>
+        if (document.getElementById("submitbtnactive").value == "true")
+        {
+            document.getElementById("submitbtn").disabled = false;
+        }
+        else
+        {
+            document.getElementById("submitbtn").disabled = true;
+        }
+        
+
+    </script>
+}
