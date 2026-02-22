@@ -1,0 +1,44 @@
+﻿@page
+@model WebGUICertManager.Pages.Request.NewModel
+@{
+    ViewData["Title"] = "New Certificate request";
+}
+
+<h1>Certificates List</h1>
+<hr />
+<table class="table table-responsive table-striped table-hover align-middle">
+    <form asp-page="./New" method="get">
+        <div class="form-actions no-color">
+    <tbody>
+        <tr>
+            <td>
+                <p>
+                    Request type:
+                    <select id="RequestOption" asp-for="@Model.RequestOption" asp-items="Model.RequestOptions" value="@Model.CurrentRequestOption" class="form-control" size="2">Select</select>
+                </p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <p>
+                    Please copy request here:
+                    <textarea asp-for="RequestData" name="requestdata" class="form-control" rows="10" value="@Model.CurrentRequestData"></textarea>
+                </p>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <p>
+                    <input type="submit" value="Submit" class="btn btn-primary" />
+                </p>
+            </td>
+            <td>
+                <p>
+                    <a asp-page="./New">Clear</a>
+                </p>
+            </td>
+        </tr>
+    </tbody>
+    </div>
+    </form>
+</table>
