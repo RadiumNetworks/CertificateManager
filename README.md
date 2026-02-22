@@ -11,5 +11,8 @@ Here for approval or to deny new requests
 For submitting new requests
 ![Header](./newrequest.png)
 
+The backend consists of an exit module where changes on the certificate authority
+are written to a SQL database
+
 The used database has the following tables
 ![Header](./database.png)
