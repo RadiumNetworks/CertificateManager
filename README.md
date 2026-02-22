@@ -8,5 +8,8 @@ Here for filtering, exporting, editing owner information or revocation
 Here for approval or to deny new requests
 ![Header](./certificaterequestview.png)
 
+For submitting new requests
+![Header](./newrequest.png)
+
 The used database has the following tables
 ![Header](./database.png)
