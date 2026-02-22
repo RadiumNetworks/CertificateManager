@@ -1,3 +1,12 @@
+As in the Exit module we use different dll's to access request properties or to interact with the certificate authorities
+
+certxds.dll
+
+certcli.dll
+
+certenroll.dll
+
+certadm.dll
 
 To run the tool with the certificate revocation / request approval function on a new system
 1. the RSAT Remote Server Administration Tool for ADCS must be installed
