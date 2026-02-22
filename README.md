@@ -2,6 +2,9 @@
 
 The UI has different pages
 
+The main page shows some guidance of what the user can do (role based access still on todo)
+![Header](./startuppage.png)
+
 Here for filtering, exporting, editing owner information or revocation
 ![Header](./certificateview.png)
 
