@@ -1,5 +1,9 @@
 ## Welcome to the Certificate Management project
 
+The architecture can be outlined as follows
+
+![Header](./architecture.png)
+
 The UI has different pages
 
 The main page shows some guidance of what the user can do (role based access still on todo)
