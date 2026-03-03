@@ -5,21 +5,62 @@
 @using CertificateManager.Models.Views
 @using CertificateManager.Data
 @using Microsoft.AspNetCore.Components.QuickGrid
+@using CertificateManager.Services
 @implements IAsyncDisposable
-@inject IDbContextFactory<AppDbContext> DbFactory
+@inject CertificateService certificateService
 
 <PageTitle>Certificate Entries</PageTitle>
 
 <h3>List certificate database entries</h3>
 
 <QuickGrid Class="table" Items="entry" Pagination="pagination">
-    <PropertyColumn Property="entry => entry.RequestId" Sortable="true" />
-    <PropertyColumn Property="entry => entry.CAConfig" Sortable="true" />
-    <PropertyColumn Property="entry => entry.SerialNumber" Sortable="true" />
-    <PropertyColumn Property="entry => entry.Owner" Sortable="true" />
-    <PropertyColumn Property="entry => entry.SubjectAlternativeNames" Title="SAN" Sortable="false" />
-    <PropertyColumn Property="entry => entry.EKUNames" Title="SAN" Sortable="false" />
-
+    <PropertyColumn Property="@(e => $"{e.CAConfig} {e.RequestId}")" Title="Request" Sortable="true" />
+    <TemplateColumn Title = "RequesterInformation">
+        @if (context.RequestCommonName != "")
+        {
+            <p style="display:inline">CN=@context.RequestCommonName<br /></p>
+        }
+        @if (context.RequestCountryRegion != "")
+        {
+            <p style="display:inline">C=@context.RequestCountryRegion<br /></p>
+        }
+        @if (context.RequestCity != "")
+        {
+            <p style="display:inline">L=@context.RequestCity<br /></p>
+        }
+        @if (context.RequestOrganization != "")
+        {
+            <p style="display:inline">O=@context.RequestOrganization<br /></p>
+        }
+        @if (context.RequestOrganizationUnit != "")
+        {
+            <p style="display:inline">OU=@context.RequestOrganizationUnit<br /></p>
+        }
+        @if (context.RequestEMailAddress != "")
+        {
+            <p style="display:inline">E=@context.RequestEMailAddress<br /></p>
+        }
+    </TemplateColumn>
+    <TemplateColumn Title=SubjectAlternativeNames>
+        @if (context.SubjectAlternativeNames != "")
+        {
+            foreach (var san in @context.SubjectAlternativeNames.Split(","))
+            {
+                <p style="display:inline">@san<br /></p>
+            }
+        }
+    </TemplateColumn>
+    <TemplateColumn Title=EnhancedKeyUsages>
+        @if (context.EKUNames != "")
+        {
+            foreach (var eku in @context.EKUNames.Split(","))
+            {
+                <p style="display:inline">@eku<br /></p>
+            }
+        }
+    </TemplateColumn>
+    <PropertyColumn Property="@(e => e.Owner)" Sortable="true" />
+    <PropertyColumn Property="@(e => e.Notes)" Sortable="true" />
     <TemplateColumn Context="Entry">
         <a href="@($"certificates/edit?requestid={Entry.RequestId}&caconfig={Entry.CAConfig}")">Edit</a> |
         <a href="@($"certificates/revoke?serialnumber={Entry.SerialNumber}")">Revoke</a>
@@ -33,21 +74,11 @@
 
     protected override void OnInitialized()
     {
-        context = DbFactory.CreateDbContext();
+        context = certificateService.CreateDbContext();
     }
 
-    private IQueryable<ExtendedEntry> entry => context.Entry
-        .Include(e => e.SAN)
-        .Include(e => e.EKU)
-        .Select(e => new ExtendedEntry
-        {
-            RequestId = e.RequestId,
-            CAConfig = e.CAConfig,
-            SerialNumber = e.SerialNumber,
-            Owner = e.Owner,
-            SubjectAlternativeNames = string.Join(", ", e.SAN.Select(s => s.SubjectAlternativeName)),
-            EKUNames = string.Join(", ", e.EKU.Select(s => s.Name))
-        });
+    private IQueryable<ExtendedEntry> entry => certificateService.GetAllCertificateEntries(context);
 
     public async ValueTask DisposeAsync() => await context.DisposeAsync();
 }
+
