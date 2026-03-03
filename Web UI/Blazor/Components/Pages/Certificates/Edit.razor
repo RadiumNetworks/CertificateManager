@@ -1,0 +1,46 @@
+﻿@page "/certificates/edit"
+
+@using CertificateManager.Services
+@using CertificateManager.Models
+@inject CertificateService certificateService;
+
+<PageTitle>Edit certificate entry</PageTitle>
+
+<h3>Edit certificate database entry</h3>
+
+
+<EditForm Model="@entry" OnSubmit="HandleSubmit">
+    <label for="RequestIdInput">RequestId</label>
+    <InputNumber id="RequestIdInput" @bind-Value="@entry.RequestId" readonly="readonly"></InputNumber>
+    <label for="CAConfigInput">CAConfig</label>
+    <InputText id="CAConfigInput" @bind-Value="@entry.CAConfig" readonly="readonly"></InputText>
+    <label for="SerialNumberInput">SerialNumber</label>
+    <InputText id="SerialNumberInput" @bind-Value="@entry.SerialNumber" readonly="readonly"></InputText>
+    <label for="OwnerInput">Owner</label>
+    <InputText id="OwnerInput" @bind-Value="@entry.Owner"></InputText>
+    <label for="NotesInput">Notes</label>
+    <InputText id="NotesInput" @bind-Value="@entry.Notes"></InputText>
+    <button type="submit" class="btn-primary">Edit</button>
+</EditForm>
+
+@code {
+    [SupplyParameterFromQuery]
+    private int RequestId { get; set; }
+
+    [SupplyParameterFromQuery]
+    private string CAConfig { get; set; }
+
+    Entry entry = new Entry();
+
+    public void HandleSubmit(EditContext editContext)
+    {
+        var newCertificate = (Entry)editContext.Model;
+
+        certificateService.UpdateCertificate(newCertificate.RequestId, newCertificate.CAConfig, newCertificate.Owner, newCertificate.Notes);
+    }
+
+    protected override void OnInitialized()
+    {
+        entry = certificateService.GetCertificate(RequestId, CAConfig);
+    }
+}

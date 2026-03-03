@@ -1,0 +1,53 @@
+﻿@page "/listcertificates"
+@rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore
+@using CertificateManager.Models
+@using CertificateManager.Models.Views
+@using CertificateManager.Data
+@using Microsoft.AspNetCore.Components.QuickGrid
+@implements IAsyncDisposable
+@inject IDbContextFactory<AppDbContext> DbFactory
+
+<PageTitle>Certificate Entries</PageTitle>
+
+<h3>List certificate database entries</h3>
+
+<QuickGrid Class="table" Items="entry" Pagination="pagination">
+    <PropertyColumn Property="entry => entry.RequestId" Sortable="true" />
+    <PropertyColumn Property="entry => entry.CAConfig" Sortable="true" />
+    <PropertyColumn Property="entry => entry.SerialNumber" Sortable="true" />
+    <PropertyColumn Property="entry => entry.Owner" Sortable="true" />
+    <PropertyColumn Property="entry => entry.SubjectAlternativeNames" Title="SAN" Sortable="false" />
+    <PropertyColumn Property="entry => entry.EKUNames" Title="SAN" Sortable="false" />
+
+    <TemplateColumn Context="Entry">
+        <a href="@($"certificates/edit?requestid={Entry.RequestId}&caconfig={Entry.CAConfig}")">Edit</a> |
+        <a href="@($"certificates/revoke?serialnumber={Entry.SerialNumber}")">Revoke</a>
+    </TemplateColumn>
+
+</QuickGrid>
+
+@code {
+    private AppDbContext context = default!;
+    private PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    private IQueryable<ExtendedEntry> entry => context.Entry
+        .Include(e => e.SAN)
+        .Include(e => e.EKU)
+        .Select(e => new ExtendedEntry
+        {
+            RequestId = e.RequestId,
+            CAConfig = e.CAConfig,
+            SerialNumber = e.SerialNumber,
+            Owner = e.Owner,
+            SubjectAlternativeNames = string.Join(", ", e.SAN.Select(s => s.SubjectAlternativeName)),
+            EKUNames = string.Join(", ", e.EKU.Select(s => s.Name))
+        });
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}
