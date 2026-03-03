@@ -14,17 +14,64 @@
             </NavLink>
         </div>
 
+        
+
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="certificates" Match="NavLinkMatch.All">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Create Certificate entry
+            <NavLink class="nav-link" href="certificates/list" Match="NavLinkMatch.All">
+                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> List Certificate entries
             </NavLink>
         </div>
 
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="listcertificates" Match="NavLinkMatch.All">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> List Certificate entries
+            <NavLink class="nav-link" href="requests/list" Match="NavLinkMatch.All">
+                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> List Certificate requests
             </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="requests/new" Match="NavLinkMatch.All">
+                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> New certificate requests
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="certificates/import" Match="NavLinkMatch.All">
+                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Import external Certificates
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" @onclick="() => expandSubNav = !expandSubNav" Match="NavLinkMatch.All">
+                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Default views
+            </NavLink>
+            @if (expandSubNav)
+            {
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="views/expiring30days">
+                        <span class="bi bi-plus-square-fill-nav-menu"></span> 30 days to expire
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="views/expiring60days">
+                        <span class="bi bi-plus-square-fill-nav-menu"></span> 60 days to expire
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="views/wildcard">
+                        <span class="bi bi-plus-square-fill-nav-menu"></span> Wildcard certificates
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="views/codesigning">
+                        <span class="bi bi-plus-square-fill-nav-menu"></span> Codesigning certificates
+                    </NavLink>
+                </div>
+            }
         </div>
     </nav>
 </div>
 
+@code {
+    private bool expandSubNav = false;
+
+}

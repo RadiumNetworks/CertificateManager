@@ -8,18 +8,17 @@
 
 <h3>Edit certificate database entry</h3>
 
-
 <EditForm Model="@entry" OnSubmit="HandleSubmit">
-    <label for="RequestIdInput">RequestId</label>
-    <InputNumber id="RequestIdInput" @bind-Value="@entry.RequestId" readonly="readonly"></InputNumber>
+    <label for="RequestIdInput" >RequestId</label>
+    <InputNumber id="RequestIdInput" @bind-Value="@entry.RequestId" readonly="readonly"></InputNumber><br />
     <label for="CAConfigInput">CAConfig</label>
-    <InputText id="CAConfigInput" @bind-Value="@entry.CAConfig" readonly="readonly"></InputText>
+    <InputText id="CAConfigInput" @bind-Value="@entry.CAConfig" readonly="readonly"></InputText><br />
     <label for="SerialNumberInput">SerialNumber</label>
-    <InputText id="SerialNumberInput" @bind-Value="@entry.SerialNumber" readonly="readonly"></InputText>
+    <InputText id="SerialNumberInput" @bind-Value="@entry.SerialNumber" readonly="readonly"></InputText><br />
     <label for="OwnerInput">Owner</label>
-    <InputText id="OwnerInput" @bind-Value="@entry.Owner"></InputText>
-    <label for="NotesInput">Notes</label>
-    <InputText id="NotesInput" @bind-Value="@entry.Notes"></InputText>
+    <InputText id="OwnerInput" @bind-Value="@entry.Owner"></InputText><br />
+    <label for="NotesInput" >Notes</label>
+    <InputText id="NotesInput" @bind-Value="@entry.Notes"></InputText><br /><br />
     <button type="submit" class="btn-primary">Edit</button>
 </EditForm>
 

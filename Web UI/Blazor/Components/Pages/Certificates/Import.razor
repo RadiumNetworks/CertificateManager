@@ -1,0 +1,43 @@
+﻿@page "/certificates/import"
+@using CertificateManager.Services
+@using CertificateManager.Models
+@inject CertificateService certificateService;
+
+<PageTitle>Import Certificate Entries</PageTitle>
+
+<h3>Import certificate database entry</h3>
+
+
+<EditForm Model="@entry" OnSubmit="HandleSubmit">
+    <table>
+        <tr>
+            <td><label for="Base64CertificateInput">Base64Certificate</label></td>
+            <td><InputText id="Base64CertificateInput" @bind-Value="@entry.Base64Certificate"></InputText></td>
+        </tr>
+    <tr>
+        <td><label for="Base64RequestInput">Base64Request</label></td>
+        <td><InputText id="Base64RequestInput" @bind-Value="@entry.Base64Request"></InputText></td>
+    </tr>
+    <tr>
+        <td><label for="OwnerInput">Owner</label></td>
+        <td><InputText id="OwnerInput" @bind-Value="@entry.Owner"></InputText></td>
+    </tr>
+    <tr>
+        <td><label for="NotesInput">Notes</label></td>
+        <td><InputText id="NotesInput" @bind-Value="@entry.Notes"></InputText></td>
+    </tr>
+
+    <button type="submit" class="btn-primary">Import</button>
+    </table>
+</EditForm>
+
+@code {
+    Entry entry = new Entry();
+
+    public void HandleSubmit(EditContext editContext)
+    {
+        var newCertificate = (Entry)editContext.Model;
+        newCertificate.CAConfig = "external";
+        certificateService.AddCertificateEntry(newCertificate);
+    }
+}

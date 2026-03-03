@@ -19,4 +19,16 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="CERTADMINLib">
+      <HintPath>CERTADMINLib.dll</HintPath>
+    </Reference>
+    <Reference Include="CERTCLILib">
+      <HintPath>CERTCLILIB.dll</HintPath>
+    </Reference>
+    <Reference Include="CERTENROLLLib">
+      <HintPath>CERTENROLLLib.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>
