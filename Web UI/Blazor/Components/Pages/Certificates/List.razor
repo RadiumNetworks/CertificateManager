@@ -37,6 +37,17 @@
             </InputSelect></td>
         </tr>
         <tr>
+            <td><label for="DispositionFilter">Disposition Options</label></td>
+            <td>
+                <InputSelect id="DispositionFilter" @bind-Value="@DispositionOption">
+                    @foreach (var option in Enum.GetValues<DispositionOptions>())
+                    {
+                        <option value="@option">@option</option>
+                    }
+                </InputSelect>
+            </td>
+        </tr>
+        <tr>
             <td><label for="RequestIdFilter">RequestId</label></td>
             <td><InputNumber id="RequestIdFilter" @bind-Value="@requestId"></InputNumber></td>
         </tr>
@@ -109,6 +120,17 @@
     }
     public CAOptions CAOption { get; set; } = CAOptions.SECURECA01;
 
+    public enum DispositionOptions
+    {
+        Under_Review = 9,
+        Certificate_Issued = 20,
+        Certificate_Revoked = 21,
+        Request_Failed = 30,
+        Request_Denied = 31
+    }
+    public DispositionOptions DispositionOption { get; set; } = DispositionOptions.Certificate_Issued;
+
+
     public string SubjectFilter = "";
     public string OwnerFilter = "";
     public string TemplateFilter = "";
@@ -121,6 +143,7 @@
         filterht["Owner"] = OwnerFilter;
         filterht["CertificateTemplate"] = TemplateFilter;
         filterht["CAConfig"] = CAOption;
+        filterht["RequestDisposition"] = (int)DispositionOption;
     }
     private AppDbContext context = default!;
     private PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
@@ -128,6 +151,7 @@
     protected override void OnInitialized()
     {
         context = certificateService.CreateDbContext();
+        filterht["RequestDisposition"] = (int)DispositionOption;
     }
 
     private IQueryable<ExtendedEntry> entry => certificateService.GetCertificateEntries(context, requestId, filterht);

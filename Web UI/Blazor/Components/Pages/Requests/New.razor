@@ -19,12 +19,15 @@ The submit button will be available if the request can be parsed and is complian
             <td><InputTextArea id="Base64RequestInput" @bind-Value="@entry.Base64Request" rows="8" cols="100"></InputTextArea></td>
         </tr>
         <tr>
-            <td><label for="OwnerInput">Owner</label></td>
-            <td><InputText id="OwnerInput" @bind-Value="@entry.Owner"></InputText></td>
-        </tr>
-        <tr>
-            <td><label for="NotesInput">Notes</label></td>
-            <td><InputText id="NotesInput" @bind-Value="@entry.Notes"></InputText></td>
+            <td><label for="CAFilter">Certificate Authority</label></td>
+            <td>
+                <InputSelect id="CAFilter" @bind-Value="@CAConfiguration">
+                    @foreach (var option in CAConfigurationList)
+                    {
+                        <option value="@option">@option</option>
+                    }
+                </InputSelect>
+            </td>
         </tr>
         <button type="submit" class="btn-primary" @onclick="() => selectedAction = 1">Parse</button>
         <button type="submit" class="btn-primary" @onclick="() => selectedAction = 2" hidden="@btnhidden">Submit</button>
@@ -35,9 +38,36 @@ The submit button will be available if the request can be parsed and is complian
         <td>ParsedData</td>
         <td><textarea value="@CurrentRequestData" rows="10" cols="100" readonly></textarea></td>
     </tr>
+    <tr>
+        <td>Certificate or Message</td>
+        <td><textarea value="@output" rows="10" cols="100" readonly></textarea></td>
+    </tr>
 </table>
 
 @code {
+    public static class CAConfigurations 
+    {
+        public static readonly string SECURECA01 = @"CA01.cool.ice.corp.com\SECURECA01";
+        public static readonly string SECURECA02 = @"CA02.cool.ice.corp.com\SECURECA02";
+    }
+
+    List<string> CAConfigurationList = typeof(CAConfigurations)
+            .GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+            .Where(f => f.FieldType == typeof(string))
+            .Select(f => f.GetValue(null)?.ToString()) 
+            .ToList();
+
+    string CAConfiguration { get; set; } = CAConfigurations.SECURECA01;
+
+    const int CR_IN_ANY = 0;
+    const int CR_IN_BASE64 = 0x1;
+    const int CR_IN_PKCS10 = 0x100;
+
+    const int CR_OUT_BASE64 = 0x1;
+
+    const int CR_DISP_ISSUED = 0x3;
+    const int CR_DISP_PENDING = 0x5;
+
     Entry entry = new Entry();
     public int selectedAction = 0;
     private bool btnhidden = true;
@@ -74,6 +104,7 @@ The submit button will be available if the request can be parsed and is complian
     private const string TemplateName = "1.3.6.1.4.1.311.20.2";
 
     public string CurrentRequestData { get; set; } = string.Empty;
+    public string output { get; set; } = string.Empty;
 
     //https://learn.microsoft.com/en-us/archive/blogs/alejacma/how-to-modify-an-interop-assembly-to-change-the-return-type-of-a-method-vb-net
     [DllImport(@"oleaut32.dll", SetLastError = true, CallingConvention = CallingConvention.StdCall)]
@@ -324,13 +355,33 @@ The submit button will be available if the request can be parsed and is complian
                 CurrentRequestData = null;
             }
 
-            
+
         }
         else if (selectedAction == 2)
         {
+            CCertRequest cCertRequest = new CCertRequestClass();
+            int iDisposition;
             
-            newCertificate.CAConfig = "external";
-            certificateService.AddCertificateEntry(newCertificate);
+
+            iDisposition = cCertRequest.Submit(
+                    CR_IN_BASE64 | CR_IN_ANY,
+                    newCertificate.Base64Request,
+                    null,
+                    CAConfiguration
+                );
+
+            switch (iDisposition)
+            {
+                case CR_DISP_ISSUED:
+                    output = cCertRequest.GetCertificate(CR_OUT_BASE64);
+                    break;
+                case CR_DISP_PENDING:
+                    output = cCertRequest.GetDispositionMessage();
+                    break;
+                default:
+                    break;
+
+            }
         }
         
     }
