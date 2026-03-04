@@ -10,7 +10,7 @@ The main page shows some guidance of what the user can do (role based access sti
 ![Header](./blazor.png)
 
 Here for filtering, exporting, editing owner information or revocation
-![Header](./certificateview.png)
+![Header](./listcertificates.png)
 
 Here for approval or to deny new requests
 ![Header](./certificaterequestview.png)

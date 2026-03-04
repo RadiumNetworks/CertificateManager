@@ -104,12 +104,27 @@ namespace SendToSQL
             public string PublicKeyAlgorithm { get; set; } = null;
             public string SerialNumber { get; set; } = null;
             public string CertificateTemplate { get; set; } = null;
+            public string CertificateHash { get; set; } = null;
             public DateTime NotBefore { get; set; }
             public DateTime NotAfter { get; set; }
             public byte[] RawCertificate { get; set; } = null;
             public byte[] RawPublicKey { get; set; } = null;
             public byte[] RawPublicKeyAlgorithmParameters { get; set; } = null;
             public int? RequestType { get; set; } = null;
+            public string CommonName { get; set; } = null;
+            public string Organization { get; set; } = null;
+            public string OrgUnit { get; set; } = null;
+            public string EMail { get; set; } = null;
+            public string Country { get; set; } = null;
+            public string Locality { get; set; } = null;
+            public string State { get; set; } = null;
+            public string CallerName { get; set; } = null;
+            public string TemplateEnrollmentFlags { get; set; } = null;
+            public string TemplateGeneralFlags { get; set; } = null;
+            public string TemplatePrivateKeyFlags { get; set; } = null;
+            public string PublicKeyAlgorithmParameters { get; set; } = null;
+            public DateTime RevocationDate { get; set; }
+            public string RevocationReason { get; set; } = null;
         }
 
         //https://learn.microsoft.com/en-us/windows/win32/api/certif/nf-certif-icertserverexit-getrequestproperty
@@ -134,6 +149,7 @@ namespace SendToSQL
             public string Country { get; set; } = null;
             public string State { get; set; } = null;
             public byte[] RawRequest { get; set; } = null;
+            public string CallerName { get; set; } = null;
         }
 
 
@@ -214,13 +230,22 @@ namespace SendToSQL
             string DispositionMessage = "";
             string RequesterName = "";
             string DistinguishedName = "";
-            string CommonName = "";
-            string Organization = "";
-            string OrgUnit = "";
-            string EMail = "";
-            string Locality = "";
-            string Country = "";
-            string State = "";
+            string RequestCommonName = "";
+            string RequestOrganization = "";
+            string RequestOrganizationUnit = "";
+            string RequestEMailAddress = "";
+            string RequestCity = "";
+            string RequestCountryRegion = "";
+            string RequestState = "";
+            string IssuedCommonName = "";
+            string IssuedOrganization = "";
+            string IssuedOrganizationUnit = "";
+            string IssuedEMailAddress = "";
+            string IssuedCity = "";
+            string IssuedCountryRegion = "";
+            string IssuedState = "";
+            string CallerName = "";
+            string CertificateHash = "";
 
 
             try { Requestid = Certificate.RequestId.ToString(); }
@@ -232,6 +257,8 @@ namespace SendToSQL
             try { NotAfter = Certificate.NotAfter.ToString("yyyy-MM-dd hh:mm:ss"); }
             catch { }
             try { CertificateTemplate = Certificate.CertificateTemplate.ToString(); }
+            catch { }
+            try { CertificateHash = Certificate.CertificateHash.ToString(); }
             catch { }
             try { PublicKeyLength = Certificate.PublicKeyLength.ToString(); }
             catch { }
@@ -255,31 +282,81 @@ namespace SendToSQL
             catch { }
             try { DistinguishedName = Request.DistinguishedName; }
             catch { }
-            try { CommonName = Request.CommonName; }
+            try { RequestCommonName = Request.CommonName; }
             catch { }
-            try { Organization = Request.Organization; }
+            try { RequestOrganization = Request.Organization; }
             catch { }
-            try { OrgUnit = Request.OrgUnit; }
+            try { RequestOrganizationUnit = Request.OrgUnit; }
             catch { }
-            try { EMail = Request.EMail; }
+            try { RequestEMailAddress = Request.EMail; }
             catch { }
-            try { Locality = Request.Locality; }
+            try { RequestCity = Request.Locality; }
             catch { }
-            try { Country = Request.Country; }
+            try { RequestCountryRegion = Request.Country; }
             catch { }
-            try { State = Request.State; }
+            try { RequestState = Request.State; }
+            catch { }
+            try { IssuedCommonName = Certificate.CommonName; }
+            catch { }
+            try { IssuedOrganization = Certificate.Organization; }
+            catch { }
+            try { IssuedOrganizationUnit = Certificate.OrgUnit; }
+            catch { }
+            try { IssuedEMailAddress = Certificate.EMail; }
+            catch { }
+            try { IssuedCity = Certificate.Locality; }
+            catch { }
+            try { IssuedCountryRegion = Certificate.Country; }
+            catch { }
+            try { IssuedState = Certificate.State; }
+            catch { }
+            try { CallerName = Request.CallerName; }
             catch { }
 
 
             try
             {
-                String sql = $@"Update Entries set Base64Request='{Base64Request}',Base64Certificate='{Base64Certificate}',
-                SerialNumber='{SerialNumber}',RequestDisposition='{Disposition}',RequestType='{RequestType}',
-                RequestCommonName='{CommonName}',CertificateExpirationDate='{NotAfter}',CertificateEffectiveDate='{NotBefore}'
+                String sql = $@"Update Entry set 
+                Base64Request='{Base64Request}',
+                Base64Certificate='{Base64Certificate}',
+                SerialNumber='{SerialNumber}',
+                RequestDisposition='{Disposition}',
+                RequesterName='{RequesterName}',
+                RequestType='{RequestType}',
+                IssuedEmailAddress='{IssuedEMailAddress}',
+                IssuedCommonName='{IssuedCommonName}',
+                IssuedCountryRegion='{IssuedCountryRegion}',
+                IssuedOrganization='{IssuedOrganization}',
+                IssuedOrganizationUnit='{IssuedOrganizationUnit}',
+                CallerName='{CallerName}',
+                CertificateHash='{CertificateHash}',
+                CertificateTemplate='{CertificateTemplate}',
+                CertificateEffectiveDate='{NotBefore}',
+                CertificateExpirationDate='{NotAfter}',
+                PublicKeyLength='{PublicKeyLength}',
+                PublicKeyAlgorithm='{PublicKeyAlgorithm}',
+                RequestCountryRegion='{RequestCountryRegion}',
+                RequestOrganization='{RequestOrganization}',
+                RequestOrganizationUnit='{RequestOrganizationUnit}',
+                RequestCommonName='{RequestCommonName}',
+                RequestCity='{RequestCity}',
+                RequestEmailAddress='{RequestEMailAddress}'
                 where RequestID='{Requestid}' and CAConfig='{CAConfig}' 
                 If @@ROWCOUNT=0 
-                Insert into Entries (Base64Request, RequestId, CAConfig, Base64Certificate, SerialNumber, RequestDisposition, RequestType, RequestCommonName, CertificateExpirationDate, CertificateEffectiveDate) 
-                VALUES ('{Base64Request}','{Requestid}','{CAConfig}','{Base64Certificate}','{SerialNumber}','{Disposition}','{RequestType}','{CommonName}','{NotAfter}','{NotBefore}')";
+                Insert into Entry (Base64Request, RequestId, 
+                CAConfig, Base64Certificate, SerialNumber, RequestDisposition, RequesterName,
+                RequestType, IssuedEmailAddress, IssuedCommonName, IssuedCountryRegion, IssuedOrganization, 
+                IssuedOrganizationUnit, CallerName, CertificateHash, CertificateTemplate,
+                CertificateExpirationDate, CertificateEffectiveDate,
+                PublicKeyLength,PublicKeyAlgorithm, RequestCountryRegion, RequestOrganization, 
+                RequestOrganizationUnit, RequestCommonName, RequestCity, RequestEmailAddress) 
+                VALUES ('{Base64Request}','{Requestid}',
+                '{CAConfig}','{Base64Certificate}','{SerialNumber}','{Disposition}','{RequesterName}',
+                '{RequestType}','{IssuedEMailAddress}','{IssuedCommonName}','{IssuedCountryRegion}','{IssuedOrganization}',
+                '{IssuedOrganizationUnit}','{CallerName}','{CertificateHash}','{CertificateTemplate}',
+                '{NotAfter}','{NotBefore}',
+                '{PublicKeyLength}','{PublicKeyAlgorithm}','{RequestCountryRegion}','{RequestOrganization}',
+                '{RequestOrganizationUnit}','{RequestCommonName}','{RequestCity}','{RequestEMailAddress}')";
                 Log(DebugFlag, DebugLog, sql);
 
                 using (SqlConnection connection = new SqlConnection(SQLConfig))
@@ -301,10 +378,10 @@ namespace SendToSQL
             {
                 foreach (var EKU in EKUs)
                 {
-                    String ekusql = $@"Update EKUs set Name='{EKU}' 
+                    String ekusql = $@"Update EKU set Name='{EKU}' 
                     where RequestID='{Requestid}' and CAConfig='{CAConfig}' 
                     If @@ROWCOUNT=0 
-                    Insert into EKUs (Name, RequestId, CAConfig) 
+                    Insert into EKU (Name, RequestId, CAConfig) 
                     VALUES ('{EKU}','{Requestid}','{CAConfig}')";
 
                     Log(DebugFlag, DebugLog, ekusql);
@@ -329,10 +406,10 @@ namespace SendToSQL
             {
                 foreach (var SAN in SubjectAlternativeNames)
                 {
-                    String sansql = $@"Update SANs set SubjectAlternativeName='{SAN}' 
+                    String sansql = $@"Update SAN set SubjectAlternativeName='{SAN}' 
                     where RequestID='{Requestid}' and CAConfig='{CAConfig}' 
                     If @@ROWCOUNT=0 
-                    Insert into SANs (SubjectAlternativeName, RequestId, CAConfig) 
+                    Insert into SAN (SubjectAlternativeName, RequestId, CAConfig) 
                     VALUES ('{SAN}','{Requestid}','{CAConfig}')";
                     Log(DebugFlag, DebugLog, sansql);
 

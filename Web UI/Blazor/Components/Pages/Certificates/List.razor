@@ -13,8 +13,40 @@
 
 <h3>List certificate database entries</h3>
 
+<EditForm Model="entry" OnSubmit="HandleSubmit">
+    <table>
+        <tr>
+            <td><label for="SubjectFilter">Subject</label></td>
+            <td><InputText id="SubjectFilter" @bind-Value="@SubjectFilter"></InputText></td>
+        </tr>
+        <tr>
+            <td><label for="OwnerFilter">Owner</label></td>
+            <td><InputText id="OwnerFilter" @bind-Value="@OwnerFilter"></InputText></td>
+        </tr>
+        <tr>
+            <td><label for="TemplateFilter">Template</label></td>
+            <td><InputText id="TemplateFilter" @bind-Value="@TemplateFilter"></InputText></td>
+        </tr>
+        <tr>
+            <td><label for="CAFilter">Certificate Authority</label></td>
+            <td><InputSelect id="CAFilter" @bind-Value="@CAOption">
+                    @foreach (var option in Enum.GetValues<CAOptions>())
+                    {
+                        <option value="@option">@option</option>
+                    }
+            </InputSelect></td>
+        </tr>
+        <tr>
+            <td><label for="RequestIdFilter">RequestId</label></td>
+            <td><InputNumber id="RequestIdFilter" @bind-Value="@requestId"></InputNumber></td>
+        </tr>
+        <button type="submit" class="btn-primary">Search</button>
+        </table>
+</EditForm>
+
 <QuickGrid Class="table" Items="entry" Pagination="pagination">
-    <PropertyColumn Property="@(e => $"{e.CAConfig} {e.RequestId}")" Title="Request" Sortable="true" />
+    <Paginator State="pagination" />
+    <PropertyColumn Property="@(e => e.RequestId)" Title="Request" Sortable="true" />
     <TemplateColumn Title = "RequesterInformation">
         @if (context.RequestCommonName != "")
         {
@@ -69,6 +101,27 @@
 </QuickGrid>
 
 @code {
+    public enum CAOptions
+    {
+        SECURECA01,
+        SECURECA02,
+        Extern
+    }
+    public CAOptions CAOption { get; set; } = CAOptions.SECURECA01;
+
+    public string SubjectFilter = "";
+    public string OwnerFilter = "";
+    public string TemplateFilter = "";
+    public int? requestId = null;
+
+    System.Collections.Hashtable filterht = new System.Collections.Hashtable();
+    public void HandleSubmit(EditContext editContext)
+    {
+        filterht["RequestCommonName"] = SubjectFilter;
+        filterht["Owner"] = OwnerFilter;
+        filterht["CertificateTemplate"] = TemplateFilter;
+        filterht["CAConfig"] = CAOption;
+    }
     private AppDbContext context = default!;
     private PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
 
@@ -77,7 +130,7 @@
         context = certificateService.CreateDbContext();
     }
 
-    private IQueryable<ExtendedEntry> entry => certificateService.GetAllCertificateEntries(context);
+    private IQueryable<ExtendedEntry> entry => certificateService.GetCertificateEntries(context, requestId, filterht);
 
     public async ValueTask DisposeAsync() => await context.DisposeAsync();
 }

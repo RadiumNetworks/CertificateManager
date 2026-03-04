@@ -79,6 +79,8 @@ namespace CertificateManager.Models
         public string? Owner { get; set; } = string.Empty;
 
         public string? Notes { get; set; } = string.Empty;
+        public string? Successor { get; set; } = string.Empty;
+        public string? Monitoring { get; set; } = string.Empty;
 
         public ICollection<SAN> SAN { get; set; }
 
