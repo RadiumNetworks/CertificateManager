@@ -117,6 +117,7 @@
     public string OwnerFilter = "";
     public string TemplateFilter = "";
     public int? requestId = null;
+    public DateTime? expirationDate = null;
 
     System.Collections.Hashtable filterht = new System.Collections.Hashtable();
 
@@ -137,7 +138,7 @@
         filterht["RequestDisposition"] = 9;
     }
 
-    private IQueryable<ExtendedEntry> entry => certificateService.GetCertificateEntries(context, requestId, filterht);
+    private IQueryable<ExtendedEntry> entry => certificateService.GetCertificateEntries(context, requestId, expirationDate, filterht);
 
     public async ValueTask DisposeAsync() => await context.DisposeAsync();
 }

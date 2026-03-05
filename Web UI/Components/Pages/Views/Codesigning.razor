@@ -1,9 +1,104 @@
 ﻿@page "/views/codesigning"
 
-@using CertificateManager.Services
+@rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore
 @using CertificateManager.Models
-@inject CertificateService certificateService;
+@using CertificateManager.Models.Views
+@using CertificateManager.Data
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using CertificateManager.Services
+@implements IAsyncDisposable
+@inject CertificateService certificateService
 
 <PageTitle>List certificates that have a code signing EKU</PageTitle>
 
 <h3>List certificates that have a code signing EKU</h3>
+
+
+<QuickGrid Class="table" Items="entry" Pagination="pagination">
+    <Paginator State="pagination" />
+    <PropertyColumn Property="@(e => e.RequestId)" Title="Request" Sortable="true" />
+    <TemplateColumn Title="RequesterInformation">
+        @if (context.RequestCommonName != "")
+        {
+            <p style="display:inline">CN=@context.RequestCommonName<br /></p>
+        }
+        @if (context.RequestCountryRegion != "")
+        {
+            <p style="display:inline">C=@context.RequestCountryRegion<br /></p>
+        }
+        @if (context.RequestCity != "")
+        {
+            <p style="display:inline">L=@context.RequestCity<br /></p>
+        }
+        @if (context.RequestOrganization != "")
+        {
+            <p style="display:inline">O=@context.RequestOrganization<br /></p>
+        }
+        @if (context.RequestOrganizationUnit != "")
+        {
+            <p style="display:inline">OU=@context.RequestOrganizationUnit<br /></p>
+        }
+        @if (context.RequestEMailAddress != "")
+        {
+            <p style="display:inline">E=@context.RequestEMailAddress<br /></p>
+        }
+    </TemplateColumn>
+    <TemplateColumn Title=SubjectAlternativeNames>
+        @if (context.SubjectAlternativeNames != "")
+        {
+            foreach (var san in @context.SubjectAlternativeNames.Split(","))
+            {
+                <p style="display:inline">@san<br /></p>
+            }
+        }
+    </TemplateColumn>
+    <TemplateColumn Title=EnhancedKeyUsages>
+        @if (context.EKUNames != "")
+        {
+            foreach (var eku in @context.EKUNames.Split(","))
+            {
+                <p style="display:inline">@eku<br /></p>
+            }
+        }
+    </TemplateColumn>
+    <PropertyColumn Property="@(e => e.Owner)" Sortable="true" />
+    <PropertyColumn Property="@(e => e.Notes)" Sortable="true" />
+    <TemplateColumn Context="Entry">
+        <a href="@($"certificates/edit?requestid={Entry.RequestId}&caconfig={Entry.CAConfig}")">Edit</a> |
+        <a href="@($"certificates/revoke?serialnumber={Entry.SerialNumber}")">Revoke</a>
+    </TemplateColumn>
+
+</QuickGrid>
+
+@code {
+    public enum DispositionOptions
+    {
+        Under_Review = 9,
+        Certificate_Issued = 20,
+        Certificate_Revoked = 21,
+        Request_Failed = 30,
+        Request_Denied = 31
+    }
+    public DispositionOptions DispositionOption { get; set; } = DispositionOptions.Certificate_Issued;
+
+    public int? requestId = null;
+    public DateTime? expirationDate = null;
+
+    System.Collections.Hashtable filterht = new System.Collections.Hashtable();
+
+    private AppDbContext context = default!;
+    private PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
+
+    protected override void OnInitialized()
+    {
+        context = certificateService.CreateDbContext();
+        filterht["RequestDisposition"] = (int)DispositionOption;
+        expirationDate = DateTime.Today.AddDays(30);
+    }
+
+    private IQueryable<ExtendedEntry> entry => certificateService.GetCertificateEntries(context, "code", "name", typeof(EKU));
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}
+
