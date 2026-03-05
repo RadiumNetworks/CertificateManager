@@ -379,7 +379,7 @@ namespace SendToSQL
                 foreach (var EKU in EKUs)
                 {
                     String ekusql = $@"Update EKU set Name='{EKU}' 
-                    where RequestID='{Requestid}' and CAConfig='{CAConfig}' 
+                    where RequestID='{Requestid}' and CAConfig='{CAConfig}' and Name = '{EKU}'
                     If @@ROWCOUNT=0 
                     Insert into EKU (Name, RequestId, CAConfig) 
                     VALUES ('{EKU}','{Requestid}','{CAConfig}')";
@@ -407,7 +407,7 @@ namespace SendToSQL
                 foreach (var SAN in SubjectAlternativeNames)
                 {
                     String sansql = $@"Update SAN set SubjectAlternativeName='{SAN}' 
-                    where RequestID='{Requestid}' and CAConfig='{CAConfig}' 
+                    where RequestID='{Requestid}' and CAConfig='{CAConfig}' and SubjectAlternativeName='{SAN}'
                     If @@ROWCOUNT=0 
                     Insert into SAN (SubjectAlternativeName, RequestId, CAConfig) 
                     VALUES ('{SAN}','{Requestid}','{CAConfig}')";
