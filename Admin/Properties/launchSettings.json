@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Certificate Manager (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "Certificate Manager (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="Certificate_Manager.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Certificate_Manager"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Title="Certificate Manager">
+
+    <NavigationView
+        x:Name="NavView"
+        PaneDisplayMode="Left"
+        IsBackButtonVisible="Collapsed"
+        IsSettingsVisible="False"
+        SelectionChanged="NavView_SelectionChanged"
+        Loaded="NavView_Loaded">
+
+        <NavigationView.MenuItems>
+            <NavigationViewItem Content="List certificates" Tag="List_Certificates" FlowDirection="LeftToRight">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xEB95;"/>
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="List certificate requests" Tag="List_Requests" FlowDirection="LeftToRight">
+                <NavigationViewItem.Icon>
+                    <SymbolIcon Symbol="Library" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="New certificate request" Tag="New_Request" FlowDirection="LeftToRight">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE8FA;"/>
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Setup" Tag="Setup" FlowDirection="LeftToRight">
+                <NavigationViewItem.Icon>
+                    <SymbolIcon Symbol="Admin" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+        </NavigationView.MenuItems>
+
+        <Frame x:Name="ContentFrame" FlowDirection="RightToLeft" />
+    </NavigationView>
+
+</Window>

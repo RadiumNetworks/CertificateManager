@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="Certificate_Manager.Pages.Admin.Setup"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Certificate_Manager.Pages.Admin"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid Padding="24" RowSpacing="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="200" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="200" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Database Administration"
+                   Style="{StaticResource TitleTextBlockStyle}"
+                   Grid.Row="0" />
+
+        <StackPanel Orientation="Horizontal" Spacing="12" Grid.Row="1">
+            <Button x:Name="MigrateButton"
+                    Content="Apply Database Migrations"
+                    Click="MigrateButton_Click"
+                    Style="{StaticResource AccentButtonStyle}"
+                    Padding="24,8" />
+
+            <Button x:Name="CheckButton"
+                    Content="Check Pending Migrations"
+                    Click="CheckButton_Click"
+                    Padding="24,8" />
+
+            <ProgressRing x:Name="ProgressIndicator"
+                          IsActive="False"
+                          Width="24" Height="24"
+                          VerticalAlignment="Center" />
+        </StackPanel>
+
+        <InfoBar x:Name="StatusInfoBar"
+                 IsOpen="False"
+                 IsClosable="True"
+                 Grid.Row="2" />
+
+        <TextBox x:Name="MigrationLog"
+                 Header="Migration Log"
+                 IsReadOnly="True"
+                 AcceptsReturn="True"
+                 TextWrapping="Wrap"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                 PlaceholderText="Migration output will appear here..."
+                 Grid.Row="3" />
+
+        <StackPanel Orientation="Horizontal" Spacing="12" Grid.Row="4">
+            <Button x:Name="InitButton"
+            Content="Full Import of Certificate Authority"
+            Click="InitButton_Click"
+            Style="{StaticResource AccentButtonStyle}"
+            Padding="24,8" />
+
+            <TextBox x:Name="CAConfigString"
+                     Width="200"
+                     VerticalAlignment="Center"
+                     PlaceholderText="Enter CAConfig..." />
+
+            <ProgressRing x:Name="InitProgressIndicator"
+                  IsActive="False"
+                  Width="24" Height="24"
+                  VerticalAlignment="Center" />
+
+            <ProgressBar Width="250" Value="0"
+                         VerticalAlignment="Center"/>
+
+            <TextBlock Text="% Progress on Import:"
+                       VerticalAlignment="Center"/>
+        </StackPanel>
+
+        <TextBox x:Name="ImportLog"
+         Header="Import Log"
+         IsReadOnly="True"
+         AcceptsReturn="True"
+         TextWrapping="Wrap"
+         ScrollViewer.VerticalScrollBarVisibility="Auto"
+         PlaceholderText="Import output will appear here..."
+         Grid.Row="5" />
+    </Grid>
+</Page>
