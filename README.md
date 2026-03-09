@@ -21,5 +21,9 @@ For submitting new requests
 The backend consists of an exit module where changes on the certificate authority
 are written to a SQL database
 
+The Admin interface is shown below
+![Header](./admin.png)
+
 The used database has the following tables
 ![Header](./database.png)
+
