@@ -83,7 +83,7 @@ namespace Certificate_Manager.Data.Services
 
         }
 
-        public IQueryable<ExtendedEntry> GetCertificateEntries(AppDbContext context, int? requestId, DateTime? expirationDate, System.Collections.Hashtable filterht)
+        public IQueryable<ExtendedEntry> GetCertificateEntries(AppDbContext context, double? requestId, DateTime? expirationDate, System.Collections.Hashtable filterht)
         {
             IQueryable<Entry> query = context.Entry
                 .Include(e => e.SAN)
