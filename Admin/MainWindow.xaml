@@ -18,29 +18,29 @@
         Loaded="NavView_Loaded">
 
         <NavigationView.MenuItems>
-            <NavigationViewItem Content="List certificates" Tag="List_Certificates" FlowDirection="LeftToRight">
+            <NavigationViewItem Content="List certificates" Tag="List_Certificates" >
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xEB95;"/>
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-            <NavigationViewItem Content="List certificate requests" Tag="List_Requests" FlowDirection="LeftToRight">
+            <NavigationViewItem Content="List certificate requests" Tag="List_Requests" >
                 <NavigationViewItem.Icon>
                     <SymbolIcon Symbol="Library" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-            <NavigationViewItem Content="New certificate request" Tag="New_Request" FlowDirection="LeftToRight">
+            <NavigationViewItem Content="New certificate request" Tag="New_Request" >
                 <NavigationViewItem.Icon>
                     <FontIcon Glyph="&#xE8FA;"/>
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-            <NavigationViewItem Content="Setup" Tag="Setup" FlowDirection="LeftToRight">
+            <NavigationViewItem Content="Setup" Tag="Setup" >
                 <NavigationViewItem.Icon>
                     <SymbolIcon Symbol="Admin" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
         </NavigationView.MenuItems>
 
-        <Frame x:Name="ContentFrame" FlowDirection="RightToLeft" />
+        <Frame x:Name="ContentFrame" />
     </NavigationView>
 
 </Window>
