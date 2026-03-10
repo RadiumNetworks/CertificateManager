@@ -77,6 +77,7 @@ namespace Certificate_Manager.Data.Services
                 RequestEMailAddress = e.RequestEmailAddress,
                 Owner = e.Owner,
                 Notes = e.Notes,
+                CertificateExpirationDate = e.CertificateExpirationDate,
                 SubjectAlternativeNames = string.Join(", ", e.SAN.Select(s => s.SubjectAlternativeName)),
                 EKUNames = string.Join(", ", e.EKU.Select(s => s.Name))
             });
@@ -98,7 +99,7 @@ namespace Certificate_Manager.Data.Services
             if (requestId.HasValue)
             {
                 var Property = Expression.Property(parameter, "RequestId");
-                var Equals = Expression.Equal(Property, Expression.Constant(requestId.Value));
+                var Equals = Expression.Equal(Property, Expression.Constant((int)requestId.Value));
                 combinedFilter = CombineAnd(combinedFilter, Equals);
             }
 
@@ -145,6 +146,7 @@ namespace Certificate_Manager.Data.Services
                 RequestEMailAddress = e.RequestEmailAddress,
                 Owner = e.Owner,
                 Notes = e.Notes,
+                CertificateExpirationDate = e.CertificateExpirationDate,
                 SubjectAlternativeNames = string.Join(", ", e.SAN.Select(s => s.SubjectAlternativeName)),
                 EKUNames = string.Join(", ", e.EKU.Select(s => s.Name))
             });
@@ -168,6 +170,7 @@ namespace Certificate_Manager.Data.Services
                     RequestEMailAddress = e.RequestEmailAddress,
                     Owner = e.Owner,
                     Notes = e.Notes,
+                    CertificateExpirationDate = e.CertificateExpirationDate,
                     SubjectAlternativeNames = string.Join(", ", e.SAN.Select(s => s.SubjectAlternativeName)),
                     EKUNames = string.Join(", ", e.EKU.Select(s => s.Name))
                 });

@@ -48,13 +48,13 @@
         </StackPanel>
         
         <StackPanel Orientation="Horizontal" Spacing="16" Grid.Row="2">
-            <TextBox x:Name="CAInput"
-                Header="CA"
+            <ComboBox x:Name="CAInput"
+                Header="CAConfig"
                 PlaceholderText="Choose certificate authority..."
                 Width="200" />
 
-            <TextBox x:Name="DispositionCodeInput"
-                Header="DispositionCode"
+            <ComboBox x:Name="DispositionCodeInput"
+                Header="Disposition"
                 PlaceholderText="Choose disposition status..."
                 Width="200" />
 
@@ -86,30 +86,54 @@
             CornerRadius="4">
 
             <controls:DataGrid.Columns>
-                <controls:DataGridTextColumn Header="RequestId"
+                <controls:DataGridTextColumn Header="ID"
                                               Binding="{Binding RequestId}"
                                               Tag="RequestId"
-                                              Width="90" />
+                                              Width="80" />
                 <controls:DataGridTextColumn Header="RequesterInformation"
                                               Binding="{Binding RequesterInformation}"
                                               Tag="RequesterInformation"
-                                              Width="250" />
+                                              Width="200" />
                 <controls:DataGridTextColumn Header="SubjectAlternativeName"
                                               Binding="{Binding SubjectAlternativeNamesFormatted}"
                                               Tag="SubjectAlternativeNames"
-                                              Width="320" />
-                <controls:DataGridTextColumn Header="EnhancedKeyUsage"
-                                              Binding="{Binding EKUNamesFormatted}"
-                                              Tag="EnhancedKeyUsage"
-                                              Width="180" />
+                                              Width="200" />
+                <controls:DataGridTextColumn Header="ExpirationDate"
+                                              Binding="{Binding CertificateExpirationDate}"
+                                              Tag="CertificateExpirationDate"
+                                              Width="150" />
                 <controls:DataGridTextColumn Header="Owner"
                                               Binding="{Binding Owner}"
                                               Tag="Owner"
-                                              Width="140" />
+                                              Width="120" />
                 <controls:DataGridTextColumn Header="Notes"
                                               Binding="{Binding Notes}"
                                               Tag="Notes"
-                                              Width="140" />
+                                              Width="120" />
+                <controls:DataGridTemplateColumn Header="Edit" Width="70">
+                    <controls:DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="Edit"
+                                    Click="EditActionButton_Click"
+                                    CommandParameter="{Binding}"
+                                    Padding="8,4"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center" />
+                        </DataTemplate>
+                    </controls:DataGridTemplateColumn.CellTemplate>
+                </controls:DataGridTemplateColumn>
+                <controls:DataGridTemplateColumn Header="Revoke" Width="90">
+                    <controls:DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="Revoke"
+                                    Click="RevokeActionButton_Click"
+                                    CommandParameter="{Binding}"
+                                    Padding="8,4"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center" />
+                        </DataTemplate>
+                    </controls:DataGridTemplateColumn.CellTemplate>
+                </controls:DataGridTemplateColumn>
             </controls:DataGrid.Columns>
         </controls:DataGrid>
         <Grid Grid.Row="5" Padding="0,8,0,0">

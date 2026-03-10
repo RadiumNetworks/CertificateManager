@@ -16,6 +16,12 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Certificate_Manager.Pages.Certificate
 {
+    public class DispositionItem
+    {
+        public string Name { get; set; } = string.Empty;
+        public int? Value { get; set; }
+        public override string ToString() => Name;
+    }
     public sealed partial class List : Page
     {
         private ObservableCollection<ExtendedEntry> _entries = new();
@@ -26,6 +32,17 @@ namespace Certificate_Manager.Pages.Certificate
         private int pageSize = 10;
         private int totalCount = 0;
         private int totalPages = 1;
+
+
+        public enum DispositionOptions
+        {
+            Under_Review = 9,
+            Certificate_Issued = 20,
+            Certificate_Revoked = 21,
+            Request_Failed = 30,
+            Request_Denied = 31
+        }
+        public DispositionOptions DispositionOption { get; set; } = DispositionOptions.Certificate_Issued;
 
         private System.Collections.Hashtable filterht = new System.Collections.Hashtable();
         private double? requestId = null;
@@ -39,6 +56,9 @@ namespace Certificate_Manager.Pages.Certificate
 
         private async void List_Loaded(object sender, RoutedEventArgs e)
         {
+            await LoadCAConfigOptionsAsync();
+            LoadDispositionOptions();
+
             using var db = _certificateService.CreateDbContext();
             var entries = await Task.Run(() =>
                 _certificateService.GetCertificateEntries(db)
@@ -49,6 +69,40 @@ namespace Certificate_Manager.Pages.Certificate
             EntryDataGrid.ItemsSource = _entries;
         }
 
+        private async Task LoadCAConfigOptionsAsync()
+        {
+            using var db = _certificateService.CreateDbContext();
+            var caConfigs = await Task.Run(() =>
+                db.Entry
+                    .Select(e => e.CAConfig)
+                    .Distinct()
+                    .OrderBy(c => c)
+                    .ToList());
+
+            CAInput.Items.Clear();
+            CAInput.Items.Add("(All)");
+            foreach (var ca in caConfigs)
+                CAInput.Items.Add(ca);
+
+            CAInput.SelectedIndex = 0;
+        }
+
+        private void LoadDispositionOptions()
+        {
+            DispositionCodeInput.Items.Clear();
+            DispositionCodeInput.Items.Add(new DispositionItem { Name = "(All)", Value = null });
+
+            foreach (DispositionOptions option in Enum.GetValues(typeof(DispositionOptions)))
+            {
+                DispositionCodeInput.Items.Add(new DispositionItem
+                {
+                    Name = option.ToString().Replace('_', ' '),
+                    Value = (int)option
+                });
+            }
+
+            DispositionCodeInput.SelectedIndex = 0;
+        }
 
         private async void SearchButton_Click(object sender, RoutedEventArgs e)
         {
@@ -56,7 +110,28 @@ namespace Certificate_Manager.Pages.Certificate
             filterht["RequestCommonName"] = this.SubjectInput.Text;
             filterht["Owner"] = this.OwnerInput.Text;
             filterht["CertificateTemplate"] = this.TemplateInput.Text;
-            filterht["CAConfig"] = this.CAInput.Text;
+            filterht["CAConfig"] = (CAInput.SelectedItem?.ToString() == "(All)") ? "" : CAInput.SelectedItem?.ToString() ?? ""; ;
+
+            var selectedDisposition = DispositionCodeInput.SelectedItem as DispositionItem;
+            filterht["RequestDisposition"] = (selectedDisposition?.Value == null) ? "" : selectedDisposition.Value.ToString();
+
+            expirationDate = (DateInput.SelectedDate.HasValue)
+               ? DateInput.SelectedDate.Value.DateTime
+               : null;
+
+            try
+            {
+                requestId = (int)RequestIdInput.Value;
+            }
+            catch
+            {
+
+            }
+            if (requestId == 0)
+            {
+                requestId = null;
+            }
+            
 
             await LoadEntriesAsync();
         }
@@ -93,6 +168,93 @@ namespace Certificate_Manager.Pages.Certificate
             UpdatePaginationUI();
         }
 
+        private async void EditActionButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.CommandParameter is ExtendedEntry entry)
+            {
+                // TODO: Replace with your desired action (e.g. navigate to detail page)
+                var detailsPanel = new StackPanel { Spacing = 12, MinWidth = 400 };
+
+                detailsPanel.Children.Add(new TextBlock
+                {
+                    Text = $"RequestId: {entry.RequestId}\nCA: {entry.CAConfig}\nOwner: {entry.Owner}\nCN: {entry.RequestCommonName}"
+                });
+
+                var ownerBox = new TextBox
+                {
+                    Header = "Owner",
+                    Text = entry.Owner ?? string.Empty,
+                    AcceptsReturn = true,
+                    TextWrapping = TextWrapping.Wrap,
+                    Height = 80,
+                    PlaceholderText = "Enter owner here..."
+                };
+                detailsPanel.Children.Add(ownerBox);
+
+                var notesBox = new TextBox
+                {
+                    Header = "Notes",
+                    Text = entry.Notes ?? string.Empty,
+                    AcceptsReturn = true,
+                    TextWrapping = TextWrapping.Wrap,
+                    Height = 80,
+                    PlaceholderText = "Enter notes here..."
+                };
+                detailsPanel.Children.Add(notesBox);
+
+                var dialog = new ContentDialog
+                {
+                    Title = "Certificate Details",
+                    Content = detailsPanel,
+                    PrimaryButtonText = "Save",
+                    CloseButtonText = "Cancel",
+                    DefaultButton = ContentDialogButton.Primary,
+                    XamlRoot = this.XamlRoot
+                };
+
+                var result = await dialog.ShowAsync();
+                if (result == ContentDialogResult.Primary)
+                {
+                    try
+                    {
+                        _certificateService.UpdateCertificate(
+                            entry.RequestId,
+                            entry.CAConfig,
+                            ownerBox.Text,
+                            notesBox.Text);
+
+                        entry.Notes = notesBox.Text;
+                        entry.Owner = ownerBox.Text;
+                    }
+                    catch (Exception ex)
+                    {
+                        var errorDialog = new ContentDialog
+                        {
+                            Title = "Error",
+                            Content = $"Failed to save notes: {ex.Message}",
+                            CloseButtonText = "OK",
+                            XamlRoot = this.XamlRoot
+                        };
+                        await errorDialog.ShowAsync();
+                    }
+                }
+            }
+        }
+
+        private async void RevokeActionButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.CommandParameter is ExtendedEntry entry)
+            {
+                var dialog = new ContentDialog
+                {
+                    Title = $"Certificate Details",
+                    Content = $"RequestId: {entry.RequestId}\nCA: {entry.CAConfig}\nOwner: {entry.Owner}\nCN: {entry.RequestCommonName}",
+                    CloseButtonText = "Close",
+                    XamlRoot = this.XamlRoot
+                };
+                await dialog.ShowAsync();
+            }
+        }
 
         private void UpdatePaginationUI()
         {

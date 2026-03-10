@@ -17,6 +17,8 @@ namespace Certificate_Manager.Models.Views
         public string? SubjectAlternativeNames { get; set; } = string.Empty;
         public string? EKUNames { get; set; } = string.Empty;
 
+        public DateTime? CertificateExpirationDate { get; set; }
+
         public string SubjectAlternativeNamesFormatted =>
             string.IsNullOrWhiteSpace(SubjectAlternativeNames)
                 ? string.Empty
