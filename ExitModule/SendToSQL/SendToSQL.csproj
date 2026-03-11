@@ -34,15 +34,15 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="CERTCLILIB">
-      <HintPath>.\CERTCLILIB.dll</HintPath>
+      <HintPath>References\CERTCLILIB.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="CERTENROLLLib">
-      <HintPath>.\CERTENROLLLib.dll</HintPath>
+      <HintPath>References\CERTENROLLLib.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="CERTEXITLib">
-      <HintPath>.\CERTEXITLib.dll</HintPath>
+      <HintPath>References\CERTEXITLib.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="System" />
@@ -73,6 +73,9 @@
   <ItemGroup>
     <Compile Include="Exit.cs" />
     <Compile Include="ExitManage.cs" />
+    <Compile Include="Models\CACertificate.cs" />
+    <Compile Include="Models\CAInfo.cs" />
+    <Compile Include="Models\CARequest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
