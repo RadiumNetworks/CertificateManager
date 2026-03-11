@@ -12,17 +12,17 @@
 Please insert the Base64 encoded CMC request. 
 The submit button will be available if the request can be parsed and is compliant.
 
-<EditForm Model="@entry" OnSubmit="HandleSubmit">
+<EditForm Model="@_entry" OnSubmit="HandleSubmit">
     <table>
         <tr>
             <td><label for="Base64RequestInput">Base64Request</label></td>
-            <td><InputTextArea id="Base64RequestInput" @bind-Value="@entry.Base64Request" rows="8" cols="100"></InputTextArea></td>
+            <td><InputTextArea id="Base64RequestInput" @bind-Value="@_entry.Base64Request" rows="8" cols="100"></InputTextArea></td>
         </tr>
         <tr>
             <td><label for="CAFilter">Certificate Authority</label></td>
             <td>
                 <InputSelect id="CAFilter" @bind-Value="@CAConfiguration">
-                    @foreach (var option in CAConfigurationList)
+                    @foreach (var option in _caConfigurationList)
                     {
                         <option value="@option">@option</option>
                     }
@@ -30,7 +30,7 @@ The submit button will be available if the request can be parsed and is complian
             </td>
         </tr>
         <button type="submit" class="btn-primary" @onclick="() => selectedAction = 1">Parse</button>
-        <button type="submit" class="btn-primary" @onclick="() => selectedAction = 2" hidden="@btnhidden">Submit</button>
+        <button type="submit" class="btn-primary" @onclick="() => selectedAction = 2" hidden="@_btnhidden">Submit</button>
     </table>
 </EditForm>
 <table>
@@ -51,7 +51,7 @@ The submit button will be available if the request can be parsed and is complian
         public static readonly string SECURECA02 = @"CA02.cool.ice.corp.com\SECURECA02";
     }
 
-    List<string> CAConfigurationList = typeof(CAConfigurations)
+    private List<string> _caConfigurationList = typeof(CAConfigurations)
             .GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
             .Where(f => f.FieldType == typeof(string))
             .Select(f => f.GetValue(null)?.ToString()) 
@@ -68,9 +68,9 @@ The submit button will be available if the request can be parsed and is complian
     const int CR_DISP_ISSUED = 0x3;
     const int CR_DISP_PENDING = 0x5;
 
-    Entry entry = new Entry();
+    private Entry _entry = new Entry();
     public int selectedAction = 0;
-    private bool btnhidden = true;
+    private bool _btnhidden = true;
 
     //https://learn.microsoft.com/en-us/windows/win32/api/certif/nf-certif-icertserverexit-getcertificateproperty
     internal enum PropertyType : int
@@ -193,30 +193,30 @@ The submit button will be available if the request can be parsed and is complian
         }
     }
 
-    public void ParseRequestExtension(IX509CertificateRequestPkcs10 CX509CertificateRequestPkcs10)
+    public void ParseRequestExtension(IX509CertificateRequestPkcs10 cX509CertificateRequestPkcs10)
     {
-        var CX509ExtensionAlternativeNames = new CX509ExtensionAlternativeNames();
-        var CX509ExtensionBasicConstraints = new CX509ExtensionBasicConstraints();
-        var CX509ExtensionTemplate = new CX509ExtensionTemplate();
-        var CX509ExtensionEnhancedKeyUsage = new CX509ExtensionEnhancedKeyUsage();
-        var CX509ExtensionKeyUsage = new CX509ExtensionKeyUsage();
-        var CX509ExtensionMSApplicationPolicies = new CX509ExtensionMSApplicationPolicies();
-        var CX509ExtensionSubjectKeyIdentifier = new CX509ExtensionSubjectKeyIdentifier();
+        var extensionAlternativeNames = new CX509ExtensionAlternativeNames();
+        var extensionBasicConstraints = new CX509ExtensionBasicConstraints();
+        var extensionTemplate = new CX509ExtensionTemplate();
+        var extensionEnhancedKeyUsage = new CX509ExtensionEnhancedKeyUsage();
+        var extensionKeyUsage = new CX509ExtensionKeyUsage();
+        var extensionMSApplicationPolicies = new CX509ExtensionMSApplicationPolicies();
+        var extensionSubjectKeyIdentifier = new CX509ExtensionSubjectKeyIdentifier();
         CurrentRequestData += "Subject:" + Environment.NewLine;
-        CurrentRequestData += " " + CX509CertificateRequestPkcs10.Subject.Name + Environment.NewLine;
+        CurrentRequestData += " " + cX509CertificateRequestPkcs10.Subject.Name + Environment.NewLine;
 
-        for (var i = 0; i < CX509CertificateRequestPkcs10.X509Extensions.Count; i++)
+        for (var i = 0; i < cX509CertificateRequestPkcs10.X509Extensions.Count; i++)
         {
-            switch (CX509CertificateRequestPkcs10.X509Extensions[i].ObjectId.Value)
+            switch (cX509CertificateRequestPkcs10.X509Extensions[i].ObjectId.Value)
             {
                 case AlternativeNames:
                     try
                     {
-                        string sAlternativeNames = (CX509CertificateRequestPkcs10.X509Extensions[i].RawData[CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64]);
+                        string sAlternativeNames = (cX509CertificateRequestPkcs10.X509Extensions[i].RawData[CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64]);
 
-                        CX509ExtensionAlternativeNames.InitializeDecode(EncodingType.XCN_CRYPT_STRING_BASE64, sAlternativeNames);
+                        extensionAlternativeNames.InitializeDecode(EncodingType.XCN_CRYPT_STRING_BASE64, sAlternativeNames);
                         CurrentRequestData += "SubjectAlternateNames:" + Environment.NewLine;
-                        foreach (CAlternativeName san in CX509ExtensionAlternativeNames.AlternativeNames)
+                        foreach (CAlternativeName san in extensionAlternativeNames.AlternativeNames)
                         {
                             CurrentRequestData += " " + san.Type + "=" + san.strValue + Environment.NewLine;
                         }
@@ -233,11 +233,11 @@ The submit button will be available if the request can be parsed and is complian
                     try
                     {
                         CurrentRequestData += "KeyUsages:" + Environment.NewLine;
-                        string sKeyUsage = (CX509CertificateRequestPkcs10.X509Extensions[i].RawData[CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64]);
+                        string sKeyUsage = (cX509CertificateRequestPkcs10.X509Extensions[i].RawData[CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64]);
 
-                        CX509ExtensionKeyUsage.InitializeDecode(EncodingType.XCN_CRYPT_STRING_BASE64, sKeyUsage);
+                        extensionKeyUsage.InitializeDecode(EncodingType.XCN_CRYPT_STRING_BASE64, sKeyUsage);
 
-                        CurrentRequestData += " " + CX509ExtensionKeyUsage.KeyUsage.ToString() + Environment.NewLine;
+                        CurrentRequestData += " " + extensionKeyUsage.KeyUsage.ToString() + Environment.NewLine;
                     }
                     catch
                     {
@@ -250,10 +250,10 @@ The submit button will be available if the request can be parsed and is complian
                     try
                     {
                         CurrentRequestData += "EnhancedKeyUsages:" + Environment.NewLine;
-                        string sEnhancedKeyUsage = (CX509CertificateRequestPkcs10.X509Extensions[i].RawData[CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64]);
+                        string sEnhancedKeyUsage = (cX509CertificateRequestPkcs10.X509Extensions[i].RawData[CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64]);
 
-                        CX509ExtensionEnhancedKeyUsage.InitializeDecode(EncodingType.XCN_CRYPT_STRING_BASE64, sEnhancedKeyUsage);
-                        foreach (CObjectId objectid in CX509ExtensionEnhancedKeyUsage.EnhancedKeyUsage)
+                        extensionEnhancedKeyUsage.InitializeDecode(EncodingType.XCN_CRYPT_STRING_BASE64, sEnhancedKeyUsage);
+                        foreach (CObjectId objectid in extensionEnhancedKeyUsage.EnhancedKeyUsage)
                         {
                             CurrentRequestData += " " + objectid.Name + "=" + objectid.Value + Environment.NewLine;
                         }
@@ -269,10 +269,10 @@ The submit button will be available if the request can be parsed and is complian
                     try
                     {
 
-                        string sMSApplicationPolicies = (CX509CertificateRequestPkcs10.X509Extensions[i].RawData[CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64]);
+                        string sMSApplicationPolicies = (cX509CertificateRequestPkcs10.X509Extensions[i].RawData[CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64]);
 
-                        CX509ExtensionMSApplicationPolicies.InitializeDecode(EncodingType.XCN_CRYPT_STRING_BASE64, sMSApplicationPolicies);
-                        foreach (CCertificatePolicy certificatepolicy in CX509ExtensionMSApplicationPolicies.Policies)
+                        extensionMSApplicationPolicies.InitializeDecode(EncodingType.XCN_CRYPT_STRING_BASE64, sMSApplicationPolicies);
+                        foreach (CCertificatePolicy certificatepolicy in extensionMSApplicationPolicies.Policies)
                         {
 
                         }
@@ -288,11 +288,11 @@ The submit button will be available if the request can be parsed and is complian
                     try
                     {
                         CurrentRequestData += "Template:" + Environment.NewLine;
-                        string sTemplate = (CX509CertificateRequestPkcs10.X509Extensions[i].RawData[CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64]);
+                        string sTemplate = (cX509CertificateRequestPkcs10.X509Extensions[i].RawData[CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64]);
 
-                        CX509ExtensionTemplate.InitializeDecode(EncodingType.XCN_CRYPT_STRING_BASE64, sTemplate);
+                        extensionTemplate.InitializeDecode(EncodingType.XCN_CRYPT_STRING_BASE64, sTemplate);
 
-                        CurrentRequestData += " " + CX509ExtensionTemplate.TemplateOid.Value + Environment.NewLine;
+                        CurrentRequestData += " " + extensionTemplate.TemplateOid.Value + Environment.NewLine;
 
                     }
                     catch
@@ -304,10 +304,10 @@ The submit button will be available if the request can be parsed and is complian
                     try
                     {
 
-                        string sSubjectKeyIdentifier = (CX509CertificateRequestPkcs10.X509Extensions[i].RawData[CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64]);
+                        string sSubjectKeyIdentifier = (cX509CertificateRequestPkcs10.X509Extensions[i].RawData[CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64]);
 
-                        CX509ExtensionSubjectKeyIdentifier.InitializeDecode(EncodingType.XCN_CRYPT_STRING_BASE64, sSubjectKeyIdentifier);
-                        CObjectId oid = CX509ExtensionSubjectKeyIdentifier.ObjectId;
+                        extensionSubjectKeyIdentifier.InitializeDecode(EncodingType.XCN_CRYPT_STRING_BASE64, sSubjectKeyIdentifier);
+                        CObjectId oid = extensionSubjectKeyIdentifier.ObjectId;
 
                     }
                     catch
@@ -319,7 +319,7 @@ The submit button will be available if the request can be parsed and is complian
                     try
                     {
 
-                        string ssdef = (CX509CertificateRequestPkcs10.X509Extensions[i].RawData[CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64]);
+                        string ssdef = (cX509CertificateRequestPkcs10.X509Extensions[i].RawData[CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64]);
 
                     }
                     catch
@@ -339,15 +339,15 @@ The submit button will be available if the request can be parsed and is complian
 
         if (selectedAction == 1)
         {
-            var CX509CertificateRequestCMC = new CERTENROLLLib.CX509CertificateRequestCmc();
+            var cX509CertificateRequestCmc = new CERTENROLLLib.CX509CertificateRequestCmc();
             try
             {
-                CX509CertificateRequestCMC.InitializeDecode(
+                cX509CertificateRequestCmc.InitializeDecode(
                     newCertificate.Base64Request,
                     CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64_ANY);
-                var CX509CertificateRequestPkcs10 = (IX509CertificateRequestPkcs10)CX509CertificateRequestCMC.GetInnerRequest(0);
-                btnhidden = false;
-                ParseRequestExtension(CX509CertificateRequestPkcs10);
+                var cX509CertificateRequestPkcs10 = (IX509CertificateRequestPkcs10)cX509CertificateRequestCmc.GetInnerRequest(0);
+                _btnhidden = false;
+                ParseRequestExtension(cX509CertificateRequestPkcs10);
 
             }
             catch

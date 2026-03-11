@@ -28,31 +28,31 @@ namespace CertificateManager.Services
 
             if (!string.IsNullOrEmpty(columnname) && table != null && !string.IsNullOrEmpty(searchstring))
             {
-                var Parameter = Expression.Parameter(table, "k");
-                var Property = Expression.Property(Parameter, columnname);
-                var NotNull = Expression.NotEqual(Property, Expression.Constant(null, typeof(string)));
-                var Contains = Expression.Call(
-                    Property,
+                var tableParameter = Expression.Parameter(table, "k");
+                var property = Expression.Property(tableParameter, columnname);
+                var notNull = Expression.NotEqual(property, Expression.Constant(null, typeof(string)));
+                var contains = Expression.Call(
+                    property,
                     typeof(string).GetMethod(nameof(string.Contains), new[] { typeof(string) })!,
                     Expression.Constant(searchstring));
-                var Predicate = Expression.AndAlso(NotNull, Contains);
+                var predicate = Expression.AndAlso(notNull, contains);
                 
                 var anyMethod = typeof(Enumerable)
                     .GetMethods()
                     .First(m => m.Name == nameof(Enumerable.Any) && m.GetParameters().Length == 2)
                     .MakeGenericMethod(table);
 
-                var Collection = Expression.Property(parameter, table.Name);
+                var collection = Expression.Property(parameter, table.Name);
                 if(table.Name == "EKU")
                 {
-                    var Lambda = Expression.Lambda<Func<EKU, bool>>(Predicate, Parameter);
-                    var anyCall = Expression.Call(anyMethod, Collection, Lambda);
+                    var subLambda = Expression.Lambda<Func<EKU, bool>>(predicate, tableParameter);
+                    var anyCall = Expression.Call(anyMethod, collection, subLambda);
                     combinedFilter = CombineAnd(combinedFilter, anyCall);
                 }
                 else
                 {
-                    var Lambda = Expression.Lambda<Func<SAN, bool>>(Predicate, Parameter);
-                    var anyCall = Expression.Call(anyMethod, Collection, Lambda);
+                    var subLambda = Expression.Lambda<Func<SAN, bool>>(predicate, tableParameter);
+                    var anyCall = Expression.Call(anyMethod, collection, subLambda);
                     combinedFilter = CombineAnd(combinedFilter, anyCall);
                 }
 
@@ -97,31 +97,31 @@ namespace CertificateManager.Services
 
             if (requestId.HasValue)
             {
-                var Property = Expression.Property(parameter, "RequestId");
-                var Equals = Expression.Equal(Property, Expression.Constant(requestId.Value));
-                combinedFilter = CombineAnd(combinedFilter, Equals);
+                var property = Expression.Property(parameter, "RequestId");
+                var equals = Expression.Equal(property, Expression.Constant(requestId.Value));
+                combinedFilter = CombineAnd(combinedFilter, equals);
             }
 
             if (expirationDate.HasValue)
             {
-                var Property = Expression.Property(parameter, "CertificateExpirationDate");
-                var NotNull = Expression.NotEqual(Property,Expression.Constant(null, typeof(DateTime?)));
-                var Value = Expression.Property(Property, nameof(Nullable<DateTime>.Value));
-                var LessOrEqual = Expression.LessThanOrEqual(Value,Expression.Constant(expirationDate.Value));
-                combinedFilter = CombineAnd(combinedFilter, Expression.AndAlso(NotNull, LessOrEqual));
+                var property = Expression.Property(parameter, "CertificateExpirationDate");
+                var notNull = Expression.NotEqual(property,Expression.Constant(null, typeof(DateTime?)));
+                var value = Expression.Property(property, nameof(Nullable<DateTime>.Value));
+                var lessOrEqual = Expression.LessThanOrEqual(value,Expression.Constant(expirationDate.Value));
+                combinedFilter = CombineAnd(combinedFilter, Expression.AndAlso(notNull, lessOrEqual));
             }
 
             foreach (string key in filterht.Keys)
             {
                 if (filterht[key] != null && filterht[key] != "")
                 {
-                    var Property = Expression.Property(parameter, key);
-                    var NotNull = Expression.NotEqual(Property, Expression.Constant(null, typeof(string)));
-                    var Contains = Expression.Call(
-                        Property,
+                    var property = Expression.Property(parameter, key);
+                    var notNull = Expression.NotEqual(property, Expression.Constant(null, typeof(string)));
+                    var contains = Expression.Call(
+                        property,
                         typeof(string).GetMethod(nameof(string.Contains), new[] { typeof(string) })!,
                         Expression.Constant(filterht[key].ToString()));
-                    combinedFilter = CombineAnd(combinedFilter, Expression.AndAlso(NotNull, Contains));
+                    combinedFilter = CombineAnd(combinedFilter, Expression.AndAlso(notNull, contains));
                 }
             }
             

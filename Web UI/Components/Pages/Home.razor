@@ -9,8 +9,8 @@
 
 <h1>User Claims & Roles</h1>
 
-<QuickGrid Items="claims" Pagination="pagination">
-    <Paginator State="pagination" />
+<QuickGrid Items="_claims" Pagination="_pagination">
+    <Paginator State="_pagination" />
     <PropertyColumn Property="@(p => p.Type)" Sortable="true" />
     <PropertyColumn Property="@(p => p.Value)" Sortable="true" />
     <PropertyColumn Property="@(p => GetClaimAsHumanReadable(p))" Sortable="true" Title="Translation" />
@@ -19,10 +19,10 @@
 
 <h1>User Roles</h1>
 
-@if (roles.Any())
+@if (_roles.Any())
 {
     <ul>
-        @foreach (var role in roles)
+        @foreach (var role in _roles)
         {
             <li>@role</li>
         }
@@ -34,9 +34,9 @@ else
 }
 
 @code {
-    private IQueryable<Claim> claims = Enumerable.Empty<Claim>().AsQueryable();
-    private IEnumerable<string> roles = Enumerable.Empty<string>();
-    PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
+    private IQueryable<Claim> _claims = Enumerable.Empty<Claim>().AsQueryable();
+    private IEnumerable<string> _roles = Enumerable.Empty<string>();
+    private PaginationState _pagination = new PaginationState { ItemsPerPage = 10 };
 
     [CascadingParameter]
     private Task<AuthenticationState>? AuthState { get; set; }
@@ -50,9 +50,9 @@ else
 
         var authState = await AuthState;
 
-        claims = authState.User.Claims.AsQueryable();
+        _claims = authState.User.Claims.AsQueryable();
 
-        roles = authState.User.Claims
+        _roles = authState.User.Claims
             .Where(claim => (claim.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/denyonlysid") && (claim.Value == "S-1-5-21-2099237672-4193923515-138243912-512"))
             .Select(claim => "Administator");
     }

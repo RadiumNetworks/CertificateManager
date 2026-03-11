@@ -8,23 +8,23 @@
 <h3>Import certificate database entry</h3>
 
 
-<EditForm Model="@entry" OnSubmit="HandleSubmit">
+<EditForm Model="@_entry" OnSubmit="HandleSubmit">
     <table>
         <tr>
             <td><label for="Base64CertificateInput">Base64Certificate</label></td>
-            <td><InputText id="Base64CertificateInput" @bind-Value="@entry.Base64Certificate"></InputText></td>
+            <td><InputText id="Base64CertificateInput" @bind-Value="@_entry.Base64Certificate"></InputText></td>
         </tr>
     <tr>
         <td><label for="Base64RequestInput">Base64Request</label></td>
-        <td><InputText id="Base64RequestInput" @bind-Value="@entry.Base64Request"></InputText></td>
+        <td><InputText id="Base64RequestInput" @bind-Value="@_entry.Base64Request"></InputText></td>
     </tr>
     <tr>
         <td><label for="OwnerInput">Owner</label></td>
-        <td><InputText id="OwnerInput" @bind-Value="@entry.Owner"></InputText></td>
+        <td><InputText id="OwnerInput" @bind-Value="@_entry.Owner"></InputText></td>
     </tr>
     <tr>
         <td><label for="NotesInput">Notes</label></td>
-        <td><InputText id="NotesInput" @bind-Value="@entry.Notes"></InputText></td>
+        <td><InputText id="NotesInput" @bind-Value="@_entry.Notes"></InputText></td>
     </tr>
 
     <button type="submit" class="btn-primary">Import</button>
@@ -32,7 +32,7 @@
 </EditForm>
 
 @code {
-    Entry entry = new Entry();
+    private Entry _entry = new Entry();
 
     public void HandleSubmit(EditContext editContext)
     {

@@ -16,5 +16,30 @@ namespace CertificateManager.Models.Views
         public string? Notes { get; set; } = string.Empty;
         public string? SubjectAlternativeNames { get; set; } = string.Empty;
         public string? EKUNames { get; set; } = string.Empty;
+
+        public DateTime? CertificateExpirationDate { get; set; }
+
+        public string SubjectAlternativeNamesFormatted =>
+            string.IsNullOrWhiteSpace(SubjectAlternativeNames)
+                ? string.Empty
+                : SubjectAlternativeNames.Replace(", ", "\n").Replace(",", "\n");
+
+        public string EKUNamesFormatted =>
+            string.IsNullOrWhiteSpace(EKUNames)
+                ? string.Empty
+                : EKUNames.Replace(", ", "\n").Replace(",", "\n");
+
+        public string RequesterInformation =>
+            string.Join("\n", new (string Label, string? Value)[]
+                {
+                    ("CN", RequestCommonName),
+                    ("L", RequestCity),
+                    ("C", RequestCountryRegion),
+                    ("O", RequestOrganization),
+                    ("OU", RequestOrganizationUnit),
+                    ("E", RequestEMailAddress)
+                }
+                .Where(x => !string.IsNullOrWhiteSpace(x.Value))
+                .Select(x => $"{x.Label} = {x.Value}"));
     }
 }

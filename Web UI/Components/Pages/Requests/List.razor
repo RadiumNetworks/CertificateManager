@@ -47,8 +47,8 @@
     </table>
 </EditForm>
 
-<QuickGrid Class="table" Items="entry" Pagination="pagination">
-    <Paginator State="pagination" />
+<QuickGrid Class="table" Items="entry" Pagination="_pagination">
+    <Paginator State="_pagination" />
     <PropertyColumn Property="@(e => e.RequestId)" Title="Request" Sortable="true" />
     <TemplateColumn Title="RequesterInformation">
         @if (context.RequestCommonName != "")
@@ -119,26 +119,26 @@
     public int? requestId = null;
     public DateTime? expirationDate = null;
 
-    System.Collections.Hashtable filterht = new System.Collections.Hashtable();
+    private System.Collections.Hashtable _filterht = new System.Collections.Hashtable();
 
     public void HandleSubmit(EditContext editContext)
     {
-        filterht["RequestCommonName"] = SubjectFilter;
-        filterht["Owner"] = OwnerFilter;
-        filterht["CertificateTemplate"] = TemplateFilter;
-        filterht["CAConfig"] = CAOption;
-        filterht["RequestDisposition"] = 9;
+        _filterht["RequestCommonName"] = SubjectFilter;
+        _filterht["Owner"] = OwnerFilter;
+        _filterht["CertificateTemplate"] = TemplateFilter;
+        _filterht["CAConfig"] = CAOption;
+        _filterht["RequestDisposition"] = 9;
     }
-    private AppDbContext context = default!;
-    private PaginationState pagination = new PaginationState { ItemsPerPage = 10 };
+    private AppDbContext _context = default!;
+    private PaginationState _pagination = new PaginationState { ItemsPerPage = 10 };
 
     protected override void OnInitialized()
     {
-        context = certificateService.CreateDbContext();
-        filterht["RequestDisposition"] = 9;
+        _context = certificateService.CreateDbContext();
+        _filterht["RequestDisposition"] = 9;
     }
 
-    private IQueryable<ExtendedEntry> entry => certificateService.GetCertificateEntries(context, requestId, expirationDate, filterht);
+    private IQueryable<ExtendedEntry> entry => certificateService.GetCertificateEntries(_context, requestId, expirationDate, _filterht);
 
-    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+    public async ValueTask DisposeAsync() => await _context.DisposeAsync();
 }

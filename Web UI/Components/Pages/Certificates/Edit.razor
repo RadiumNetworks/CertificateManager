@@ -8,17 +8,17 @@
 
 <h3>Edit certificate database entry</h3>
 
-<EditForm Model="@entry" OnSubmit="HandleSubmit">
+<EditForm Model="@_entry" OnSubmit="HandleSubmit">
     <label for="RequestIdInput" >RequestId</label>
-    <InputNumber id="RequestIdInput" @bind-Value="@entry.RequestId" readonly="readonly"></InputNumber><br />
+    <InputNumber id="RequestIdInput" @bind-Value="@_entry.RequestId" readonly="readonly"></InputNumber><br />
     <label for="CAConfigInput">CAConfig</label>
-    <InputText id="CAConfigInput" @bind-Value="@entry.CAConfig" readonly="readonly"></InputText><br />
+    <InputText id="CAConfigInput" @bind-Value="@_entry.CAConfig" readonly="readonly"></InputText><br />
     <label for="SerialNumberInput">SerialNumber</label>
-    <InputText id="SerialNumberInput" @bind-Value="@entry.SerialNumber" readonly="readonly"></InputText><br />
+    <InputText id="SerialNumberInput" @bind-Value="@_entry.SerialNumber" readonly="readonly"></InputText><br />
     <label for="OwnerInput">Owner</label>
-    <InputText id="OwnerInput" @bind-Value="@entry.Owner"></InputText><br />
+    <InputText id="OwnerInput" @bind-Value="@_entry.Owner"></InputText><br />
     <label for="NotesInput" >Notes</label>
-    <InputText id="NotesInput" @bind-Value="@entry.Notes"></InputText><br /><br />
+    <InputText id="NotesInput" @bind-Value="@_entry.Notes"></InputText><br /><br />
     <button type="submit" class="btn-primary">Edit</button>
 </EditForm>
 
@@ -29,7 +29,7 @@
     [SupplyParameterFromQuery]
     private string CAConfig { get; set; }
 
-    Entry entry = new Entry();
+    private Entry _entry = new Entry();
 
     public void HandleSubmit(EditContext editContext)
     {
@@ -40,6 +40,6 @@
 
     protected override void OnInitialized()
     {
-        entry = certificateService.GetCertificate(RequestId, CAConfig);
+        _entry = certificateService.GetCertificate(RequestId, CAConfig);
     }
 }
