@@ -23,6 +23,7 @@ are written to a SQL database
 
 The Admin interface is shown below
 ![Header](./admin.png)
+![Header](./admin2.png)
 ![Header](./winui_listcertificates.png)
 
 The used database has the following tables
