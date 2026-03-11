@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.3" />
@@ -16,10 +17,23 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.3" />
+    <PackageReference Include="System.Data.Common" Version="4.3.0" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Models\Views\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="CERTADMINLib">
+      <HintPath>References\CERTADMINLib.dll</HintPath>
+    </Reference>
+    <Reference Include="CERTCLILib">
+      <HintPath>References\CERTCLILIB.dll</HintPath>
+    </Reference>
+    <Reference Include="CERTENROLLLib">
+      <HintPath>References\CERTENROLLLib.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

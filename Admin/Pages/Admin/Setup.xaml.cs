@@ -1,4 +1,5 @@
 using Certificate_Manager.Data;
+using Certificate_Manager.Data.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -118,6 +119,12 @@ namespace Certificate_Manager.Pages.Admin
             MigrationLog.Text += $"[{timestamp}] {message}\n";
         }
 
+        private void AppendImportLog(string message)
+        {
+            var timestamp = DateTime.Now.ToString("HH:mm:ss");
+            ImportLog.Text += $"[{timestamp}] {message}\n";
+        }
+
         private void ShowStatus(string message, InfoBarSeverity severity)
         {
             StatusInfoBar.Message = message;
@@ -149,17 +156,41 @@ namespace Certificate_Manager.Pages.Admin
 
             try
             {
+                SetBusy(true);
+                InitButton.IsEnabled = false;
+                InitProgressIndicator.IsActive = true;
 
+                string caConfig = CAConfigString.Text;
+                if (string.IsNullOrWhiteSpace(caConfig))
+                {
+                    ShowStatus("Please enter a CA configuration string (e.g., server\\CAName).", InfoBarSeverity.Warning);
+                    return;
+                }
+
+                AppendImportLog("Starting CA database import...");
+                AppendImportLog($"Connecting to: {caConfig}");
+
+                var svc = new CertificateAuthoritySvc();
+                var (requests, certificates) = await Task.Run(() =>
+                    svc.ReadCADbEntries(caConfig, msg =>
+                        DispatcherQueue.TryEnqueue(() => AppendImportLog(msg))));
+
+                AppendImportLog($"Read {requests.Count} requests and {certificates.Count} certificates.");
+                ShowStatus($"Successfully read {requests.Count} requests and {certificates.Count} certificates from CA database.", InfoBarSeverity.Success);
             }
             catch (Exception ex)
             {
-                AppendLog($"Error: {ex.Message}");
-                ShowStatus($"Failed to check migrations: {ex.Message}", InfoBarSeverity.Error);
+                AppendImportLog($"Error: {ex.Message}");
+                if (ex.InnerException != null)
+                    AppendImportLog($"  Inner: {ex.InnerException.Message}");
+                ShowStatus($"Failed to read CA database: {ex.Message}", InfoBarSeverity.Error);
             }
             finally
             {
                 SetBusy(false);
             }
+            InitButton.IsEnabled = true;
+            InitProgressIndicator.IsActive = false;
         }
     }
 }

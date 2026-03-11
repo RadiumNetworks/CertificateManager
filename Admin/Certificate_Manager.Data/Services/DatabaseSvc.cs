@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Certificate_Manager.Data.Services
 {
-    public class CertificateService
+    public class DatabaseSvc
     {
         public AppDbContext CreateDbContext()
         {
@@ -28,31 +28,31 @@ namespace Certificate_Manager.Data.Services
 
             if (!string.IsNullOrEmpty(columnname) && table != null && !string.IsNullOrEmpty(searchstring))
             {
-                var Parameter = Expression.Parameter(table, "k");
-                var Property = Expression.Property(Parameter, columnname);
-                var NotNull = Expression.NotEqual(Property, Expression.Constant(null, typeof(string)));
-                var Contains = Expression.Call(
-                    Property,
+                var innerParameter = Expression.Parameter(table, "k");
+                var property = Expression.Property(innerParameter, columnname);
+                var notNull = Expression.NotEqual(property, Expression.Constant(null, typeof(string)));
+                var contains = Expression.Call(
+                    property,
                     typeof(string).GetMethod(nameof(string.Contains), new[] { typeof(string) })!,
                     Expression.Constant(searchstring));
-                var Predicate = Expression.AndAlso(NotNull, Contains);
+                var predicate = Expression.AndAlso(notNull, contains);
                 
                 var anyMethod = typeof(Enumerable)
                     .GetMethods()
                     .First(m => m.Name == nameof(Enumerable.Any) && m.GetParameters().Length == 2)
                     .MakeGenericMethod(table);
 
-                var Collection = Expression.Property(parameter, table.Name);
+                var collection = Expression.Property(parameter, table.Name);
                 if(table.Name == "EKU")
                 {
-                    var Lambda = Expression.Lambda<Func<EKU, bool>>(Predicate, Parameter);
-                    var anyCall = Expression.Call(anyMethod, Collection, Lambda);
+                    var lambda = Expression.Lambda<Func<EKU, bool>>(predicate, innerParameter);
+                    var anyCall = Expression.Call(anyMethod, collection, lambda);
                     combinedFilter = CombineAnd(combinedFilter, anyCall);
                 }
                 else
                 {
-                    var Lambda = Expression.Lambda<Func<SAN, bool>>(Predicate, Parameter);
-                    var anyCall = Expression.Call(anyMethod, Collection, Lambda);
+                    var lambda = Expression.Lambda<Func<SAN, bool>>(predicate, innerParameter);
+                    var anyCall = Expression.Call(anyMethod, collection, lambda);
                     combinedFilter = CombineAnd(combinedFilter, anyCall);
                 }
 
@@ -98,31 +98,31 @@ namespace Certificate_Manager.Data.Services
 
             if (requestId.HasValue)
             {
-                var Property = Expression.Property(parameter, "RequestId");
-                var Equals = Expression.Equal(Property, Expression.Constant((int)requestId.Value));
-                combinedFilter = CombineAnd(combinedFilter, Equals);
+                var property = Expression.Property(parameter, "RequestId");
+                var equals = Expression.Equal(property, Expression.Constant((int)requestId.Value));
+                combinedFilter = CombineAnd(combinedFilter, equals);
             }
 
             if (expirationDate.HasValue)
             {
-                var Property = Expression.Property(parameter, "CertificateExpirationDate");
-                var NotNull = Expression.NotEqual(Property,Expression.Constant(null, typeof(DateTime?)));
-                var Value = Expression.Property(Property, nameof(Nullable<DateTime>.Value));
-                var LessOrEqual = Expression.LessThanOrEqual(Value,Expression.Constant(expirationDate.Value));
-                combinedFilter = CombineAnd(combinedFilter, Expression.AndAlso(NotNull, LessOrEqual));
+                var property = Expression.Property(parameter, "CertificateExpirationDate");
+                var notNull = Expression.NotEqual(property, Expression.Constant(null, typeof(DateTime?)));
+                var value = Expression.Property(property, nameof(Nullable<DateTime>.Value));
+                var lessOrEqual = Expression.LessThanOrEqual(value, Expression.Constant(expirationDate.Value));
+                combinedFilter = CombineAnd(combinedFilter, Expression.AndAlso(notNull, lessOrEqual));
             }
 
             foreach (string key in filterht.Keys)
             {
                 if (filterht[key] != null && filterht[key] != "")
                 {
-                    var Property = Expression.Property(parameter, key);
-                    var NotNull = Expression.NotEqual(Property, Expression.Constant(null, typeof(string)));
-                    var Contains = Expression.Call(
-                        Property,
+                    var property = Expression.Property(parameter, key);
+                    var notNull = Expression.NotEqual(property, Expression.Constant(null, typeof(string)));
+                    var contains = Expression.Call(
+                        property,
                         typeof(string).GetMethod(nameof(string.Contains), new[] { typeof(string) })!,
                         Expression.Constant(filterht[key].ToString()));
-                    combinedFilter = CombineAnd(combinedFilter, Expression.AndAlso(NotNull, Contains));
+                    combinedFilter = CombineAnd(combinedFilter, Expression.AndAlso(notNull, contains));
                 }
             }
             
@@ -178,7 +178,7 @@ namespace Certificate_Manager.Data.Services
 
         private IDbContextFactory<AppDbContext> _dbContextFactory;
 
-        public CertificateService(IDbContextFactory<AppDbContext> dbContextFactory)
+        public DatabaseSvc(IDbContextFactory<AppDbContext> dbContextFactory)
         {
             _dbContextFactory = dbContextFactory;
         }
@@ -192,11 +192,11 @@ namespace Certificate_Manager.Data.Services
             }
         }
 
-        public Entry GetCertificate(int requestId, string cAConfig)
+        public Entry GetCertificate(int requestId, string caConfig)
         {
             using (var context = _dbContextFactory.CreateDbContext())
             {
-                var entry = context.Entry.SingleOrDefault(x => (x.RequestId == requestId) && (x.CAConfig == cAConfig));
+                var entry = context.Entry.SingleOrDefault(x => (x.RequestId == requestId) && (x.CAConfig == caConfig));
                 if (entry == null)
                 {
                     return null;
@@ -208,9 +208,9 @@ namespace Certificate_Manager.Data.Services
             }
         }
 
-        public void UpdateCertificate(int requestId, string cAConfig, string owner, string notes)
+        public void UpdateCertificate(int requestId, string caConfig, string owner, string notes)
         {
-            var entry = GetCertificate(requestId, cAConfig);
+            var entry = GetCertificate(requestId, caConfig);
             if (entry == null)
             {
                 throw new Exception("Certificate entry does not exist");

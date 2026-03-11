@@ -26,12 +26,12 @@ namespace Certificate_Manager.Pages.Certificate
     {
         private ObservableCollection<ExtendedEntry> _entries = new();
 
-        private readonly CertificateService _certificateService = new CertificateService(new SimpleDbContextFactory());
+        private readonly DatabaseSvc _certificateService = new DatabaseSvc(new SimpleDbContextFactory());
 
-        private int currentPage = 1;
-        private int pageSize = 10;
-        private int totalCount = 0;
-        private int totalPages = 1;
+        private int _currentPage = 1;
+        private int _pageSize = 10;
+        private int _totalCount = 0;
+        private int _totalPages = 1;
 
 
         public enum DispositionOptions
@@ -44,9 +44,9 @@ namespace Certificate_Manager.Pages.Certificate
         }
         public DispositionOptions DispositionOption { get; set; } = DispositionOptions.Certificate_Issued;
 
-        private System.Collections.Hashtable filterht = new System.Collections.Hashtable();
-        private double? requestId = null;
-        private DateTime? expirationDate = null;
+        private System.Collections.Hashtable _filterht = new System.Collections.Hashtable();
+        private double? _requestId = null;
+        private DateTime? _expirationDate = null;
 
         public List()
         {
@@ -106,30 +106,30 @@ namespace Certificate_Manager.Pages.Certificate
 
         private async void SearchButton_Click(object sender, RoutedEventArgs e)
         {
-            currentPage = 1;
-            filterht["RequestCommonName"] = this.SubjectInput.Text;
-            filterht["Owner"] = this.OwnerInput.Text;
-            filterht["CertificateTemplate"] = this.TemplateInput.Text;
-            filterht["CAConfig"] = (CAInput.SelectedItem?.ToString() == "(All)") ? "" : CAInput.SelectedItem?.ToString() ?? ""; ;
+            _currentPage = 1;
+            _filterht["RequestCommonName"] = this.SubjectInput.Text;
+            _filterht["Owner"] = this.OwnerInput.Text;
+            _filterht["CertificateTemplate"] = this.TemplateInput.Text;
+            _filterht["CAConfig"] = (CAInput.SelectedItem?.ToString() == "(All)") ? "" : CAInput.SelectedItem?.ToString() ?? ""; ;
 
             var selectedDisposition = DispositionCodeInput.SelectedItem as DispositionItem;
-            filterht["RequestDisposition"] = (selectedDisposition?.Value == null) ? "" : selectedDisposition.Value.ToString();
+            _filterht["RequestDisposition"] = (selectedDisposition?.Value == null) ? "" : selectedDisposition.Value.ToString();
 
-            expirationDate = (DateInput.SelectedDate.HasValue)
+            _expirationDate = (DateInput.SelectedDate.HasValue)
                ? DateInput.SelectedDate.Value.DateTime
                : null;
 
             try
             {
-                requestId = (int)RequestIdInput.Value;
+                _requestId = (int)RequestIdInput.Value;
             }
             catch
             {
 
             }
-            if (requestId == 0)
+            if (_requestId == 0)
             {
-                requestId = null;
+                _requestId = null;
             }
             
 
@@ -144,21 +144,21 @@ namespace Certificate_Manager.Pages.Certificate
             }
             using var db = _certificateService.CreateDbContext();
 
-            var query = _certificateService.GetCertificateEntries(db, requestId, expirationDate, filterht)
+            var query = _certificateService.GetCertificateEntries(db, _requestId, _expirationDate, _filterht)
                 .OrderBy(e => e.RequestId);
 
-            totalCount = await Task.Run(() => query.Count());
-            totalPages = Math.Max(1, (int)Math.Ceiling((double)totalCount / pageSize));
+            _totalCount = await Task.Run(() => query.Count());
+            _totalPages = Math.Max(1, (int)Math.Ceiling((double)_totalCount / _pageSize));
 
-            if (currentPage > totalPages)
-                currentPage = totalPages;
-            if (currentPage < 1)
-                currentPage = 1;
+            if (_currentPage > _totalPages)
+                _currentPage = _totalPages;
+            if (_currentPage < 1)
+                _currentPage = 1;
 
             var entries = await Task.Run(() =>
                     query
-                    .Skip((currentPage - 1) * pageSize)
-                    .Take(pageSize)
+                    .Skip((_currentPage - 1) * _pageSize)
+                    .Take(_pageSize)
                     .ToList());
 
 
@@ -258,42 +258,42 @@ namespace Certificate_Manager.Pages.Certificate
 
         private void UpdatePaginationUI()
         {
-            PageInfoText.Text = $"Page {currentPage} of {totalPages}";
-            TotalCountText.Text = $"{totalCount:N0} entries";
+            PageInfoText.Text = $"Page {_currentPage} of {_totalPages}";
+            TotalCountText.Text = $"{_totalCount:N0} entries";
 
-            FirstPageButton.IsEnabled = currentPage > 1;
-            PreviousPageButton.IsEnabled = currentPage > 1;
-            NextPageButton.IsEnabled = currentPage < totalPages;
-            LastPageButton.IsEnabled = currentPage < totalPages;
+            FirstPageButton.IsEnabled = _currentPage > 1;
+            PreviousPageButton.IsEnabled = _currentPage > 1;
+            NextPageButton.IsEnabled = _currentPage < _totalPages;
+            LastPageButton.IsEnabled = _currentPage < _totalPages;
         }
 
         private async void FirstPageButton_Click(object sender, RoutedEventArgs e)
         {
-            currentPage = 1;
+            _currentPage = 1;
             await LoadEntriesAsync();
         }
 
         private async void PreviousPageButton_Click(object sender, RoutedEventArgs e)
         {
-            if (currentPage > 1)
+            if (_currentPage > 1)
             {
-                currentPage--;
+                _currentPage--;
                 await LoadEntriesAsync();
             }
         }
 
         private async void NextPageButton_Click(object sender, RoutedEventArgs e)
         {
-            if (currentPage < totalPages)
+            if (_currentPage < _totalPages)
             {
-                currentPage++;
+                _currentPage++;
                 await LoadEntriesAsync();
             }
         }
 
         private async void LastPageButton_Click(object sender, RoutedEventArgs e)
         {
-            currentPage = totalPages;
+            _currentPage = _totalPages;
             await LoadEntriesAsync();
         }
 
@@ -301,8 +301,8 @@ namespace Certificate_Manager.Pages.Certificate
         {
             if (PageSizeCombo?.SelectedItem is string sizeStr && int.TryParse(sizeStr, out int newSize))
             {
-                pageSize = newSize;
-                currentPage = 1;
+                _pageSize = newSize;
+                _currentPage = 1;
                 await LoadEntriesAsync();
             }
         }
