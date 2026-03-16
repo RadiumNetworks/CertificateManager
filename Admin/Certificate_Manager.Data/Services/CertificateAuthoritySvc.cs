@@ -1,23 +1,12 @@
 ﻿using CERTADMINLib;
-using CERTCLILib;
 using CERTENROLLLib;
-using Certificate_Manager.Models;
+using Certificate_Manager.Data.Models.Views;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Win32;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Reflection;
+
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml;
-using System.Xml.Linq;
-using System.Xml.Serialization;
-using static Certificate_Manager.Data.Services.CertificateAuthoritySvc;
+
 
 namespace Certificate_Manager.Data.Services
 {
@@ -97,63 +86,6 @@ namespace Certificate_Manager.Data.Services
             "Request.RevokedWhen",
             "Request.RevokedReason"
         };
-
-        //https://learn.microsoft.com/en-us/windows/win32/api/certif/nf-certif-icertserverexit-getcertificateproperty
-        public class Certificate
-        {
-            public int RequestId { get; set; } = 0;
-            public int? PublicKeyLength { get; set; } = null;
-            public string PublicKeyAlgorithm { get; set; } = null;
-            public string SerialNumber { get; set; } = null;
-            public string CertificateTemplate { get; set; } = null;
-            public string CertificateHash { get; set; } = null;
-            public DateTime NotBefore { get; set; }
-            public DateTime NotAfter { get; set; }
-            public byte[] RawCertificate { get; set; } = null;
-            public byte[] RawPublicKey { get; set; } = null;
-            public byte[] RawPublicKeyAlgorithmParameters { get; set; } = null;
-            public int? RequestType { get; set; } = null;
-            public string CommonName { get; set; } = null;
-            public string Organization { get; set; } = null;
-            public string OrgUnit { get; set; } = null;
-            public string EMail { get; set; } = null;
-            public string Country { get; set; } = null;
-            public string Locality { get; set; } = null;
-            public string State { get; set; } = null;
-            public string CallerName { get; set; } = null;
-            public string TemplateEnrollmentFlags { get; set; } = null;
-            public string TemplateGeneralFlags { get; set; } = null;
-            public string TemplatePrivateKeyFlags { get; set; } = null;
-            public string PublicKeyAlgorithmParameters { get; set; } = null;
-            public DateTime RevocationDate { get; set; }
-            public string RevocationReason { get; set; } = null;
-        }
-
-        //https://learn.microsoft.com/en-us/windows/win32/api/certif/nf-certif-icertserverexit-getrequestproperty
-        public class Request
-        {
-            public int RequestId { get; set; } = 0;
-            public int? RequestType { get; set; } = null;
-            public int? StatusCode { get; set; } = null;
-            public int? Disposition { get; set; } = null;
-            public string DispositionMessage { get; set; } = null;
-            public DateTime ResolvedWhen { get; set; }
-            public DateTime SubmittedWhen { get; set; }
-            public byte[] RawCertificate { get; set; } = null;
-            public string RequesterName { get; set; } = null;
-            public string DistinguishedName { get; set; } = null;
-            public string RequestAttributes { get; set; } = null;
-            public string CommonName { get; set; } = null;
-            public string Organization { get; set; } = null;
-            public string OrgUnit { get; set; } = null;
-            public string EMail { get; set; } = null;
-            public string Locality { get; set; } = null;
-            public string Country { get; set; } = null;
-            public string State { get; set; } = null;
-            public byte[] RawRequest { get; set; } = null;
-            public string CallerName { get; set; } = null;
-        }
-
 
 
         public void ParseRequestExtension(IX509CertificateRequestPkcs10 cX509CertificateRequestPkcs10)
@@ -324,7 +256,7 @@ namespace Certificate_Manager.Data.Services
             }
         }
 
-        public (List<Request> Requests, List<Certificate> Certificates) ReadCADbEntries(string caConfig, Action<string> log = null)
+        public string LoadConnectionString()
         {
             var basePaths = new[]
                     {
@@ -353,343 +285,168 @@ namespace Certificate_Manager.Data.Services
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .Build();
 
-            var connectionString = configuration.GetConnectionString("DefaultConnection");
-
-            var requests = new List<Request>();
-            var certificates = new List<Certificate>();
-
-            ICertView certView = new CCertView();
-
-            certView.OpenConnection(caConfig);
-
-            certView.SetResultColumnCount(ResultColumns.Length);
-            foreach (string col in ResultColumns)
+            return configuration.GetConnectionString("DefaultConnection");
+        }
+        public void UpdateOrInsertEKUs(string connectionString, string caConfig, CARequest request, CACertificate certificate, Action<string> log = null)
+        {
+            foreach (string eku in EKUs)
             {
-                int colIndex = certView.GetColumnIndex(0, col);
-                certView.SetResultColumn(colIndex);
+                String ekusql = $@"Update EKU set Name='{eku}' 
+                    where RequestID='{request.RequestId}' and CAConfig='{caConfig}' and Name = '{eku}'
+                    If @@ROWCOUNT=0 
+                    Insert into EKU (Name, RequestId, CAConfig) 
+                    VALUES ('{eku}','{request.RequestId}','{caConfig}')";
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    using (SqlCommand command = new SqlCommand(ekusql, connection))
+                    {
+                        connection.Open();
+                        command.ExecuteNonQuery();
+                    }
+                    log?.Invoke($"EKU Update or Import successful");
+                }
+            }
+        }
+
+        public void UpdateOrInsertSANs(string connectionString, string caConfig, CARequest request, CACertificate certificate, Action<string> log = null)
+        {
+            foreach (string san in SubjectAlternativeNames)
+            {
+                String sansql = $@"Update SAN set SubjectAlternativeName='{san}' 
+                    where RequestID='{request.RequestId}' and CAConfig='{caConfig}' and SubjectAlternativeName='{san}'
+                    If @@ROWCOUNT=0 
+                    Insert into SAN (SubjectAlternativeName, RequestId, CAConfig) 
+                    VALUES ('{san}','{request.RequestId}','{caConfig}')";
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    using (SqlCommand command = new SqlCommand(sansql, connection))
+                    {
+                        connection.Open();
+                        command.ExecuteNonQuery();
+                    }
+                    log?.Invoke($"SAN Update or Import successful");
+                }
+            }
+        }
+
+        public void UpdateOrInsertEntry(string connectionString, string caConfig, CARequest request, CACertificate certificate, Action<string> log = null)
+        {
+            string requestid = "";
+            string serialNumber = "";
+            string notBefore = "";
+            string notAfter = "";
+            string certificateTemplate = "";
+            string publicKeyLength = "";
+            string publicKeyAlgorithm = "";
+            string base64Certificate = "";
+            string base64PublicKey = "";
+            string base64PublicKeyAlgorithmParameters = "";
+            string requestType = "";
+            string base64Request = "";
+            string disposition = "";
+            string dispositionMessage = "";
+            string requesterName = "";
+            string distinguishedName = "";
+            string requestCommonName = "";
+            string requestOrganization = "";
+            string requestOrganizationUnit = "";
+            string requestEMailAddress = "";
+            string requestCity = "";
+            string requestCountryRegion = "";
+            string requestState = "";
+            string issuedCommonName = "";
+            string issuedOrganization = "";
+            string issuedOrganizationUnit = "";
+            string issuedEMailAddress = "";
+            string issuedCity = "";
+            string issuedCountryRegion = "";
+            string issuedState = "";
+            string callerName = "";
+            string certificateHash = "";
+
+
+            try { requestid = certificate.RequestId.ToString(); }
+            catch { }
+            try { serialNumber = certificate.SerialNumber; }
+            catch { }
+            try { notBefore = certificate.NotBefore.ToString("yyyy-MM-dd hh:mm:ss"); }
+            catch { }
+            try { notAfter = certificate.NotAfter.ToString("yyyy-MM-dd hh:mm:ss"); }
+            catch { }
+            if (certificate.CertificateTemplate != null)
+            {
+                try { certificateTemplate = certificate.CertificateTemplate.ToString(); }
+                catch { }
             }
 
-            IEnumCERTVIEWROW enumRow = certView.OpenView();
-
-            int rowCount = 0;
-
-            while (enumRow.Next() != -1)
+            if (certificate.CertificateHash != null)
             {
-                rowCount++;
-                var request = new Request();
-                var certificate = new Certificate();
-                bool hasCertData = false;
-
-                IEnumCERTVIEWCOLUMN enumCol = enumRow.EnumCertViewColumn();
-
-                while (enumCol.Next() != -1)
-                {
-                    IntPtr variantNamePtr = Marshal.AllocHGlobal(2048);
-                    string colName = enumCol.GetName();
-                    try
-                    {
-
-                        int flags = BinaryColumns.Contains(colName) ? CV_OUT_BASE64 : CV_OUT_BASE64HEADER;
-                        object val = enumCol.GetValue(flags);
-                        if (val == null) continue;
-
-                        switch (colName)
-                        {
-                            case "RequestID":
-                                int id = Convert.ToInt32(val);
-                                request.RequestId = id;
-                                certificate.RequestId = id;
-                                break;
-                            case "Request.RequesterName":
-                                request.RequesterName = val.ToString();
-                                break;
-                            case "Request.SubmittedWhen":
-                                request.SubmittedWhen = (DateTime)val;
-                                break;
-                            case "Request.ResolvedWhen":
-                                request.ResolvedWhen = (DateTime)val;
-                                break;
-                            case "Request.RawRequest":
-                                request.RawRequest = Convert.FromBase64String(val.ToString());
-                                break;
-                            case "Request.RequestType":
-                                request.RequestType = Convert.ToInt32(val);
-                                break;
-                            case "Request.StatusCode":
-                                request.StatusCode = Convert.ToInt32(val);
-                                break;
-                            case "Request.Disposition":
-                                request.Disposition = Convert.ToInt32(val);
-                                break;
-                            case "Request.DispositionMessage":
-                                request.DispositionMessage = val.ToString();
-                                break;
-                            case "Request.CallerName":
-                                request.CallerName = val.ToString();
-                                certificate.CallerName = val.ToString();
-                                break;
-                            case "Request.DistinguishedName":
-                                request.DistinguishedName = val.ToString();
-                                break;
-                            case "Request.RequestAttributes":
-                                request.RequestAttributes = val.ToString();
-                                break;
-                            case "CommonName":
-                                request.CommonName = val.ToString();
-                                certificate.CommonName = val.ToString();
-                                break;
-                            case "Organization":
-                                request.Organization = val.ToString();
-                                certificate.Organization = val.ToString();
-                                break;
-                            case "OrgUnit":
-                                request.OrgUnit = val.ToString();
-                                certificate.OrgUnit = val.ToString();
-                                break;
-                            case "EMail":
-                                request.EMail = val.ToString();
-                                certificate.EMail = val.ToString();
-                                break;
-                            case "Locality":
-                                request.Locality = val.ToString();
-                                certificate.Locality = val.ToString();
-                                break;
-                            case "Country":
-                                request.Country = val.ToString();
-                                certificate.Country = val.ToString();
-                                break;
-                            case "State":
-                                request.State = val.ToString();
-                                certificate.State = val.ToString();
-                                break;
-                            case "SerialNumber":
-                                certificate.SerialNumber = val.ToString();
-                                hasCertData = true;
-                                break;
-                            case "NotBefore":
-                                certificate.NotBefore = (DateTime)val;
-                                break;
-                            case "NotAfter":
-                                certificate.NotAfter = (DateTime)val;
-                                break;
-                            case "CertificateHash":
-                                certificate.CertificateHash = val.ToString();
-                                break;
-                            case "CertificateTemplate":
-                                certificate.CertificateTemplate = val.ToString();
-                                break;
-                            case "RawCertificate":
-                                byte[] certBytes = Convert.FromBase64String(val.ToString());
-                                request.RawCertificate = certBytes;
-                                certificate.RawCertificate = certBytes;
-                                hasCertData = true;
-                                break;
-                            case "PublicKeyLength":
-                                certificate.PublicKeyLength = Convert.ToInt32(val);
-                                break;
-                            case "PublicKeyAlgorithm":
-                                certificate.PublicKeyAlgorithm = val.ToString();
-                                break;
-                            case "Request.RevokedWhen":
-                                certificate.RevocationDate = (DateTime)val;
-                                break;
-                            case "Request.RevokedReason":
-                                certificate.RevocationReason = val.ToString();
-                                break;
-                        }
-                    }
-                    catch
-                    {
-
-                    }
-                }
-
-                requests.Add(request);
-                if (hasCertData)
-                    certificates.Add(certificate);
-
-                switch (request.RequestType)
-                {
-                    case 263168: //CMC
-
-                        var cX509CertificateRequestCMC = new CERTENROLLLib.CX509CertificateRequestCmc();
-                        try
-                        {
-                            string base64request = Convert.ToBase64String(request.RawRequest, Base64FormattingOptions.None);
-                            cX509CertificateRequestCMC.InitializeDecode(
-                                base64request,
-                                CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64_ANY);
-                            var cX509CertificateRequestCMCtoPkcs10 = (IX509CertificateRequestPkcs10)cX509CertificateRequestCMC.GetInnerRequest(0);
-
-                            ParseRequestExtension(cX509CertificateRequestCMCtoPkcs10);
-
-                        }
-                        catch
-                        {
-
-                        }
-
-                        break;
-                    case 262912: //PKCS7
-
-                        var cX509CertificateRequestPkcs7 = new CERTENROLLLib.CX509CertificateRequestPkcs7();
-                        try
-                        {
-                            string base64request = Convert.ToBase64String(request.RawRequest, Base64FormattingOptions.None);
-                            cX509CertificateRequestPkcs7.InitializeDecode(
-                                base64request,
-                                CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64_ANY);
-
-                            var cX509CertificateRequestPkcs7toPkcs10 = (IX509CertificateRequestPkcs10)cX509CertificateRequestPkcs7.GetInnerRequest(0);
-
-                            ParseRequestExtension(cX509CertificateRequestPkcs7toPkcs10);
-
-                        }
-                        catch
-                        {
-
-                        }
-
-                        break;
-                    case 262400: //PKCS10
-
-                        var cX509CertificateRequestPkcs10 = new CERTENROLLLib.CX509CertificateRequestPkcs10();
-                        try
-                        {
-                            string base64request = Convert.ToBase64String(request.RawRequest, Base64FormattingOptions.None);
-                            cX509CertificateRequestPkcs10.InitializeDecode(
-                                base64request,
-                                CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64_ANY);
-
-                            ParseRequestExtension(cX509CertificateRequestPkcs10);
-
-                        }
-                        catch
-                        {
-
-                        }
-
-                        break;
-                }
-                log?.Invoke($"Processed {rowCount} rows — " +
-                    $"Last: RequestID = {request.RequestId}, " +
-                    $"CN = {request.CommonName ?? "(none)"}, " +
-                    $"Disposition = {request.DispositionMessage ?? "(none)"}");
-
-                string requestid = "";
-                string serialNumber = "";
-                string notBefore = "";
-                string notAfter = "";
-                string certificateTemplate = "";
-                string publicKeyLength = "";
-                string publicKeyAlgorithm = "";
-                string base64Certificate = "";
-                string base64PublicKey = "";
-                string base64PublicKeyAlgorithmParameters = "";
-                string requestType = "";
-                string base64Request = "";
-                string disposition = "";
-                string dispositionMessage = "";
-                string requesterName = "";
-                string distinguishedName = "";
-                string requestCommonName = "";
-                string requestOrganization = "";
-                string requestOrganizationUnit = "";
-                string requestEMailAddress = "";
-                string requestCity = "";
-                string requestCountryRegion = "";
-                string requestState = "";
-                string issuedCommonName = "";
-                string issuedOrganization = "";
-                string issuedOrganizationUnit = "";
-                string issuedEMailAddress = "";
-                string issuedCity = "";
-                string issuedCountryRegion = "";
-                string issuedState = "";
-                string callerName = "";
-                string certificateHash = "";
-
-
-                try { requestid = certificate.RequestId.ToString(); }
+                try { certificateHash = certificate.CertificateHash.ToString(); }
                 catch { }
-                try { serialNumber = certificate.SerialNumber; }
-                catch { }
-                try { notBefore = certificate.NotBefore.ToString("yyyy-MM-dd hh:mm:ss"); }
-                catch { }
-                try { notAfter = certificate.NotAfter.ToString("yyyy-MM-dd hh:mm:ss"); }
-                catch { }
-                if (certificate.CertificateTemplate != null)
-                {
-                    try { certificateTemplate = certificate.CertificateTemplate.ToString(); }
-                    catch { }
-                }
+            }
 
-                if (certificate.CertificateHash != null)
-                {
-                    try { certificateHash = certificate.CertificateHash.ToString(); }
-                    catch { }
-                }
+            if (certificate.PublicKeyLength != null)
+            {
+                try { publicKeyLength = certificate.PublicKeyLength.ToString(); }
+                catch { }
+            }
 
-                if (certificate.PublicKeyLength != null)
-                {
-                    try { publicKeyLength = certificate.PublicKeyLength.ToString(); }
-                    catch { }
-                }
+            try { publicKeyAlgorithm = certificate.PublicKeyAlgorithm.ToString(); }
+            catch { }
+            try { base64Certificate = Convert.ToBase64String(certificate.RawCertificate, Base64FormattingOptions.None); }
+            catch { }
+            try { base64PublicKey = Convert.ToBase64String(certificate.RawPublicKey, Base64FormattingOptions.None); }
+            catch { }
+            try { base64PublicKeyAlgorithmParameters = Convert.ToBase64String(certificate.RawPublicKeyAlgorithmParameters, Base64FormattingOptions.None); }
+            catch { }
+            try { requestType = request.RequestType.ToString(); }
+            catch { }
+            try { base64Request = Convert.ToBase64String(request.RawRequest, Base64FormattingOptions.None); }
+            catch { }
+            try { disposition = request.Disposition.ToString(); }
+            catch { }
+            try { dispositionMessage = request.DispositionMessage; }
+            catch { }
+            try { requesterName = request.RequesterName; }
+            catch { }
+            try { distinguishedName = request.DistinguishedName; }
+            catch { }
+            try { requestCommonName = request.CommonName; }
+            catch { }
+            try { requestOrganization = request.Organization; }
+            catch { }
+            try { requestOrganizationUnit = request.OrgUnit; }
+            catch { }
+            try { requestEMailAddress = request.EMail; }
+            catch { }
+            try { requestCity = request.Locality; }
+            catch { }
+            try { requestCountryRegion = request.Country; }
+            catch { }
+            try { requestState = request.State; }
+            catch { }
+            try { issuedCommonName = certificate.CommonName; }
+            catch { }
+            try { issuedOrganization = certificate.Organization; }
+            catch { }
+            try { issuedOrganizationUnit = certificate.OrgUnit; }
+            catch { }
+            try { issuedEMailAddress = certificate.EMail; }
+            catch { }
+            try { issuedCity = certificate.Locality; }
+            catch { }
+            try { issuedCountryRegion = certificate.Country; }
+            catch { }
+            try { issuedState = certificate.State; }
+            catch { }
+            try { callerName = request.CallerName; }
+            catch { }
 
-                try { publicKeyAlgorithm = certificate.PublicKeyAlgorithm.ToString(); }
-                catch { }
-                try { base64Certificate = Convert.ToBase64String(certificate.RawCertificate, Base64FormattingOptions.None); }
-                catch { }
-                try { base64PublicKey = Convert.ToBase64String(certificate.RawPublicKey, Base64FormattingOptions.None); }
-                catch { }
-                try { base64PublicKeyAlgorithmParameters = Convert.ToBase64String(certificate.RawPublicKeyAlgorithmParameters, Base64FormattingOptions.None); }
-                catch { }
-                try { requestType = request.RequestType.ToString(); }
-                catch { }
-                try { base64Request = Convert.ToBase64String(request.RawRequest, Base64FormattingOptions.None); }
-                catch { }
-                try { disposition = request.Disposition.ToString(); }
-                catch { }
-                try { dispositionMessage = request.DispositionMessage; }
-                catch { }
-                try { requesterName = request.RequesterName; }
-                catch { }
-                try { distinguishedName = request.DistinguishedName; }
-                catch { }
-                try { requestCommonName = request.CommonName; }
-                catch { }
-                try { requestOrganization = request.Organization; }
-                catch { }
-                try { requestOrganizationUnit = request.OrgUnit; }
-                catch { }
-                try { requestEMailAddress = request.EMail; }
-                catch { }
-                try { requestCity = request.Locality; }
-                catch { }
-                try { requestCountryRegion = request.Country; }
-                catch { }
-                try { requestState = request.State; }
-                catch { }
-                try { issuedCommonName = certificate.CommonName; }
-                catch { }
-                try { issuedOrganization = certificate.Organization; }
-                catch { }
-                try { issuedOrganizationUnit = certificate.OrgUnit; }
-                catch { }
-                try { issuedEMailAddress = certificate.EMail; }
-                catch { }
-                try { issuedCity = certificate.Locality; }
-                catch { }
-                try { issuedCountryRegion = certificate.Country; }
-                catch { }
-                try { issuedState = certificate.State; }
-                catch { }
-                try { callerName = request.CallerName; }
-                catch { }
-
-                try
-                {
-                    String sql = $@"Update Entry set 
+            try
+            {
+                String sql = $@"Update Entry set 
                     Base64Request='{base64Request}',
                     Base64Certificate='{base64Certificate}',
                     SerialNumber='{serialNumber}',
@@ -731,60 +488,261 @@ namespace Certificate_Manager.Data.Services
                     '{publicKeyLength}','{publicKeyAlgorithm}','{requestCountryRegion}','{requestOrganization}',
                     '{requestOrganizationUnit}','{requestCommonName}','{requestCity}','{requestEMailAddress}')";
 
-                    using (SqlConnection connection = new SqlConnection(connectionString))
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    using (SqlCommand command = new SqlCommand(sql, connection))
                     {
-                        using (SqlCommand command = new SqlCommand(sql, connection))
+                        connection.Open();
+                        command.ExecuteNonQuery();
+                    }
+                    log?.Invoke("Update or Import successful");
+                }
+            }
+            catch (Exception e)
+            {
+                log?.Invoke(e.Message);
+            }
+        }
+
+        public void ParseRequest(CARequest request)
+        {
+            switch (request.RequestType)
+            {
+                case 263168: //CMC
+
+                    var cX509CertificateRequestCMC = new CERTENROLLLib.CX509CertificateRequestCmc();
+                    try
+                    {
+                        string base64request = Convert.ToBase64String(request.RawRequest, Base64FormattingOptions.None);
+                        cX509CertificateRequestCMC.InitializeDecode(
+                            base64request,
+                            CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64_ANY);
+                        var cX509CertificateRequestCMCtoPkcs10 = (IX509CertificateRequestPkcs10)cX509CertificateRequestCMC.GetInnerRequest(0);
+
+                        ParseRequestExtension(cX509CertificateRequestCMCtoPkcs10);
+
+                    }
+                    catch
+                    {
+
+                    }
+
+                    break;
+                case 262912: //PKCS7
+
+                    var cX509CertificateRequestPkcs7 = new CERTENROLLLib.CX509CertificateRequestPkcs7();
+                    try
+                    {
+                        string base64request = Convert.ToBase64String(request.RawRequest, Base64FormattingOptions.None);
+                        cX509CertificateRequestPkcs7.InitializeDecode(
+                            base64request,
+                            CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64_ANY);
+
+                        var cX509CertificateRequestPkcs7toPkcs10 = (IX509CertificateRequestPkcs10)cX509CertificateRequestPkcs7.GetInnerRequest(0);
+
+                        ParseRequestExtension(cX509CertificateRequestPkcs7toPkcs10);
+
+                    }
+                    catch
+                    {
+
+                    }
+
+                    break;
+                case 262400: //PKCS10
+
+                    var cX509CertificateRequestPkcs10 = new CERTENROLLLib.CX509CertificateRequestPkcs10();
+                    try
+                    {
+                        string base64request = Convert.ToBase64String(request.RawRequest, Base64FormattingOptions.None);
+                        cX509CertificateRequestPkcs10.InitializeDecode(
+                            base64request,
+                            CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64_ANY);
+
+                        ParseRequestExtension(cX509CertificateRequestPkcs10);
+
+                    }
+                    catch
+                    {
+
+                    }
+
+                    break;
+            }
+        }
+
+        public (List<CARequest> Requests, List<CACertificate> Certificates) ReadCADbEntries(string caConfig, Action<string> log = null)
+        {
+            var connectionString = LoadConnectionString();
+
+            var requests = new List<CARequest>();
+            var certificates = new List<CACertificate>();
+
+            ICertView certView = new CCertView();
+
+            certView.OpenConnection(caConfig);
+
+            certView.SetResultColumnCount(ResultColumns.Length);
+            foreach (string col in ResultColumns)
+            {
+                int colIndex = certView.GetColumnIndex(0, col);
+                certView.SetResultColumn(colIndex);
+            }
+
+            IEnumCERTVIEWROW enumRow = certView.OpenView();
+
+            int rowCount = 0;
+
+            while (enumRow.Next() != -1)
+            {
+                rowCount++;
+                var request = new CARequest();
+                var certificate = new CACertificate();
+                bool hasCertData = false;
+
+                IEnumCERTVIEWCOLUMN enumCol = enumRow.EnumCertViewColumn();
+
+                while (enumCol.Next() != -1)
+                {
+                    IntPtr variantNamePtr = Marshal.AllocHGlobal(2048);
+                    string colName = enumCol.GetName();
+                    try
+                    {
+
+                        int flags = BinaryColumns.Contains(colName) ? CV_OUT_BASE64 : CV_OUT_BASE64HEADER;
+                        object val = enumCol.GetValue(flags);
+                        if (val == null)
                         {
-                            connection.Open();
-                            command.ExecuteNonQuery();
+                            continue;
                         }
-                        log?.Invoke("Update or Import successful");
+                        else
+                        {
+                            switch (colName)
+                            {
+                                case "RequestID":
+                                    int id = Convert.ToInt32(val);
+                                    request.RequestId = id;
+                                    certificate.RequestId = id;
+                                    break;
+                                case "Request.RequesterName":
+                                    request.RequesterName = val.ToString();
+                                    break;
+                                case "Request.SubmittedWhen":
+                                    request.SubmittedWhen = (DateTime)val;
+                                    break;
+                                case "Request.ResolvedWhen":
+                                    request.ResolvedWhen = (DateTime)val;
+                                    break;
+                                case "Request.RawRequest":
+                                    request.RawRequest = Convert.FromBase64String(val.ToString());
+                                    break;
+                                case "Request.RequestType":
+                                    request.RequestType = Convert.ToInt32(val);
+                                    break;
+                                case "Request.StatusCode":
+                                    request.StatusCode = Convert.ToInt32(val);
+                                    break;
+                                case "Request.Disposition":
+                                    request.Disposition = Convert.ToInt32(val);
+                                    break;
+                                case "Request.DispositionMessage":
+                                    request.DispositionMessage = val.ToString();
+                                    break;
+                                case "Request.CallerName":
+                                    request.CallerName = val.ToString();
+                                    certificate.CallerName = val.ToString();
+                                    break;
+                                case "Request.DistinguishedName":
+                                    request.DistinguishedName = val.ToString();
+                                    break;
+                                case "Request.RequestAttributes":
+                                    request.RequestAttributes = val.ToString();
+                                    break;
+                                case "CommonName":
+                                    request.CommonName = val.ToString();
+                                    certificate.CommonName = val.ToString();
+                                    break;
+                                case "Organization":
+                                    request.Organization = val.ToString();
+                                    certificate.Organization = val.ToString();
+                                    break;
+                                case "OrgUnit":
+                                    request.OrgUnit = val.ToString();
+                                    certificate.OrgUnit = val.ToString();
+                                    break;
+                                case "EMail":
+                                    request.EMail = val.ToString();
+                                    certificate.EMail = val.ToString();
+                                    break;
+                                case "Locality":
+                                    request.Locality = val.ToString();
+                                    certificate.Locality = val.ToString();
+                                    break;
+                                case "Country":
+                                    request.Country = val.ToString();
+                                    certificate.Country = val.ToString();
+                                    break;
+                                case "State":
+                                    request.State = val.ToString();
+                                    certificate.State = val.ToString();
+                                    break;
+                                case "SerialNumber":
+                                    certificate.SerialNumber = val.ToString();
+                                    hasCertData = true;
+                                    break;
+                                case "NotBefore":
+                                    certificate.NotBefore = (DateTime)val;
+                                    break;
+                                case "NotAfter":
+                                    certificate.NotAfter = (DateTime)val;
+                                    break;
+                                case "CertificateHash":
+                                    certificate.CertificateHash = val.ToString();
+                                    break;
+                                case "CertificateTemplate":
+                                    certificate.CertificateTemplate = val.ToString();
+                                    break;
+                                case "RawCertificate":
+                                    byte[] certBytes = Convert.FromBase64String(val.ToString());
+                                    request.RawCertificate = certBytes;
+                                    certificate.RawCertificate = certBytes;
+                                    hasCertData = true;
+                                    break;
+                                case "PublicKeyLength":
+                                    certificate.PublicKeyLength = Convert.ToInt32(val);
+                                    break;
+                                case "PublicKeyAlgorithm":
+                                    certificate.PublicKeyAlgorithm = val.ToString();
+                                    break;
+                                case "Request.RevokedWhen":
+                                    certificate.RevocationDate = (DateTime)val;
+                                    break;
+                                case "Request.RevokedReason":
+                                    certificate.RevocationReason = val.ToString();
+                                    break;
+                            }
+                        }
+                    }
+                    catch
+                    {
+
                     }
                 }
-                catch (Exception e)
-                {
-                    log?.Invoke(e.Message);
-                }
 
+                requests.Add(request);
+                if (hasCertData)
+                    certificates.Add(certificate);
 
+                ParseRequest(request);
+                
+                log?.Invoke($"Processed {rowCount} rows — " +
+                    $"Last: RequestID = {request.RequestId}, " +
+                    $"CN = {request.CommonName ?? "(none)"}, " +
+                    $"Disposition = {request.DispositionMessage ?? "(none)"}");
 
-                foreach (string san in SubjectAlternativeNames)
-                {
-                    String sansql = $@"Update SAN set SubjectAlternativeName='{san}' 
-                    where RequestID='{requestid}' and CAConfig='{caConfig}' and SubjectAlternativeName='{san}'
-                    If @@ROWCOUNT=0 
-                    Insert into SAN (SubjectAlternativeName, RequestId, CAConfig) 
-                    VALUES ('{san}','{requestid}','{caConfig}')";
-
-                    using (SqlConnection connection = new SqlConnection(connectionString))
-                    {
-                        using (SqlCommand command = new SqlCommand(sansql, connection))
-                        {
-                            connection.Open();
-                            command.ExecuteNonQuery();
-                        }
-                        log?.Invoke($"SAN Update or Import successful");
-                    }
-                }
-
-                foreach (string eku in EKUs)
-                {
-                    String ekusql = $@"Update EKU set Name='{eku}' 
-                    where RequestID='{requestid}' and CAConfig='{caConfig}' and Name = '{eku}'
-                    If @@ROWCOUNT=0 
-                    Insert into EKU (Name, RequestId, CAConfig) 
-                    VALUES ('{eku}','{requestid}','{caConfig}')";
-
-                    using (SqlConnection connection = new SqlConnection(connectionString))
-                    {
-                        using (SqlCommand command = new SqlCommand(ekusql, connection))
-                        {
-                            connection.Open();
-                            command.ExecuteNonQuery();
-                        }
-                        log?.Invoke($"EKU Update or Import successful");
-                    }
-                }
+                UpdateOrInsertEntry(connectionString, caConfig, request, certificate, log);
+                UpdateOrInsertEKUs(connectionString, caConfig, request, certificate, log);
+                UpdateOrInsertSANs(connectionString, caConfig, request, certificate, log);
 
                 SubjectAlternativeNames = new List<string>();
                 EKUs = new List<string>();

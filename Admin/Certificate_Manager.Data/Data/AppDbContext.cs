@@ -1,3 +1,4 @@
+using Certificate_Manager.Data.Models;
 using Certificate_Manager.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -59,6 +60,8 @@ namespace Certificate_Manager.Data
         public DbSet<RevokedCert> RevokedCert { get; set; }
         public DbSet<Template> Template { get; set; }
         public DbSet<TemplateArchive> TemplatesArchiv { get; set; }
+
+        public DbSet<SignedScript> SignedScript { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

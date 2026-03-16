@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="Certificate_Manager.Pages.Signature.Sign"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Certificate_Manager.Pages.Signature"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid Padding="24" RowSpacing="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <TextBlock Text="Sign PowerShell Script"
+                   Style="{StaticResource TitleTextBlockStyle}"
+                   Grid.Row="0" />
+
+        <!-- Options row: signature type, store, certificate, signer -->
+        <StackPanel Orientation="Horizontal" Spacing="16" Grid.Row="1">
+            <ComboBox x:Name="SignatureTypeCombo"
+                      Header="Signature Type"
+                      Width="200"
+                      SelectedIndex="0">
+                <ComboBoxItem Content="Authenticode" Tag="Authenticode" />
+                <ComboBoxItem Content="CMS" Tag="CMS" />
+            </ComboBox>
+
+            <ComboBox x:Name="StoreLocationCombo"
+                      Header="Certificate Store"
+                      Width="180"
+                      SelectedIndex="0"
+                      SelectionChanged="StoreLocationCombo_SelectionChanged">
+                <ComboBoxItem Content="Current User" Tag="CurrentUser" />
+                <ComboBoxItem Content="Local Machine" Tag="LocalMachine" />
+            </ComboBox>
+
+            <ComboBox x:Name="CSCertificateCombo"
+                      Header="Code Signing Certificate"
+                      Width="500"
+                      PlaceholderText="Select a code signing certificate...">
+                <ComboBoxItem Content="Select certificate" Tag="SelectCertificate" />
+            </ComboBox>
+
+            <TextBox x:Name="SignerInput"
+                     Header="Signer"
+                     IsReadOnly="True"
+                     Width="250" />
+
+            <TextBox x:Name="TimestampServerInput"
+                     Header="Timestamp Server (optional)"
+                     PlaceholderText="e.g. http://timestamp.digicert.com"
+                     Width="300" />
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" Spacing="16" Grid.Row="2">
+            <TextBox x:Name="NotesInput"
+                     Header="Notes"
+                     PlaceholderText="Usage notes for this script..."
+                     Width="500"
+                     AcceptsReturn="True"
+                     TextWrapping="Wrap"
+                     Height="60" />
+
+            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Bottom">
+                <Button x:Name="UploadButton"
+                        Content="Upload Script File"
+                        Click="UploadButton_Click"
+                        Style="{StaticResource AccentButtonStyle}"
+                        Padding="24,8" />
+                <Button x:Name="SignButton"
+                        Content="Sign Script"
+                        Click="SignButton_Click"
+                        Style="{StaticResource AccentButtonStyle}"
+                        Padding="24,8" />
+                <Button x:Name="DownloadButton"
+                        Content="Download Signed Script"
+                        Click="DownloadButton_Click"
+                        IsEnabled="False"
+                        Padding="24,8" />
+                <Button x:Name="VerifyButton"
+                        Content="Verify Signature"
+                        Click="VerifyButton_Click"
+                        Padding="24,8" />
+            </StackPanel>
+        </StackPanel>
+
+        <!-- Script input and signed output -->
+        <Grid Grid.Row="3" ColumnSpacing="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <TextBox x:Name="ScriptInput"
+                     Grid.Column="0"
+                     Header="Script Content"
+                     PlaceholderText="Paste your PowerShell script here..."
+                     AcceptsReturn="True"
+                     TextWrapping="Wrap"
+                     IsSpellCheckEnabled="False"
+                     FontFamily="Consolas"
+                     FontSize="12"
+                     VerticalAlignment="Stretch"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto" />
+
+            <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel Spacing="12" Padding="0,0,8,0">
+                    <TextBlock Text="Signature Information"
+                               Style="{StaticResource SubtitleTextBlockStyle}" />
+
+                    <Grid ColumnSpacing="12" RowSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Text="Status:" FontWeight="SemiBold" Grid.Row="0" Grid.Column="0" />
+                        <TextBlock x:Name="SigStatus" Grid.Row="0" Grid.Column="1" TextWrapping="Wrap" />
+
+                        <TextBlock Text="Signature Type:" FontWeight="SemiBold" Grid.Row="1" Grid.Column="0" />
+                        <TextBlock x:Name="SigType" Grid.Row="1" Grid.Column="1" />
+
+                        <TextBlock Text="Hash Algorithm:" FontWeight="SemiBold" Grid.Row="2" Grid.Column="0" />
+                        <TextBlock x:Name="SigHashAlgorithm" Grid.Row="2" Grid.Column="1" />
+
+                        <TextBlock Text="Signer:" FontWeight="SemiBold" Grid.Row="3" Grid.Column="0" />
+                        <TextBlock x:Name="SigSigner" Grid.Row="3" Grid.Column="1" TextWrapping="Wrap" />
+
+                        <TextBlock Text="Issuer:" FontWeight="SemiBold" Grid.Row="4" Grid.Column="0" />
+                        <TextBlock x:Name="SigIssuer" Grid.Row="4" Grid.Column="1" TextWrapping="Wrap" />
+
+                        <TextBlock Text="Serial Number:" FontWeight="SemiBold" Grid.Row="5" Grid.Column="0" />
+                        <TextBlock x:Name="SigSerialNumber" Grid.Row="5" Grid.Column="1" />
+
+                        <TextBlock Text="Thumbprint:" FontWeight="SemiBold" Grid.Row="6" Grid.Column="0" />
+                        <TextBlock x:Name="SigThumbprint" Grid.Row="6" Grid.Column="1" />
+
+                        <TextBlock Text="Timestamp:" FontWeight="SemiBold" Grid.Row="7" Grid.Column="0" />
+                        <TextBlock x:Name="SigTimestamp" Grid.Row="7" Grid.Column="1" TextWrapping="Wrap" />
+
+                        <TextBlock Text="Status Message:" FontWeight="SemiBold" Grid.Row="8" Grid.Column="0" />
+                        <TextBlock x:Name="SigStatusMessage" Grid.Row="8" Grid.Column="1" TextWrapping="Wrap" />
+                    </Grid>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- Status bar -->
+        <InfoBar x:Name="StatusBar"
+                 Grid.Row="4"
+                 IsOpen="False"
+                 IsClosable="True" />
+    </Grid>
+</Page>

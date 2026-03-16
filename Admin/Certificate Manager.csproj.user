@@ -11,6 +11,9 @@
     <None Update="Package.appxmanifest">
       <SubType>Designer</SubType>
     </None>
+    <Page Update="Pages\Signature\Sign.xaml">
+      <SubType>Designer</SubType>
+    </Page>
     <Page Update="Pages\Request\New.xaml">
       <SubType>Designer</SubType>
     </Page>

@@ -43,6 +43,7 @@ namespace Certificate_Manager
                     "List_Certificates" => typeof(Certificate_Manager.Pages.Certificate.List),
                     "List_Requests" => typeof(Certificate_Manager.Pages.Request.List),
                     "New_Request" => typeof(Certificate_Manager.Pages.Request.New),
+                    "Sign_Script" => typeof(Certificate_Manager.Pages.Signature.Sign),
                     "Setup" => typeof(Certificate_Manager.Pages.Admin.Setup),
                     _ => typeof(Certificate_Manager.Pages.Certificate.List)
                 };

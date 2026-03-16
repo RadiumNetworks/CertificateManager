@@ -18,6 +18,7 @@
     <None Remove="Pages\Certificate\List.xaml" />
     <None Remove="Pages\Request\List.xaml" />
     <None Remove="Pages\Request\New.xaml" />
+    <None Remove="Pages\Signature\Sign.xaml" />
   </ItemGroup>
 
   <!-- Exclude the class library subfolder from compilation (it's a separate project) -->
@@ -53,6 +54,7 @@
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.WinUI.UI.Controls.DataGrid" Version="7.1.2" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.4" />
+    <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.5.5" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7705" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260209005" />
   </ItemGroup>
@@ -77,6 +79,11 @@
     <Reference Include="CERTENROLLLib">
       <HintPath>Certificate_Manager.Data\References\CERTENROLLLib.dll</HintPath>
     </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Pages\Signature\Sign.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Page Update="Pages\Request\New.xaml">
