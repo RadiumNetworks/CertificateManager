@@ -26,6 +26,7 @@ The Admin interface is shown below
 ![Header](./admin2.png)
 ![Header](./winui_listcertificates.png)
 ![Header](./signscript.png)
+![Header](./importcertificatetemplates.png.png)
 
 The used database has the following tables
 ![Header](./database.png)
