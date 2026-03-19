@@ -60,6 +60,8 @@ namespace Certificate_Manager.Data
         public DbSet<RevokedCert> RevokedCert { get; set; }
         public DbSet<Template> Template { get; set; }
         public DbSet<TemplateArchive> TemplatesArchiv { get; set; }
+        public DbSet<SQLLog> SQLLog { get; set; }
+
 
         public DbSet<SignedScript> SignedScript { get; set; }
 

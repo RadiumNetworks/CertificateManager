@@ -37,6 +37,6 @@ namespace Certificate_Manager.Models
         public string? pKIMaxIssuingDepth { get; set; } = string.Empty;
         public string? pKIOverlapPeriod { get; set; } = string.Empty;
         public string? ntSecurityDescriptor { get; set; } = string.Empty;
-
+        public DateTime? modifiedTimeStamp { get; set; }
     }
 }

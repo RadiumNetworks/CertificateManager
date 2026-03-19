@@ -1,20 +1,20 @@
+using Azure.Core;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
 namespace Certificate_Manager.Models
 {
+    [PrimaryKey(nameof(GUID), nameof(modifyTimeStamp))]
     public class Template
     {
-        [Key]
         [Required]
         public string GUID { get; set; } = string.Empty;
+        [Required]
+        public DateTime? modifyTimeStamp { get; set; }
 
         public string? CN { get; set; } = string.Empty;
-
         public string? DistinguishedName { get; set; } = string.Empty;
-
         public string? flags { get; set; } = string.Empty;
-
         public string? msPKICertificateApplicationPolicy { get; set; } = string.Empty;
         public string? msPKICertificateNameFlag { get; set; } = string.Empty;
         public string? msPKICertificatePolicy { get; set; } = string.Empty;
@@ -37,6 +37,7 @@ namespace Certificate_Manager.Models
         public string? pKIMaxIssuingDepth { get; set; } = string.Empty;
         public string? pKIOverlapPeriod { get; set; } = string.Empty;
         public string? ntSecurityDescriptor { get; set; } = string.Empty;
+
 
     }
 }

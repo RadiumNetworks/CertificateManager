@@ -1,5 +1,4 @@
 using Certificate_Manager.Data;
-using Certificate_Manager.Data.Migrations;
 using Certificate_Manager.Data.Models;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;

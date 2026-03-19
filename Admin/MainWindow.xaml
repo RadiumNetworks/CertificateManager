@@ -38,6 +38,11 @@
                     <SymbolIcon Symbol="Admin" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
+            <NavigationViewItem Content="Import Templates" Tag="Import_Templates" >
+                <NavigationViewItem.Icon>
+                    <SymbolIcon Symbol="Admin" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
             <NavigationViewItem Content="Setup" Tag="Setup" >
                 <NavigationViewItem.Icon>
                     <SymbolIcon Symbol="Admin" />

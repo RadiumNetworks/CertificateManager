@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="Certificate_Manager.Pages.Templates.Import"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Certificate_Manager.Pages.Templates"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid Padding="24" RowSpacing="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Manage Certificate Template"
+           Style="{StaticResource TitleTextBlockStyle}"
+           Grid.Row="0" />
+
+        <StackPanel Orientation="Horizontal" Spacing="12" Grid.Row="1">
+            <Button x:Name="ImportButton"
+            Content="Import Certificate Templates"
+            Click="ImportButton_Click"
+            Style="{StaticResource AccentButtonStyle}"
+            Padding="24,8" />
+
+            <ProgressRing x:Name="ImportProgressIndicator"
+                          IsActive="False"
+                          Width="24" Height="24"
+                          VerticalAlignment="Center" />
+        </StackPanel>
+
+        <TextBox x:Name="ImportLog"
+         Header="Import Log"
+         IsReadOnly="True"
+         AcceptsReturn="True"
+         TextWrapping="Wrap"
+         ScrollViewer.VerticalScrollBarVisibility="Auto"
+         PlaceholderText="Certificate Template output will appear here..."
+         Grid.Row="2" />
+    </Grid>
+</Page>

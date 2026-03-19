@@ -7,6 +7,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Certificate_Manager.Pages.Admin
@@ -115,14 +116,38 @@ namespace Certificate_Manager.Pages.Admin
 
         private void AppendLog(string message)
         {
+            if (!DispatcherQueue.HasThreadAccess)
+            {
+                var done = new ManualResetEventSlim(false);
+                DispatcherQueue.TryEnqueue(() =>
+                {
+                    AppendLog(message);
+                    done.Set();
+                });
+                done.Wait();
+                return;
+            }
             var timestamp = DateTime.Now.ToString("HH:mm:ss");
             MigrationLog.Text += $"[{timestamp}] {message}\n";
+            MigrationLog.Select(MigrationLog.Text.Length, 0);
         }
 
         private void AppendImportLog(string message)
         {
+            if (!DispatcherQueue.HasThreadAccess)
+            {
+                var done = new ManualResetEventSlim(false);
+                DispatcherQueue.TryEnqueue(() =>
+                {
+                    AppendImportLog(message);
+                    done.Set();
+                });
+                done.Wait();
+                return;
+            }
             var timestamp = DateTime.Now.ToString("HH:mm:ss");
             ImportLog.Text += $"[{timestamp}] {message}\n";
+            ImportLog.Select(ImportLog.Text.Length, 0);
         }
 
         private void ShowStatus(string message, InfoBarSeverity severity)
@@ -172,8 +197,7 @@ namespace Certificate_Manager.Pages.Admin
 
                 var svc = new CertificateAuthoritySvc();
                 var (requests, certificates) = await Task.Run(() =>
-                    svc.ReadCADbEntries(caConfig, msg =>
-                        DispatcherQueue.TryEnqueue(() => AppendImportLog(msg))));
+                    svc.ReadCADbEntries(caConfig, AppendImportLog));
 
                 AppendImportLog($"Read {requests.Count} requests and {certificates.Count} certificates.");
                 ShowStatus($"Successfully read {requests.Count} requests and {certificates.Count} certificates from CA database.", InfoBarSeverity.Success);
