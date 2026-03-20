@@ -4,8 +4,12 @@ using Certificate_Manager.Models;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Configuration;
+using Microsoft.UI;
+using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Documents;
+using Microsoft.UI.Xaml.Media;
 using System;
 using System.Collections.Generic;
 using System.DirectoryServices.ActiveDirectory;
@@ -16,6 +20,7 @@ using System.Runtime.ConstrainedExecution;
 using System.Security.AccessControl;
 using System.Security.Cryptography;
 using System.Security.Principal;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web.Services.Description;
@@ -34,6 +39,57 @@ namespace Certificate_Manager.Pages.Templates
         public static string _configurationNamingContext { get; set; }
         public static string _schemaNamingContext { get; set; }
 
+        //https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-crtd/1192823c-d839-4bc3-9b6b-fa8c53507ae1
+        public static long _CT_FLAG_ENROLLEE_SUPPLIES_SUBJECT { get; set; } = 0x1;
+        public static long _CT_FLAG_ENROLLEE_SUPPLIES_SUBJECT_ALT_NAME { get; set; } = 0x10000;
+        public static long _CT_FLAG_SUBJECT_ALT_REQUIRE_DOMAIN_DNS { get; set; } = 0x40000;
+        public static long _CT_FLAG_SUBJECT_ALT_REQUIRE_SPN { get; set; } = 0x80000;
+        public static long _CT_FLAG_SUBJECT_ALT_REQUIRE_DIRECTORY_GUID { get; set; } = 0x1000000;
+        public static long _CT_FLAG_SUBJECT_ALT_REQUIRE_UPN { get; set; } = 0x2000000;
+        public static long _CT_FLAG_SUBJECT_ALT_REQUIRE_EMAIL { get; set; } = 0x4000000;
+        public static long _CT_FLAG_SUBJECT_ALT_REQUIRE_DNS { get; set; } = 0x8000000;
+        public static long _CT_FLAG_SUBJECT_REQUIRE_DNS_AS_CN { get; set; } = 0x10000000;
+        public static long _CT_FLAG_SUBJECT_REQUIRE_EMAIL { get; set; } = 0x20000000;
+        public static long _CT_FLAG_SUBJECT_REQUIRE_COMMON_NAME { get; set; } = 0x40000000;
+        public static long _CT_FLAG_SUBJECT_REQUIRE_DIRECTORY_PATH { get; set; } = 0x80000000;
+        public static long _CT_FLAG_OLD_CERT_SUPPLIES_SUBJECT_AND_ALT_NAME { get; set; } = 0x8;
+
+        //https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-crtd/ec71fd43-61c2-407b-83c9-b52272dec8a1
+        public static long _CT_FLAG_INCLUDE_SYMMETRIC_ALGORITHMS { get; set; } = 0x1;
+        public static long _CT_FLAG_PEND_ALL_REQUESTS { get; set; } = 0x2;
+        public static long _CT_FLAG_PUBLISH_TO_KRA_CONTAINER { get; set; } = 0x4;
+        public static long _CT_FLAG_PUBLISH_TO_DS { get; set; } = 0x8;
+        public static long _CT_FLAG_AUTO_ENROLLMENT_CHECK_USER_DS_CERTIFICATE { get; set; } = 0x10;
+        public static long _CT_FLAG_AUTO_ENROLLMENT { get; set; } = 0x20;
+        public static long _CT_FLAG_PREVIOUS_APPROVAL_VALIDATE_REENROLLMENT { get; set; } = 0x40;
+        public static long _CT_FLAG_USER_INTERACTION_REQUIRED { get; set; } = 0x100;
+        public static long _CT_FLAG_REMOVE_INVALID_CERTIFICATE_FROM_PERSONAL_STORE { get; set; } = 0x400;
+        public static long _CT_FLAG_ALLOW_ENROLL_ON_BEHALF_OF { get; set; } = 0x800;
+        public static long _CT_FLAG_ADD_OCSP_NOCHECK { get; set; } = 0x1000;
+        public static long _CT_FLAG_ENABLE_KEY_REUSE_ON_NT_TOKEN_KEYSET_STORAGE_FULL { get; set; } = 0x2000;
+        public static long _CT_FLAG_NOREVOCATIONINFOINISSUEDCERTS { get; set; } = 0x4000;
+        public static long _CT_FLAG_INCLUDE_BASIC_CONSTRAINTS_FOR_EE_CERTS { get; set; } = 0x8000;
+        public static long _CT_FLAG_ALLOW_PREVIOUS_APPROVAL_KEYBASEDRENEWAL_VALIDATE_REENROLLMENT { get; set; } = 0x10000;
+        public static long _CT_FLAG_ISSUANCE_POLICIES_FROM_REQUEST { get; set; } = 0x20000;
+        public static long _CT_FLAG_SKIP_AUTO_RENEWAL { get; set; } = 0x40000;
+        public static long _CT_FLAG_NO_SECURITY_EXTENSION { get; set; } = 0x80000;
+
+        //https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-crtd/f6122d87-b999-4b92-bff8-f465e8949667
+        public static long _CT_FLAG_REQUIRE_PRIVATE_KEY_ARCHIVAL { get; set; } = 0x1;
+        public static long _CT_FLAG_EXPORTABLE_KEY { get; set; } = 0x10;
+        public static long _CT_FLAG_STRONG_KEY_PROTECTION_REQUIRED { get; set; } = 0x20;
+        public static long _CT_FLAG_REQUIRE_ALTERNATE_SIGNATURE_ALGORITHM { get; set; } = 0x40;
+        public static long _CT_FLAG_REQUIRE_SAME_KEY_RENEWAL { get; set; } = 0x80;
+        public static long _CT_FLAG_USE_LEGACY_PROVIDER { get; set; } = 0x100;
+        public static long _CT_FLAG_ATTEST_NONE { get; set; } = 0;
+        public static long _CT_FLAG_ATTEST_REQUIRED { get; set; } = 0x2000;
+        public static long _CT_FLAG_ATTEST_PREFERRED { get; set; } = 0x1000;
+        public static long _CT_FLAG_ATTESTATION_WITHOUT_POLICY { get; set; } = 0x4000;
+        public static long _CT_FLAG_EK_TRUST_ON_USE { get; set; } = 0x200;
+        public static long _CT_FLAG_EK_VALIDATE_CERT { get; set; } = 0x400;
+        public static long _CT_FLAG_EK_VALIDATE_KEY { get; set; } = 0x800;
+        public static long _CT_FLAG_HELLO_LOGON_KEY { get; set; } = 0x200000;
+
         private void AppendImportLog(string message)
         {
             if (!DispatcherQueue.HasThreadAccess)
@@ -47,17 +103,39 @@ namespace Certificate_Manager.Pages.Templates
                 done.Wait();
                 return;
             }
+
+            var paragraph = new Paragraph();
+
             var timestamp = DateTime.Now.ToString("HH:mm:ss");
             if (message.Length == 0)
             {
-                ImportLog.Text += $" \n";
+                paragraph.Inlines.Add(new Run { Text = " " });
             }
             else
             {
-                ImportLog.Text += $"[{timestamp}] {message}\n";
+                var run = new Run();
+                switch (message)
+                {
+                    case var _ when message.Contains("Write") || message.Contains("Delete"):
+                        run = new Run { Text = $"[{timestamp}] {message}" };
+                        run.Foreground = new SolidColorBrush(Colors.Red);
+                        paragraph.Inlines.Add(run);
+                        break;
+                    case var _ when message.Contains("Unsecure"):
+                        run = new Run { Text = $"[{timestamp}] {message}" };
+                        run.FontWeight = FontWeights.SemiBold;
+                        run.Foreground = new SolidColorBrush(Colors.Red);
+                        paragraph.Inlines.Add(run);
+                        break;
+                    default:
+                        paragraph.Inlines.Add(new Run { Text = $"[{timestamp}] {message}" });
+                        break;
+                }
+                
             }
-            ImportLog.Select(ImportLog.Text.Length, 0);
-
+            ImportLog.Blocks.Add(paragraph);
+            ImportLogScroller.UpdateLayout();
+            ImportLogScroller.ChangeView(null, ImportLogScroller.ScrollableHeight, null, true);
         }
 
         public Import()
@@ -264,9 +342,8 @@ namespace Certificate_Manager.Pages.Templates
         {
             NewADConnection();
             GetADConfig();
-            int port = 3268;
+            int port = 389;
             NewADConnection(port);
-            _ldapConnection.SessionOptions.ReferralChasing = ReferralChasingOptions.All;
 
             string searchRoot = $"CN=Public Key Services,CN=Services,{_configurationNamingContext}";
             string ldapFilter = "(objectclass=pKICertificateTemplate)";
@@ -325,7 +402,7 @@ namespace Certificate_Manager.Pages.Templates
                         {
 
                             cn = entry.Attributes["cn"][0].ToString();
-                            AppendImportLog($"Certificate Template {cn}");
+                            AppendImportLog($"[Certificate Template] {cn}");
                         }
                         if (entry.Attributes["distinguishedName"] != null)
                         {
@@ -337,12 +414,115 @@ namespace Certificate_Manager.Pages.Templates
                         }
                         if (entry.Attributes["msPKI-Certificate-Application-Policy"] != null)
                         {
-                            msPKI_Certificate_Application_Policy = entry.Attributes["msPKI-Certificate-Application-Policy"][0].ToString();
+                            for (int i = 0; i < entry.Attributes["msPKI-Certificate-Application-Policy"].Count; i++)
+                            {
+                                string apppol = "";
+                                switch (entry.Attributes["msPKI-Certificate-Application-Policy"][i].ToString())
+                                {
+                                    case "1.3.6.1.5.5.7.3.1":
+                                        apppol = "Server Authentication";
+                                        break;
+                                    case "1.3.6.1.5.5.7.3.2":
+                                        apppol = "Client Authentication";
+                                        break;
+                                    case "1.3.6.1.5.5.7.3.3":
+                                        apppol = "Code Signing";
+                                        break;
+                                    case "1.3.6.1.5.5.7.3.4":
+                                        apppol = "Secure E-mail";
+                                        break;
+                                    case "1.3.6.1.5.5.7.3.9":
+                                        apppol = "OCSP Signing";
+                                        break;
+                                    case "1.3.6.1.4.1.311.20.2.2":
+                                        apppol = "Smartcard Logon";
+                                        break;
+                                    case "1.3.6.1.4.1.311.10.3.1":
+                                        apppol = "Microsoft Trust List Signing";
+                                        break;
+                                    case "1.3.6.1.4.1.311.10.3.4":
+                                        apppol = "Encrypting file system";
+                                        break;
+                                    case "1.3.6.1.5.2.3.5":
+                                        apppol = "KDC Authentication";
+                                        break;
+                                    case "1.3.6.1.5.5.8.2.2":
+                                        apppol = "IP Security IKE Intermediate";
+                                        break;
+                                    default:
+                                        apppol = entry.Attributes["msPKI-Certificate-Application-Policy"][i].ToString();
+                                        break;
+
+                                }
+                                if (msPKI_Certificate_Application_Policy.Length == 0)
+                                {
+                                    msPKI_Certificate_Application_Policy = apppol;
+                                }
+                                else
+                                {
+                                    msPKI_Certificate_Application_Policy += "; " + apppol;
+                                }
+                            }
                         }
                         if (entry.Attributes["msPKI-Certificate-Name-Flag"] != null)
                         {
-                            msPKI_Certificate_Name_Flag = entry.Attributes["msPKI-Certificate-Name-Flag"][0].ToString();
+                            var msPKICertificateNameFlag = long.Parse(entry.Attributes["msPKI-Certificate-Name-Flag"][0].ToString());
+
+                            if ((msPKICertificateNameFlag & _CT_FLAG_ENROLLEE_SUPPLIES_SUBJECT) != 0)
+                            {
+                                msPKI_Certificate_Name_Flag += "ENROLLEE_SUPPLIES_SUBJECT ";
+                            }
+                            if ((msPKICertificateNameFlag & _CT_FLAG_ENROLLEE_SUPPLIES_SUBJECT_ALT_NAME) != 0)
+                            {
+                                msPKI_Certificate_Name_Flag += "ENROLLEE_SUPPLIES_SAN ";
+                            }
+                            if ((msPKICertificateNameFlag & _CT_FLAG_SUBJECT_ALT_REQUIRE_DOMAIN_DNS) != 0)
+                            {
+                                msPKI_Certificate_Name_Flag += "SAN_DOMAIN_DNS ";
+                            }
+                            if ((msPKICertificateNameFlag & _CT_FLAG_SUBJECT_ALT_REQUIRE_SPN) != 0)
+                            {
+                                msPKI_Certificate_Name_Flag += "SAN_SPN ";
+                            }
+                            if ((msPKICertificateNameFlag & _CT_FLAG_SUBJECT_ALT_REQUIRE_DIRECTORY_GUID) != 0)
+                            {
+                                msPKI_Certificate_Name_Flag += "SAN_DIRECTORY_GUID ";
+                            }
+                            if ((msPKICertificateNameFlag & _CT_FLAG_SUBJECT_ALT_REQUIRE_UPN) != 0)
+                            {
+                                msPKI_Certificate_Name_Flag += "SAN_UPN ";
+                            }
+                            if ((msPKICertificateNameFlag & _CT_FLAG_SUBJECT_ALT_REQUIRE_EMAIL) != 0)
+                            {
+                                msPKI_Certificate_Name_Flag += "SAN_EMAIL ";
+                            }
+                            if ((msPKICertificateNameFlag & _CT_FLAG_SUBJECT_ALT_REQUIRE_DNS) != 0)
+                            {
+                                msPKI_Certificate_Name_Flag += "SAN_DNS ";
+                            }
+                            if ((msPKICertificateNameFlag & _CT_FLAG_SUBJECT_REQUIRE_DNS_AS_CN) != 0)
+                            {
+                                msPKI_Certificate_Name_Flag += "SUBJECT_DNS_AS_CN ";
+                            }
+                            if ((msPKICertificateNameFlag & _CT_FLAG_SUBJECT_REQUIRE_EMAIL) != 0)
+                            {
+                                msPKI_Certificate_Name_Flag += "SUBJECT_EMAIL ";
+                            }
+                            if ((msPKICertificateNameFlag & _CT_FLAG_SUBJECT_REQUIRE_COMMON_NAME) != 0)
+                            {
+                                msPKI_Certificate_Name_Flag += "SUBJECT_COMMON_NAME ";
+                            }
+                            if ((msPKICertificateNameFlag & _CT_FLAG_SUBJECT_REQUIRE_DIRECTORY_PATH) != 0)
+                            {
+                                msPKI_Certificate_Name_Flag += "SUBJECT_DIRECTORY_PATH ";
+                            }
+                            if ((msPKICertificateNameFlag & _CT_FLAG_OLD_CERT_SUPPLIES_SUBJECT_AND_ALT_NAME) != 0)
+                            {
+                                msPKI_Certificate_Name_Flag += "OLD_CERT_SUPPLIES_SUBJECT_AND_ALT_NAME ";
+                            }
+                            msPKI_Certificate_Name_Flag = msPKI_Certificate_Name_Flag.Trim().Replace(" ", "; ");
                         }
+                        AppendImportLog($" [Subject and SAN] {msPKI_Certificate_Name_Flag}");
 
                         if (entry.Attributes["msPKI-Certificate-Policy"] != null)
                         {
@@ -354,8 +534,88 @@ namespace Certificate_Manager.Pages.Templates
                         }
                         if (entry.Attributes["msPKI-Enrollment-Flag"] != null)
                         {
-                            msPKI_Enrollment_Flag = entry.Attributes["msPKI-Enrollment-Flag"][0].ToString();
+                            var msPKIEnrollmentFlag = long.Parse(entry.Attributes["msPKI-Enrollment-Flag"][0].ToString());
+                            if((msPKIEnrollmentFlag & _CT_FLAG_INCLUDE_SYMMETRIC_ALGORITHMS) != 0)
+                            {
+                                msPKI_Enrollment_Flag += "INCLUDE_SYMMETRIC_ALGORITHMS ";
+                            }
+                            if ((msPKIEnrollmentFlag & _CT_FLAG_PEND_ALL_REQUESTS) != 0)
+                            {
+                                msPKI_Enrollment_Flag += "PEND_ALL_REQUESTS ";
+                            }
+                            if ((msPKIEnrollmentFlag & _CT_FLAG_PUBLISH_TO_KRA_CONTAINER) != 0)
+                            {
+                                msPKI_Enrollment_Flag += "PUBLISH_TO_KRA_CONTAINER ";
+                            }
+                            if ((msPKIEnrollmentFlag & _CT_FLAG_PUBLISH_TO_DS) != 0)
+                            {
+                                msPKI_Enrollment_Flag += "PUBLISH_TO_DS ";
+                            }
+                            if ((msPKIEnrollmentFlag & _CT_FLAG_AUTO_ENROLLMENT_CHECK_USER_DS_CERTIFICATE) != 0)
+                            {
+                                msPKI_Enrollment_Flag += "AUTO_ENROLLMENT_CHECK_USER_DS_CERTIFICATE ";
+                            }
+                            if ((msPKIEnrollmentFlag & _CT_FLAG_AUTO_ENROLLMENT) != 0)
+                            {
+                                msPKI_Enrollment_Flag += "AUTO_ENROLLMENT ";
+                            }
+                            if ((msPKIEnrollmentFlag & _CT_FLAG_PREVIOUS_APPROVAL_VALIDATE_REENROLLMENT) != 0)
+                            {
+                                msPKI_Enrollment_Flag += "PREVIOUS_APPROVAL_VALIDATE_REENROLLMENT ";
+                            }
+                            if ((msPKIEnrollmentFlag & _CT_FLAG_USER_INTERACTION_REQUIRED) != 0)
+                            {
+                                msPKI_Enrollment_Flag += "USER_INTERACTION_REQUIRED ";
+                            }
+                            if ((msPKIEnrollmentFlag & _CT_FLAG_REMOVE_INVALID_CERTIFICATE_FROM_PERSONAL_STORE) != 0)
+                            {
+                                msPKI_Enrollment_Flag += "REMOVE_INVALID_CERTIFICATE_FROM_PERSONAL_STORE ";
+                            }
+                            if ((msPKIEnrollmentFlag & _CT_FLAG_ALLOW_ENROLL_ON_BEHALF_OF) != 0)
+                            {
+                                msPKI_Enrollment_Flag += "ALLOW_ENROLL_ON_BEHALF_OF ";
+                            }
+                            if ((msPKIEnrollmentFlag & _CT_FLAG_ADD_OCSP_NOCHECK) != 0)
+                            {
+                                msPKI_Enrollment_Flag += "ADD_OCSP_NOCHECK ";
+                            }
+                            if ((msPKIEnrollmentFlag & _CT_FLAG_ENABLE_KEY_REUSE_ON_NT_TOKEN_KEYSET_STORAGE_FULL) != 0)
+                            {
+                                msPKI_Enrollment_Flag += "ENABLE_KEY_REUSE_ON_NT_TOKEN_KEYSET_STORAGE_FULL ";
+                            }
+                            if ((msPKIEnrollmentFlag & _CT_FLAG_NOREVOCATIONINFOINISSUEDCERTS) != 0)
+                            {
+                                msPKI_Enrollment_Flag += "NOREVOCATIONINFOINISSUEDCERTS ";
+                            }
+                            if ((msPKIEnrollmentFlag & _CT_FLAG_INCLUDE_BASIC_CONSTRAINTS_FOR_EE_CERTS) != 0)
+                            {
+                                msPKI_Enrollment_Flag += "INCLUDE_BASIC_CONSTRAINTS_FOR_EE_CERTS ";
+                            }
+                            if ((msPKIEnrollmentFlag & _CT_FLAG_ALLOW_PREVIOUS_APPROVAL_KEYBASEDRENEWAL_VALIDATE_REENROLLMENT) != 0)
+                            {
+                                msPKI_Enrollment_Flag += "ALLOW_PREVIOUS_APPROVAL_KEYBASEDRENEWAL_VALIDATE_REENROLLMENT ";
+                            }
+                            if ((msPKIEnrollmentFlag & _CT_FLAG_ISSUANCE_POLICIES_FROM_REQUEST) != 0)
+                            {
+                                msPKI_Enrollment_Flag += "ISSUANCE_POLICIES_FROM_REQUEST ";
+                            }
+                            if ((msPKIEnrollmentFlag & _CT_FLAG_SKIP_AUTO_RENEWAL) != 0)
+                            {
+                                msPKI_Enrollment_Flag += "SKIP_AUTO_RENEWAL ";
+                            }
+                            if ((msPKIEnrollmentFlag & _CT_FLAG_NO_SECURITY_EXTENSION) != 0)
+                            {
+                                msPKI_Enrollment_Flag += "NO_SECURITY_EXTENSION ";
+                            }
+                            msPKI_Enrollment_Flag = msPKI_Enrollment_Flag.Trim().Replace(" ", "; ");
                         }
+                        AppendImportLog($" [Enrollment Flags] {msPKI_Enrollment_Flag}");
+
+                        if(msPKI_Certificate_Name_Flag.Contains("ENROLLEE_SUPPLIES_SUBJECT") && !msPKI_Enrollment_Flag.Contains("PEND_ALL_REQUESTS"))
+                        {
+                            AppendImportLog($" [Unsecure configuration] Template includes Enrollee supplies subject and does not require issuance authorization");
+                        }
+
                         if (entry.Attributes["msPKI-Minimal-Key-Size"] != null)
                         {
                             msPKI_Minimal_Key_Size = entry.Attributes["msPKI-Minimal-Key-Size"][0].ToString();
@@ -363,7 +623,66 @@ namespace Certificate_Manager.Pages.Templates
 
                         if (entry.Attributes["msPKI-Private-Key-Flag"] != null)
                         {
-                            msPKI_Private_Key_Flag = entry.Attributes["msPKI-Private-Key-Flag"][0].ToString();
+                            var msPKIPrivateKeyFlag = long.Parse(entry.Attributes["msPKI-Private-Key-Flag"][0].ToString());
+                            msPKI_Private_Key_Flag += entry.Attributes["msPKI-Private-Key-Flag"][0].ToString() + ": ";
+                            if ((msPKIPrivateKeyFlag & _CT_FLAG_REQUIRE_PRIVATE_KEY_ARCHIVAL) != 0)
+                            {
+                                msPKI_Private_Key_Flag += "PRIVATE_KEY_ARCHIVAL ";
+                            }
+                            if ((msPKIPrivateKeyFlag & _CT_FLAG_EXPORTABLE_KEY) != 0)
+                            {
+                                msPKI_Private_Key_Flag += "EXPORTABLE_KEY ";
+                            }
+                            if ((msPKIPrivateKeyFlag & _CT_FLAG_STRONG_KEY_PROTECTION_REQUIRED) != 0)
+                            {
+                                msPKI_Private_Key_Flag += "STRONG_KEY_PROTECTION_REQUIRED ";
+                            }
+                            if ((msPKIPrivateKeyFlag & _CT_FLAG_REQUIRE_ALTERNATE_SIGNATURE_ALGORITHM) != 0)
+                            {
+                                msPKI_Private_Key_Flag += "ALTERNATE_SIGNATURE_ALGORITHM ";
+                            }
+                            if ((msPKIPrivateKeyFlag & _CT_FLAG_REQUIRE_SAME_KEY_RENEWAL) != 0)
+                            {
+                                msPKI_Private_Key_Flag += "SAME_KEY_RENEWAL ";
+                            }
+                            if ((msPKIPrivateKeyFlag & _CT_FLAG_USE_LEGACY_PROVIDER) != 0)
+                            {
+                                msPKI_Private_Key_Flag += "USE_LEGACY_PROVIDER ";
+                            }
+                            if ((msPKIPrivateKeyFlag & _CT_FLAG_ATTEST_NONE) != 0)
+                            {
+                                msPKI_Private_Key_Flag += "ATTEST_NONE ";
+                            }
+                            if ((msPKIPrivateKeyFlag & _CT_FLAG_ATTEST_REQUIRED) != 0)
+                            {
+                                msPKI_Private_Key_Flag += "ATTEST_REQUIRED ";
+                            }
+                            if ((msPKIPrivateKeyFlag & _CT_FLAG_ATTEST_PREFERRED) != 0)
+                            {
+                                msPKI_Private_Key_Flag += "ATTEST_PREFERRED ";
+                            }
+                            if ((msPKIPrivateKeyFlag & _CT_FLAG_ATTESTATION_WITHOUT_POLICY) != 0)
+                            {
+                                msPKI_Private_Key_Flag += "ATTESTATION_WITHOUT_POLICY ";
+                            }
+                            if ((msPKIPrivateKeyFlag & _CT_FLAG_EK_TRUST_ON_USE) != 0)
+                            {
+                                msPKI_Private_Key_Flag += "EK_TRUST_ON_USE ";
+                            }
+                            if ((msPKIPrivateKeyFlag & _CT_FLAG_EK_VALIDATE_CERT) != 0)
+                            {
+                                msPKI_Private_Key_Flag += "EK_VALIDATE_CERT ";
+                            }
+                            if ((msPKIPrivateKeyFlag & _CT_FLAG_EK_VALIDATE_KEY) != 0)
+                            {
+                                msPKI_Private_Key_Flag += "EK_VALIDATE_KEY ";
+                            }
+                            if ((msPKIPrivateKeyFlag & _CT_FLAG_HELLO_LOGON_KEY) != 0)
+                            {
+                                msPKI_Private_Key_Flag += "HELLO_LOGON_KEY ";
+                            }
+
+                            msPKI_Private_Key_Flag = msPKI_Private_Key_Flag.Trim().Replace(" ", "; ");
                         }
                         if (entry.Attributes["msPKI-RA-Application-Policies"] != null)
                         {
@@ -469,10 +788,8 @@ namespace Certificate_Manager.Pages.Templates
                                     pKIExtendedKeyUsage += "; " + eku;
                                 }
 
-                                
-
                             }
-                            AppendImportLog($" ExtendedKeyUsage {pKIExtendedKeyUsage}");
+                            AppendImportLog($" [ExtendedKeyUsage] {pKIExtendedKeyUsage}");
                         }
 
                         if (entry.Attributes["pKIKeyUsage"] != null)

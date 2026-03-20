@@ -32,13 +32,20 @@
                           VerticalAlignment="Center" />
         </StackPanel>
 
-        <TextBox x:Name="ImportLog"
-         Header="Import Log"
-         IsReadOnly="True"
-         AcceptsReturn="True"
-         TextWrapping="Wrap"
-         ScrollViewer.VerticalScrollBarVisibility="Auto"
-         PlaceholderText="Certificate Template output will appear here..."
-         Grid.Row="2" />
+        <Grid Grid.Row="2" RowSpacing="4">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <TextBlock Text="Import Log" Style="{StaticResource BodyStrongTextBlockStyle}" Grid.Row="0" />
+            <ScrollViewer x:Name="ImportLogScroller"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled"
+                          Grid.Row="1">
+                <RichTextBlock x:Name="ImportLog"
+                               TextWrapping="Wrap"
+                               IsTextSelectionEnabled="True" />
+            </ScrollViewer>
+        </Grid>
     </Grid>
 </Page>

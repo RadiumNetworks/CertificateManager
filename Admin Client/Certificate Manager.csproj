@@ -19,6 +19,7 @@
     <None Remove="Pages\Request\List.xaml" />
     <None Remove="Pages\Request\New.xaml" />
     <None Remove="Pages\Signature\Sign.xaml" />
+    <None Remove="Pages\Statistics\Overview.xaml" />
     <None Remove="Pages\Templates\Import.xaml" />
   </ItemGroup>
 
@@ -80,6 +81,11 @@
     <Reference Include="CERTENROLLLib">
       <HintPath>Certificate_Manager.Data\References\CERTENROLLLib.dll</HintPath>
     </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Pages\Statistics\Overview.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Page Update="Pages\Templates\Import.xaml">

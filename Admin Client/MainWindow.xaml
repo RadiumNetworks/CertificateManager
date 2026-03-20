@@ -43,6 +43,11 @@
                     <SymbolIcon Symbol="Admin" />
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
+            <NavigationViewItem Content="Statistics" Tag="Statistics" >
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE9D9;"/>
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
             <NavigationViewItem Content="Setup" Tag="Setup" >
                 <NavigationViewItem.Icon>
                     <SymbolIcon Symbol="Admin" />
