@@ -1,4 +1,5 @@
 ﻿@page "/certificates/revoke"
+@rendermode InteractiveServer
 
 @using CertificateManager.Services
 @using CertificateManager.Models
@@ -7,3 +8,169 @@
 <PageTitle>Revoke certificate</PageTitle>
 
 <h3>Revoke certificate</h3>
+
+
+@if (_entry == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <EditForm Model="@_entry" OnSubmit="HandleRevoke">
+        <table>
+            <tr>
+                <td><label>RequestId</label></td>
+                <td><InputNumber @bind-Value="@_entry.RequestId" readonly="readonly"></InputNumber></td>
+            </tr>
+            <tr>
+                <td><label>CAConfig</label></td>
+                <td><InputText @bind-Value="@_entry.CAConfig" readonly="readonly"></InputText></td>
+            </tr>
+            <tr>
+                <td><label>Serial Number</label></td>
+                <td><InputText @bind-Value="@_entry.SerialNumber" readonly="readonly"></InputText></td>
+            </tr>
+            <tr>
+                <td><label>Requester Information</label></td>
+                <td>
+                    @if (!string.IsNullOrWhiteSpace(_entry.RequestCommonName))
+                    {
+                        <p style="display:inline">CN=@_entry.RequestCommonName<br /></p>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(_entry.RequestCountryRegion))
+                    {
+                        <p style="display:inline">C=@_entry.RequestCountryRegion<br /></p>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(_entry.RequestCity))
+                    {
+                        <p style="display:inline">L=@_entry.RequestCity<br /></p>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(_entry.RequestOrganization))
+                    {
+                        <p style="display:inline">O=@_entry.RequestOrganization<br /></p>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(_entry.RequestOrganizationUnit))
+                    {
+                        <p style="display:inline">OU=@_entry.RequestOrganizationUnit<br /></p>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(_entry.RequestEmailAddress))
+                    {
+                        <p style="display:inline">E=@_entry.RequestEmailAddress<br /></p>
+                    }
+                </td>
+            </tr>
+            <tr>
+                <td><label>Subject Alternative Names</label></td>
+                <td>
+                    @if (_entry.SAN != null)
+                    {
+                        @foreach (var san in _entry.SAN)
+                        {
+                            <p style="display:inline">@san.SubjectAlternativeName<br /></p>
+                        }
+                    }
+                </td>
+            </tr>
+            <tr>
+                <td><label>Enhanced Key Usages</label></td>
+                <td>
+                    @if (_entry.EKU != null)
+                    {
+                        @foreach (var eku in _entry.EKU)
+                        {
+                            <p style="display:inline">@eku.Name<br /></p>
+                        }
+                    }
+                </td>
+            </tr>
+            <tr>
+                <td><label>Requestor</label></td>
+                <td><InputText @bind-Value="@_entry.RequesterName" readonly="readonly"></InputText></td>
+            </tr>
+            <tr>
+                <td><label>Revocation Reason</label></td>
+                <td>
+                    <InputSelect @bind-Value="@_selectedReason">
+                        @foreach (var option in _revocationReasons)
+                        {
+                            <option value="@option.Value">@option.Text</option>
+                        }
+                    </InputSelect>
+                </td>
+            </tr>
+            <tr>
+                <td><label>Revocation Date</label></td>
+                <td>
+                    <InputCheckbox @bind-Value="@_useCustomDate"></InputCheckbox>
+                    <label> Use custom date</label>
+                    @if (_useCustomDate)
+                    {
+                        <br />
+                        <InputDate @bind-Value="@_revocationDate" Type="InputDateType.DateTimeLocal"></InputDate>
+                    }
+                </td>
+            </tr>
+        </table>
+        <br />
+        <button type="submit" class="btn-primary" disabled="@_submitted">Revoke Certificate</button>
+    </EditForm>
+
+    @if (!string.IsNullOrEmpty(_statusMessage))
+    {
+        <br />
+        <div class="@_statusCss">@_statusMessage</div>
+    }
+}
+
+@code {
+    [SupplyParameterFromQuery]
+    private int RequestId { get; set; }
+
+    [SupplyParameterFromQuery]
+    private string CAConfig { get; set; } = string.Empty;
+
+    private Entry? _entry;
+    private bool _submitted;
+    private string _statusMessage = string.Empty;
+    private string _statusCss = string.Empty;
+    private int _selectedReason = 0;
+    private bool _useCustomDate;
+    private DateTime _revocationDate = DateTime.Now;
+
+    private readonly List<(int Value, string Text)> _revocationReasons = new()
+    {
+        (0, "Unspecified"),
+        (1, "Key compromise"),
+        (2, "CA compromise"),
+        (3, "Affiliation changed"),
+        (4, "Superseded"),
+        (5, "Cessation of Operation"),
+        (6, "Certificate Hold")
+    };
+
+    protected override void OnInitialized()
+    {
+        _entry = certificateService.GetCertificateWithDetails(RequestId, CAConfig);
+        _revocationDate = DateTime.Now;
+    }
+
+    private void HandleRevoke()
+    {
+        if (_entry == null || string.IsNullOrEmpty(_entry.SerialNumber)) return;
+
+        try
+        {
+            var certAdmin = new CERTADMINLib.CCertAdmin();
+            var revokeDate = _useCustomDate ? _revocationDate : DateTime.Now;
+            certAdmin.RevokeCertificate(_entry.CAConfig, _entry.SerialNumber, _selectedReason, revokeDate);
+            _submitted = true;
+            _statusMessage = $"Certificate with serial number {_entry.SerialNumber} has been revoked successfully.";
+            _statusCss = "alert alert-success";
+        }
+        catch (Exception ex)
+        {
+            _statusMessage = $"Failed to revoke certificate: {ex.Message}";
+            _statusCss = "alert alert-danger";
+        }
+    }
+}

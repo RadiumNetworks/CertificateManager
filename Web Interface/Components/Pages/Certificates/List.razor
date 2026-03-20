@@ -106,7 +106,7 @@
     <PropertyColumn Property="@(e => e.Notes)" Sortable="true" />
     <TemplateColumn Context="Entry">
         <a href="@($"certificates/edit?requestid={Entry.RequestId}&caconfig={Entry.CAConfig}")">Edit</a> |
-        <a href="@($"certificates/revoke?serialnumber={Entry.SerialNumber}")">Revoke</a>
+        <a href="@($"certificates/revoke?requestid={Entry.RequestId}&caconfig={Entry.CAConfig}")">Revoke</a>
     </TemplateColumn>
 
 </QuickGrid>

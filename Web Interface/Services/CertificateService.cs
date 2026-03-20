@@ -205,6 +205,15 @@ namespace CertificateManager.Services
             }
         }
 
+        public Entry? GetCertificateWithDetails(int requestId, string cAConfig)
+        {
+            using var context = _dbContextFactory.CreateDbContext();
+            return context.Entry
+                .Include(e => e.SAN)
+                .Include(e => e.EKU)
+                .SingleOrDefault(x => x.RequestId == requestId && x.CAConfig == cAConfig);
+        }
+
         public void UpdateCertificate(int requestId, string cAConfig, string owner, string notes)
         {
             var entry = GetCertificate(requestId, cAConfig);

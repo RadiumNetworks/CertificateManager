@@ -97,8 +97,8 @@
     <PropertyColumn Property="@(e => e.Owner)" Sortable="true" />
     <PropertyColumn Property="@(e => e.Notes)" Sortable="true" />
     <TemplateColumn Context="Entry">
-        <a href="@($"certificates/approve?requestid={Entry.RequestId}&caconfig={Entry.CAConfig}")">Approve</a> |
-        <a href="@($"certificates/deny??requestid={Entry.RequestId}&caconfig={Entry.CAConfig}")">Deny</a>
+        <a href="@($"requests/approve?requestid={Entry.RequestId}&caconfig={Entry.CAConfig}")">Approve</a> |
+        <a href="@($"requests/deny?requestid={Entry.RequestId}&caconfig={Entry.CAConfig}")">Deny</a>
     </TemplateColumn>
 
 </QuickGrid>

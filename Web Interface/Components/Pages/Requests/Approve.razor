@@ -1,4 +1,5 @@
 ﻿@page "/requests/approve"
+@rendermode InteractiveServer
 
 @using CertificateManager.Services
 @using CertificateManager.Models
@@ -7,3 +8,126 @@
 <PageTitle>Approve certificate request</PageTitle>
 
 <h3>Approve certificate request</h3>
+
+
+@if (_entry == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <EditForm Model="@_entry" OnSubmit="HandleApprove">
+        <table>
+            <tr>
+                <td><label>RequestId</label></td>
+                <td><InputNumber @bind-Value="@_entry.RequestId" readonly="readonly"></InputNumber></td>
+            </tr>
+            <tr>
+                <td><label>CAConfig</label></td>
+                <td><InputText @bind-Value="@_entry.CAConfig" readonly="readonly"></InputText></td>
+            </tr>
+            <tr>
+                <td><label>Requester Information</label></td>
+                <td>
+                    @if (!string.IsNullOrWhiteSpace(_entry.RequestCommonName))
+                    {
+                        <p style="display:inline">CN=@_entry.RequestCommonName<br /></p>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(_entry.RequestCountryRegion))
+                    {
+                        <p style="display:inline">C=@_entry.RequestCountryRegion<br /></p>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(_entry.RequestCity))
+                    {
+                        <p style="display:inline">L=@_entry.RequestCity<br /></p>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(_entry.RequestOrganization))
+                    {
+                        <p style="display:inline">O=@_entry.RequestOrganization<br /></p>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(_entry.RequestOrganizationUnit))
+                    {
+                        <p style="display:inline">OU=@_entry.RequestOrganizationUnit<br /></p>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(_entry.RequestEmailAddress))
+                    {
+                        <p style="display:inline">E=@_entry.RequestEmailAddress<br /></p>
+                    }
+                </td>
+            </tr>
+            <tr>
+                <td><label>Subject Alternative Names</label></td>
+                <td>
+                    @if (_entry.SAN != null)
+                    {
+                        @foreach (var san in _entry.SAN)
+                        {
+                            <p style="display:inline">@san.SubjectAlternativeName<br /></p>
+                        }
+                    }
+                </td>
+            </tr>
+            <tr>
+                <td><label>Enhanced Key Usages</label></td>
+                <td>
+                    @if (_entry.EKU != null)
+                    {
+                        @foreach (var eku in _entry.EKU)
+                        {
+                            <p style="display:inline">@eku.Name<br /></p>
+                        }
+                    }
+                </td>
+            </tr>
+            <tr>
+                <td><label>Requestor</label></td>
+                <td><InputText @bind-Value="@_entry.RequesterName" readonly="readonly"></InputText></td>
+            </tr>
+        </table>
+        <br />
+        <button type="submit" class="btn-primary" disabled="@_submitted">Approve Request</button>
+    </EditForm>
+
+    @if (!string.IsNullOrEmpty(_statusMessage))
+    {
+        <br />
+        <div class="@_statusCss">@_statusMessage</div>
+    }
+}
+
+@code {
+    [SupplyParameterFromQuery]
+    private int RequestId { get; set; }
+
+    [SupplyParameterFromQuery]
+    private string CAConfig { get; set; } = string.Empty;
+
+    private Entry? _entry;
+    private bool _submitted;
+    private string _statusMessage = string.Empty;
+    private string _statusCss = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        _entry = certificateService.GetCertificateWithDetails(RequestId, CAConfig);
+    }
+
+    private void HandleApprove()
+    {
+        if (_entry == null) return;
+
+        try
+        {
+            var certAdmin = new CERTADMINLib.CCertAdmin();
+            certAdmin.ResubmitRequest(_entry.CAConfig, _entry.RequestId);
+            _submitted = true;
+            _statusMessage = $"Request {_entry.RequestId} has been approved successfully.";
+            _statusCss = "alert alert-success";
+        }
+        catch (Exception ex)
+        {
+            _statusMessage = $"Failed to approve request: {ex.Message}";
+            _statusCss = "alert alert-danger";
+        }
+    }
+}
