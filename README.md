@@ -1,5 +1,12 @@
 ## Welcome to the Certificate Management project
 
+The project is created to provide a solution for the following pain points related to Certificate Services Management:</br>
+-easier approval or denial of certificate requests so that the certificate template configuration can be more secure</br>
+-implementation of automatic approval of custom certificate requests if they agree with company rules</br>
+-easier revocation of certificates</br>
+-better reporting of expiring certificates / open certificate requests / failed requests to see the need for troubleshooting</br>
+-easier logging/exporting of information to allow point in time restore after a disaster recovery</br>
+
 The architecture can be outlined as follows
 
 ![Header](./media/architecture.png)
