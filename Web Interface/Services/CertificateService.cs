@@ -189,6 +189,15 @@ namespace CertificateManager.Services
             }
         }
 
+        public void AddChallengeEntry(Challenge challenge)
+        {
+            using (var context = _dbContextFactory.CreateDbContext())
+            {
+                context.Challenge.Add(challenge);
+                context.SaveChanges();
+            }
+        }
+
         public Entry GetCertificate(int requestId, string cAConfig)
         {
             using (var context = _dbContextFactory.CreateDbContext())
@@ -211,6 +220,14 @@ namespace CertificateManager.Services
             return context.Entry
                 .Include(e => e.SAN)
                 .Include(e => e.EKU)
+                .SingleOrDefault(x => x.RequestId == requestId && x.CAConfig == cAConfig);
+        }
+
+        public Entry? GetCertificateRequestChallenges(int requestId, string cAConfig)
+        {
+            using var context = _dbContextFactory.CreateDbContext();
+            return context.Entry
+                .Include(e => e.Challenge)
                 .SingleOrDefault(x => x.RequestId == requestId && x.CAConfig == cAConfig);
         }
 

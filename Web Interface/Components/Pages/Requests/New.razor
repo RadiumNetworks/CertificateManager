@@ -29,11 +29,16 @@ The submit button will be available if the request can be parsed and is complian
                 </InputSelect>
             </td>
         </tr>
-        <button type="submit" class="btn-primary" @onclick="() => selectedAction = 1">Parse</button>
-        <button type="submit" class="btn-primary" @onclick="() => selectedAction = 2" hidden="@_btnhidden">Submit</button>
     </table>
+    <button type="submit" class="btn-primary" @onclick="() => selectedAction = 1">Parse</button>
+    <button type="submit" class="btn-primary" @onclick="() => selectedAction = 2" hidden="@_btn1hidden">Submit</button>
+    <button type="submit" class="btn-primary" @onclick="() => selectedAction = 3" hidden="@_btn2hidden">Revalidate ownership</button>
 </EditForm>
 <table>
+    <tr>
+        <td>ChallengeData</td>
+        <td><textarea value="@ChallengeData"  rows="10" cols="100" readonly></textarea></td>
+    </tr>
     <tr>
         <td>ParsedData</td>
         <td><textarea value="@CurrentRequestData" rows="10" cols="100" readonly></textarea></td>
@@ -70,7 +75,10 @@ The submit button will be available if the request can be parsed and is complian
 
     private Entry _entry = new Entry();
     public int selectedAction = 0;
-    private bool _btnhidden = true;
+    private bool _btn1hidden = true;
+    private bool _btn2hidden = true;
+
+    public List<string> _challenges = new List<string>();
 
     //https://learn.microsoft.com/en-us/windows/win32/api/certif/nf-certif-icertserverexit-getcertificateproperty
     internal enum PropertyType : int
@@ -103,6 +111,7 @@ The submit button will be available if the request can be parsed and is complian
     private const string Template = "1.3.6.1.4.1.311.21.7";
     private const string TemplateName = "1.3.6.1.4.1.311.20.2";
 
+    public string ChallengeData { get; set; } = string.Empty;
     public string CurrentRequestData { get; set; } = string.Empty;
     public string output { get; set; } = string.Empty;
 
@@ -202,8 +211,27 @@ The submit button will be available if the request can be parsed and is complian
         var extensionKeyUsage = new CX509ExtensionKeyUsage();
         var extensionMSApplicationPolicies = new CX509ExtensionMSApplicationPolicies();
         var extensionSubjectKeyIdentifier = new CX509ExtensionSubjectKeyIdentifier();
-        CurrentRequestData += "Subject:" + Environment.NewLine;
-        CurrentRequestData += " " + cX509CertificateRequestPkcs10.Subject.Name + Environment.NewLine;
+
+
+        try
+        {
+            CurrentRequestData += "Subject:" + Environment.NewLine;
+            CurrentRequestData += " " + cX509CertificateRequestPkcs10.Subject.Name + Environment.NewLine;
+            foreach (string subjectinfo in cX509CertificateRequestPkcs10.Subject.Name.Split(","))
+            {
+                if (subjectinfo.StartsWith("CN="))
+                {
+                    string cn = subjectinfo.Split("=")[1];
+                    Guid tokenguid = Guid.NewGuid();
+                    _challenges.Add($"http://{cn}/{tokenguid.ToString()}");
+                }
+            }
+        }
+        catch
+        {
+            CurrentRequestData += " Could not read subject" + Environment.NewLine;
+        }
+
 
         for (var i = 0; i < cX509CertificateRequestPkcs10.X509Extensions.Count; i++)
         {
@@ -218,7 +246,45 @@ The submit button will be available if the request can be parsed and is complian
                         CurrentRequestData += "SubjectAlternateNames:" + Environment.NewLine;
                         foreach (CAlternativeName san in extensionAlternativeNames.AlternativeNames)
                         {
-                            CurrentRequestData += " " + san.Type + "=" + san.strValue + Environment.NewLine;
+                            switch(san.Type)
+                            {
+                                case AlternativeNameType.XCN_CERT_ALT_NAME_DNS_NAME:
+                                    CurrentRequestData += " DNS = "+ san.strValue + Environment.NewLine;
+                                    Guid tokenguid = Guid.NewGuid();
+                                    if (san.strValue.StartsWith("*."))
+                                    {
+
+                                        _challenges.Add($"DNS_TXT {san.strValue.Remove(0, 2)} {tokenguid.ToString()}");
+                                    }
+                                    else
+                                    {
+                                        _challenges.Add($"HTTP http://{san.strValue}/{tokenguid.ToString()}");
+                                    }
+
+                                    break;
+                                case AlternativeNameType.XCN_CERT_ALT_NAME_DIRECTORY_NAME:
+                                    CurrentRequestData += " DN = " + san.strValue + Environment.NewLine;
+                                    break;
+                                case AlternativeNameType.XCN_CERT_ALT_NAME_GUID:
+                                    CurrentRequestData += " GUID = " + san.strValue + Environment.NewLine;
+                                    break;
+                                case AlternativeNameType.XCN_CERT_ALT_NAME_IP_ADDRESS:
+                                    CurrentRequestData += " IP = " + san.strValue + Environment.NewLine;
+                                    break;
+                                case AlternativeNameType.XCN_CERT_ALT_NAME_RFC822_NAME:
+                                    CurrentRequestData += " RFC822 = " + san.strValue + Environment.NewLine;
+                                    break;
+                                case AlternativeNameType.XCN_CERT_ALT_NAME_OTHER_NAME:
+                                    CurrentRequestData += " Other = " + san.strValue + Environment.NewLine;
+                                    break;
+                                case AlternativeNameType.XCN_CERT_ALT_NAME_UNKNOWN:
+                                    CurrentRequestData += " UNKNOWN = " + san.strValue + Environment.NewLine;
+                                    break;
+                                default:
+                                    CurrentRequestData += " " + san.Type + "=" + san.strValue + Environment.NewLine;
+                                    break;
+                            }
+
                         }
 
                     }
@@ -330,7 +396,15 @@ The submit button will be available if the request can be parsed and is complian
                     break;
 
             }
+        }if(_challenges.Count != 0)
+        {
+            ChallengeData = @"For automatic enrollment, the following files or entries must be created." + Environment.NewLine;
         }
+        foreach(string challenge in _challenges)
+        {
+            ChallengeData += challenge + Environment.NewLine;
+        }
+
     }
 
     public void HandleSubmit(EditContext editContext)
@@ -339,6 +413,9 @@ The submit button will be available if the request can be parsed and is complian
 
         if (selectedAction == 1)
         {
+            ChallengeData = "";
+            CurrentRequestData = "";
+            _challenges.Clear();
             var cX509CertificateRequestCmc = new CERTENROLLLib.CX509CertificateRequestCmc();
             try
             {
@@ -346,7 +423,7 @@ The submit button will be available if the request can be parsed and is complian
                     newCertificate.Base64Request,
                     CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64_ANY);
                 var cX509CertificateRequestPkcs10 = (IX509CertificateRequestPkcs10)cX509CertificateRequestCmc.GetInnerRequest(0);
-                _btnhidden = false;
+                _btn1hidden = false;
                 ParseRequestExtension(cX509CertificateRequestPkcs10);
 
             }
@@ -361,7 +438,8 @@ The submit button will be available if the request can be parsed and is complian
         {
             CCertRequest cCertRequest = new CCertRequestClass();
             int iDisposition;
-            
+            Challenge challenge = new Challenge();
+            _btn2hidden = false;
 
             iDisposition = cCertRequest.Submit(
                     CR_IN_BASE64 | CR_IN_ANY,
@@ -376,7 +454,13 @@ The submit button will be available if the request can be parsed and is complian
                     output = cCertRequest.GetCertificate(CR_OUT_BASE64);
                     break;
                 case CR_DISP_PENDING:
-                    output = cCertRequest.GetDispositionMessage();
+                    int requestid = cCertRequest.GetRequestId();
+                    output = $"RequestID {requestid} {cCertRequest.GetDispositionMessage()}" + Environment.NewLine;
+                    foreach(string challenge1 in _challenges)
+                    {
+                        challenge.Location = challenge1;
+                        output += $"Checking for {challenge1}" + Environment.NewLine;
+                    }
                     break;
                 default:
                     break;

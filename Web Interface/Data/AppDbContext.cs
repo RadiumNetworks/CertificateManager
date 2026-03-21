@@ -19,7 +19,8 @@ namespace CertificateManager.Data
         public DbSet<CRL> CRL { get; set; }
         public DbSet<RevokedCert> RevokedCert { get; set; }
         public DbSet<Template> Template { get; set; }
-        public DbSet<TemplateArchive> TemplatesArchiv { get; set; }
+        public DbSet<Challenge> Challenge { get; set; }
+        public DbSet<SQLLog> SQLLog { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -40,6 +41,10 @@ namespace CertificateManager.Data
             modelBuilder.Entity<CRL>()
                 .HasMany(c => c.RevokedCert)
                 .WithOne(r => r.CRL);
+
+            modelBuilder.Entity<Entry>()
+                .HasMany(e => e.Challenge)
+                .WithOne(c => c.Entry);
         }
 
     }
