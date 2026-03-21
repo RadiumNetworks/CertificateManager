@@ -1,6 +1,7 @@
 ﻿@page "/requests/new"
 @using CertificateManager.Services
 @using CertificateManager.Models
+@using Microsoft.Data.SqlClient
 @using CERTCLILib;
 @using CERTENROLLLib;
 @using System.Runtime.InteropServices;
@@ -222,8 +223,9 @@ The submit button will be available if the request can be parsed and is complian
                 if (subjectinfo.StartsWith("CN="))
                 {
                     string cn = subjectinfo.Split("=")[1];
-                    Guid tokenguid = Guid.NewGuid();
-                    _challenges.Add($"http://{cn}/{tokenguid.ToString()}");
+                    Guid token = Guid.NewGuid();
+                    Guid content = Guid.NewGuid();
+                    _challenges.Add($"HTTP http://{cn}/{token.ToString()} {content.ToString()}");
                 }
             }
         }
@@ -250,15 +252,16 @@ The submit button will be available if the request can be parsed and is complian
                             {
                                 case AlternativeNameType.XCN_CERT_ALT_NAME_DNS_NAME:
                                     CurrentRequestData += " DNS = "+ san.strValue + Environment.NewLine;
-                                    Guid tokenguid = Guid.NewGuid();
+                                    Guid token = Guid.NewGuid();
+                                    Guid content = Guid.NewGuid();
                                     if (san.strValue.StartsWith("*."))
                                     {
 
-                                        _challenges.Add($"DNS_TXT {san.strValue.Remove(0, 2)} {tokenguid.ToString()}");
+                                        _challenges.Add($"DNS_TXT {san.strValue.Remove(0, 2)} {token.ToString()}");
                                     }
                                     else
                                     {
-                                        _challenges.Add($"HTTP http://{san.strValue}/{tokenguid.ToString()}");
+                                        _challenges.Add($"HTTP http://{san.strValue}/{token.ToString()} {content.ToString()}");
                                     }
 
                                     break;
@@ -407,6 +410,11 @@ The submit button will be available if the request can be parsed and is complian
 
     }
 
+    public bool CheckChallenge(string type, string location, string content)
+    {
+        return true;
+    }
+
     public void HandleSubmit(EditContext editContext)
     {
         var newCertificate = (Entry)editContext.Model;
@@ -438,8 +446,7 @@ The submit button will be available if the request can be parsed and is complian
         {
             CCertRequest cCertRequest = new CCertRequestClass();
             int iDisposition;
-            Challenge challenge = new Challenge();
-            _btn2hidden = false;
+            //_btn2hidden = false;
 
             iDisposition = cCertRequest.Submit(
                     CR_IN_BASE64 | CR_IN_ANY,
@@ -454,17 +461,73 @@ The submit button will be available if the request can be parsed and is complian
                     output = cCertRequest.GetCertificate(CR_OUT_BASE64);
                     break;
                 case CR_DISP_PENDING:
-                    int requestid = cCertRequest.GetRequestId();
-                    output = $"RequestID {requestid} {cCertRequest.GetDispositionMessage()}" + Environment.NewLine;
+                    int requestId = cCertRequest.GetRequestId();
+                    string caConfig = CAConfiguration;
+                    output = $"RequestID {requestId} {cCertRequest.GetDispositionMessage()}" + Environment.NewLine;
+                    bool ownershipChecked = true;
                     foreach(string challenge1 in _challenges)
                     {
-                        challenge.Location = challenge1;
+                        string type = challenge1.Split(" ")[0];
+                        string location = challenge1.Split(" ")[1];
+                        string content = challenge1.Split(" ")[2];
+
+                        string sql = $@"Update Challenge set
+                        Location = '{location}',
+                        Content = '{content}',
+                        Type = '{type}'
+                        where RequestId = '{requestId}' and CAConfig = '{caConfig}' and Location = '{location}' and Content = '{content}'
+                        If @@ROWCOUNT=0 
+                        Insert into Challenge
+                        (RequestId, CAConfig, Type, Location, Content)
+                        VALUES
+                        ('{requestId}','{caConfig}','{type}','{location}','{content}')";
+
+                        var connectionString = @"Data Source=DATA01\SQLPKI;Initial Catalog=CADB;Integrated Security=True;Encrypt=False";
+
+                        using (SqlConnection connection = new SqlConnection(connectionString))
+                        {
+                            using (SqlCommand command = new SqlCommand(sql, connection))
+                            {
+                                connection.Open();
+                                command.ExecuteNonQuery();
+                            }
+                        }
+
                         output += $"Checking for {challenge1}" + Environment.NewLine;
+
+                        if(CheckChallenge(type,location,content))
+                        {
+                            output += $"Successful" + Environment.NewLine;
+                        }
+                        else
+                        {
+                            output += $"Failed" + Environment.NewLine;
+                            ownershipChecked = false;
+                        }
+
                     }
+
+                    if (ownershipChecked)
+                    {
+                        output += $"Ownership successfully verified" + Environment.NewLine;
+                        var certAdmin = new CERTADMINLib.CCertAdmin();
+                        try
+                        {
+                            certAdmin.ResubmitRequest(caConfig, requestId);
+                            output += $"Request {requestId} has been approved successfully." + Environment.NewLine;
+                            Entry entry = certificateService.GetCertificate(requestId, caConfig);
+                            output += entry.Base64Certificate;
+                        }
+                        catch (Exception ex)
+                        {
+                            output += $"Failed to approve request: {ex.Message}" + Environment.NewLine;
+                        }
+
+                    }
+
                     break;
                 default:
                     break;
-
             }
         }
         
