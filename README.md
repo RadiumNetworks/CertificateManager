@@ -2,7 +2,7 @@
 
 The project is created to provide a solution for the following pain points related to certificate services management:</br>
 - easier approval or denial of certificate requests so that the certificate template configuration can be more secure
-- implementation of automatic approval of custom certificate requests if they agree with company rules
+- implementation of automatic approval of custom certificate requests if they agree with company rules or by verifying the ownership of web servers or domains.
 - easier revocation of certificates
 - better reporting of expiring certificates / open certificate requests / failed requests to see the need for troubleshooting
 - easier logging/exporting of information to allow point in time restore after a disaster recovery</br>
