@@ -1,11 +1,16 @@
 ## Welcome to the Certificate Management project
 
-The project is created to provide a solution for the following pain points related to Certificate Services Management:</br>
--easier approval or denial of certificate requests so that the certificate template configuration can be more secure</br>
--implementation of automatic approval of custom certificate requests if they agree with company rules</br>
--easier revocation of certificates</br>
--better reporting of expiring certificates / open certificate requests / failed requests to see the need for troubleshooting</br>
--easier logging/exporting of information to allow point in time restore after a disaster recovery</br>
+The project is created to provide a solution for the following pain points related to certificate services management:</br>
+- easier approval or denial of certificate requests so that the certificate template configuration can be more secure
+- implementation of automatic approval of custom certificate requests if they agree with company rules
+- easier revocation of certificates
+- better reporting of expiring certificates / open certificate requests / failed requests to see the need for troubleshooting
+- easier logging/exporting of information to allow point in time restore after a disaster recovery</br>
+
+The main parts of the solution are:</br>
+- an exit module that writes all data automatically from the certificate authority into a database
+- a web application using the Blazor framework that allows user and administrator access that addresses the above stated pain points
+- a separate desktop application using WinUI that is designed for the administrator to do the stated tasks but also to do initial setups/imports and to allow more specific tasks like the reliable signing and tracking of signed scripts to reduced problems with expired or revoked code signing certificates. </br>
 
 The architecture can be outlined as follows
 
