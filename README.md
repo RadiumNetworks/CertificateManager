@@ -1,7 +1,7 @@
 ## Welcome to the Certificate Management project
 
 The project is created to provide a solution for the following pain points related to certificate services management:</br>
-- automated request and issuance of certificates
+- automated request and issuance of certificates using a HTTP API reducing required firewall rules
 - easier approval or denial of certificate requests so that the certificate template configuration can be more secure
 - implementation of automatic approval of custom certificate requests if they agree with company rules or by verifying the ownership of web servers or domains.
 - easier revocation of certificates
