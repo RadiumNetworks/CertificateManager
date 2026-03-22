@@ -1,21 +1,23 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
+
 <Package
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
-  IgnorableNamespaces="uap rescap">
+  xmlns:systemai="http://schemas.microsoft.com/appx/manifest/systemai/windows10"
+  IgnorableNamespaces="uap rescap systemai">
 
   <Identity
-    Name="simple-client-demo"
-    Publisher="CN=Demo"
+    Name="1326f9f4-89d3-45e1-92ed-6bfb227859fb"
+    Publisher="CN=Admin"
     Version="1.0.0.0" />
 
-  <mp:PhoneIdentity PhoneProductId="00000000-0000-0000-0000-000000000001" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
+  <mp:PhoneIdentity PhoneProductId="1326f9f4-89d3-45e1-92ed-6bfb227859fb" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
-    <DisplayName>Simple Client</DisplayName>
-    <PublisherDisplayName>Demo</PublisherDisplayName>
+    <DisplayName>CertificateManager</DisplayName>
+    <PublisherDisplayName>Admin</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 
@@ -33,8 +35,8 @@
       Executable="$targetnametoken$.exe"
       EntryPoint="$targetentrypoint$">
       <uap:VisualElements
-        DisplayName="Simple Client"
-        Description="Simple API Client Demo"
+        DisplayName="CertificateManager"
+        Description="CertificateManager"
         BackgroundColor="transparent"
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png">
@@ -46,5 +48,6 @@
 
   <Capabilities>
     <rescap:Capability Name="runFullTrust" />
+    <systemai:Capability Name="systemAIModels"/>
   </Capabilities>
 </Package>

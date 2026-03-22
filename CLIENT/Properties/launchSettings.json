@@ -1,9 +1,9 @@
 {
   "profiles": {
-    "SimpleClient (Package)": {
+    "CertificateManager (Package)": {
       "commandName": "MsixPackage"
     },
-    "SimpleClient (Unpackaged)": {
+    "CertificateManager (Unpackaged)": {
       "commandName": "Project"
     }
   }
