@@ -47,7 +47,24 @@ namespace CertificateManager
             response.EnsureSuccessStatusCode();
 
             var result = await response.Content.ReadFromJsonAsync<Response>(_jsonOptions);
-            ParsedDataOutput.Text = result?.Result ?? "No response received";
+            if (result != null)
+            {
+                var data = result.Result.ToString().Split(";");
+                if (data.Length > 0)
+                {
+                    if (data[0] == "Parsed")
+                    {
+                        ParsedDataOutput.Text = data[1];
+                        ChallengeDataOutput.Text = data[2];
+                    }
+                    else
+                    {
+                        ParsedDataOutput.Text = data[3];
+                    }
+                }
+
+            }
+
         }
 
         private async void SubmitButton_Click(object sender, RoutedEventArgs e)

@@ -1,4 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using CertificateManager.Services;
+using CertificateManager.Models;
+using System.Runtime.InteropServices;
 
 namespace CertificateManager.Controllers
 {
@@ -6,12 +9,24 @@ namespace CertificateManager.Controllers
     [Route("api/parse")]
     public class ParseController : ControllerBase
     {
+        private readonly CertificateService _certificateService;
+
+        private readonly Validation _validation;
+
+        public ParseController(Validation validation)
+        {
+            _validation = validation;
+        }
+
         [HttpPost]
         public ActionResult<ParseResponse> Post([FromBody] ParseRequest request)
         {
+            var result = _validation.ParseRequest(request.Input);
+
             return Ok(new ParseResponse
             {
-                Result = $"Hello! You sent: \"{request.Input}\" (received at {DateTime.Now:HH:mm:ss})"
+                //Result = $"Hello! You sent: \"{request.Input}\" (received at {DateTime.Now:HH:mm:ss})"
+                Result = $"{result.Status}; {result.ParsedData}; {result.ChallengeData}; {result.Message}"
             });
         }
     }
