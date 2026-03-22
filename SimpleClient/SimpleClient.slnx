@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="SimpleClient.csproj">
+    <Platform Project="x64" />
+    <Deploy />
+  </Project>
+</Solution>
