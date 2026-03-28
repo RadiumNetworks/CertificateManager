@@ -8,19 +8,26 @@
 
 <h3>Edit certificate database entry</h3>
 
-<EditForm Model="@_entry" OnSubmit="HandleSubmit">
-    <label for="RequestIdInput" >RequestId</label>
-    <InputNumber id="RequestIdInput" @bind-Value="@_entry.RequestId" readonly="readonly"></InputNumber><br />
-    <label for="CAConfigInput">CAConfig</label>
-    <InputText id="CAConfigInput" @bind-Value="@_entry.CAConfig" readonly="readonly"></InputText><br />
-    <label for="SerialNumberInput">SerialNumber</label>
-    <InputText id="SerialNumberInput" @bind-Value="@_entry.SerialNumber" readonly="readonly"></InputText><br />
-    <label for="OwnerInput">Owner</label>
-    <InputText id="OwnerInput" @bind-Value="@_entry.Owner"></InputText><br />
-    <label for="NotesInput" >Notes</label>
-    <InputText id="NotesInput" @bind-Value="@_entry.Notes"></InputText><br /><br />
-    <button type="submit" class="btn-primary">Edit</button>
-</EditForm>
+@if (!string.IsNullOrEmpty(_dbError))
+{
+    <div class="alert alert-danger">@_dbError</div>
+}
+else
+{
+    <EditForm Model="@_entry" OnSubmit="HandleSubmit">
+        <label for="RequestIdInput" >RequestId</label>
+        <InputNumber id="RequestIdInput" @bind-Value="@_entry.RequestId" readonly="readonly"></InputNumber><br />
+        <label for="CAConfigInput">CAConfig</label>
+        <InputText id="CAConfigInput" @bind-Value="@_entry.CAConfig" readonly="readonly"></InputText><br />
+        <label for="SerialNumberInput">SerialNumber</label>
+        <InputText id="SerialNumberInput" @bind-Value="@_entry.SerialNumber" readonly="readonly"></InputText><br />
+        <label for="OwnerInput">Owner</label>
+        <InputText id="OwnerInput" @bind-Value="@_entry.Owner"></InputText><br />
+        <label for="NotesInput" >Notes</label>
+        <InputText id="NotesInput" @bind-Value="@_entry.Notes"></InputText><br /><br />
+        <button type="submit" class="btn-primary">Edit</button>
+    </EditForm>
+}
 
 @code {
     [SupplyParameterFromQuery]
@@ -35,11 +42,30 @@
     {
         var newCertificate = (Entry)editContext.Model;
 
-        certificateService.UpdateCertificate(newCertificate.RequestId, newCertificate.CAConfig, newCertificate.Owner, newCertificate.Notes);
+        try
+        {
+            certificateService.UpdateCertificate(newCertificate.RequestId, newCertificate.CAConfig, newCertificate.Owner, newCertificate.Notes);
+        }
+        catch (Exception ex)
+        {
+            _dbError = $"Database error: {ex.Message}";
+        }
+
+        
     }
+
+    private string _dbError = string.Empty;
 
     protected override void OnInitialized()
     {
-        _entry = certificateService.GetCertificate(RequestId, CAConfig);
+        try
+        {
+            _entry = certificateService.GetCertificate(RequestId, CAConfig);
+        }
+        catch (Exception ex)
+        {
+            _dbError = $"Database error: {ex.Message}";
+        }
+        
     }
 }

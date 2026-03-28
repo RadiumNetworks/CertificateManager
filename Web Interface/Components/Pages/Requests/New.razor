@@ -410,12 +410,54 @@ The submit button will be available if the request can be parsed and is complian
 
     }
 
-    public bool CheckChallenge(string type, string location, string content)
+    async Task<bool> CheckChallenge(string type, string location, string content)
     {
-        return true;
+        if (type == "HTTP")
+        {
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    client.Timeout = TimeSpan.FromSeconds(10);
+                    HttpResponseMessage response = await client.GetAsync(location);
+                    response.EnsureSuccessStatusCode();
+                    string filecontent = await response.Content.ReadAsStringAsync();
+                    if (filecontent == content)
+                    {
+                        return true;
+                    }
+                }
+            }
+            catch
+            {
+
+            }
+        }
+        else if (type == "DNS_TXT")
+        {
+            try
+            {
+                /*var lookup = new LookupClient();
+                var result = await lookup.QueryAsync(location, QueryType.TXT);
+                var txtRecords = result.Answers.TxtRecords();
+                foreach (var txt in txtRecords)
+                {
+                    string txtValue = string.Join("", txt.Text);
+                    if (txtValue == content)
+                    {
+                        return true;
+                    }
+                }*/
+            }
+            catch
+            {
+
+            }
+        }
+        return false;
     }
 
-    public void HandleSubmit(EditContext editContext)
+    public async Task HandleSubmit(EditContext editContext)
     {
         var newCertificate = (Entry)editContext.Model;
 
@@ -482,7 +524,7 @@ The submit button will be available if the request can be parsed and is complian
                         VALUES
                         ('{requestId}','{caConfig}','{type}','{location}','{content}')";
 
-                        var connectionString = @"Data Source=DATA01\SQLPKI;Initial Catalog=CADB;Integrated Security=True;Encrypt=False";
+                        var connectionString = @"Data Source=DATA01\PKIDB;Initial Catalog=CADB;Integrated Security=True;Encrypt=False;TrustServerCertificate=True";
 
                         using (SqlConnection connection = new SqlConnection(connectionString))
                         {
@@ -495,7 +537,7 @@ The submit button will be available if the request can be parsed and is complian
 
                         output += $"Checking for {challenge1}" + Environment.NewLine;
 
-                        if(CheckChallenge(type,location,content))
+                        if(await CheckChallenge(type,location,content))
                         {
                             output += $"Successful" + Environment.NewLine;
                         }
@@ -504,7 +546,6 @@ The submit button will be available if the request can be parsed and is complian
                             output += $"Failed" + Environment.NewLine;
                             ownershipChecked = false;
                         }
-
                     }
 
                     if (ownershipChecked)

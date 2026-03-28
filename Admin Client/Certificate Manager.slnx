@@ -10,5 +10,7 @@
     <Platform Solution="*|x86" Project="x86" />
     <Deploy />
   </Project>
-  <Project Path="Certificate_Manager.Data/Certificate_Manager.Data.csproj" />
+  <Project Path="Certificate_Manager.Data/Certificate_Manager.Data.csproj">
+    <Platform Solution="Debug|x86" Project="x86" />
+  </Project>
 </Solution>

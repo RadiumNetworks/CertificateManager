@@ -1,0 +1,20 @@
+*.dll
+/Web API/.vs
+/Web API/bin
+/Web API/obj
+/Admin Client/.vs
+/Admin Client/bin
+/Admin Client/obj
+/Admin Client/Certificate_Manager.Data/bin
+/Admin Client/Certificate_Manager.Data/obj
+/Certificate Request Client/.vs
+/Certificate Request Client/bin
+/Certificate Request Client/obj
+/Web Interface/.vs
+/Web Interface/bin
+/Web Interface/obj
+/Exit Module/SendToSQL/.vs
+/Exit Module/SendToSQL/bin
+/Exit Module/SendToSQL/obj
+/Exit Module/SendToSQL/packages
+/Web Interface/wwwroot

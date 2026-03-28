@@ -10,7 +10,11 @@
 <h3>Revoke certificate</h3>
 
 
-@if (_entry == null)
+@if (!string.IsNullOrEmpty(_dbError))
+{
+    <div class="alert alert-danger">@_dbError</div>
+}
+else if (_entry == null)
 {
     <p>Loading...</p>
 }
@@ -148,10 +152,20 @@ else
         (6, "Certificate Hold")
     };
 
+    private string _dbError = string.Empty;
+
     protected override void OnInitialized()
     {
-        _entry = certificateService.GetCertificateWithDetails(RequestId, CAConfig);
-        _revocationDate = DateTime.Now;
+        try
+        {
+            _entry = certificateService.GetCertificateWithDetails(RequestId, CAConfig);
+            _revocationDate = DateTime.Now;
+        }
+        catch (Exception ex)
+        {
+            _dbError = $"Database error: {ex.Message}";
+        }
+        
     }
 
     private void HandleRevoke()

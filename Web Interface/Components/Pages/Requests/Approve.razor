@@ -10,7 +10,11 @@
 <h3>Approve certificate request</h3>
 
 
-@if (_entry == null)
+@if (!string.IsNullOrEmpty(_dbError))
+{
+    <div class="alert alert-danger">@_dbError</div>
+}
+else if (_entry == null)
 {
     <p>Loading...</p>
 }
@@ -107,9 +111,18 @@ else
     private string _statusMessage = string.Empty;
     private string _statusCss = string.Empty;
 
+    private string _dbError = string.Empty;
+
     protected override void OnInitialized()
     {
-        _entry = certificateService.GetCertificateWithDetails(RequestId, CAConfig);
+        try
+        {
+            _entry = certificateService.GetCertificateWithDetails(RequestId, CAConfig);
+        }
+        catch (Exception ex)
+        {
+            _dbError = $"Database error: {ex.Message}";
+        }
     }
 
     private void HandleApprove()

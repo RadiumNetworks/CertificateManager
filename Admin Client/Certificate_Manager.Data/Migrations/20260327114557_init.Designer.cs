@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Certificate_Manager.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260316100139_codesign")]
-    partial class codesign
+    [Migration("20260327114557_init")]
+    partial class init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,6 +24,30 @@ namespace Certificate_Manager.Data.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("Certificate_Manager.Data.Models.SQLLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CAConfig")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("LogDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("SQLStatement")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SQLLog");
+                });
 
             modelBuilder.Entity("Certificate_Manager.Data.Models.SignedScript", b =>
                 {
@@ -43,6 +67,9 @@ namespace Certificate_Manager.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Notes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ScriptContent")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("SerialNumber")
@@ -294,6 +321,9 @@ namespace Certificate_Manager.Data.Migrations
                     b.Property<string>("GUID")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<DateTime>("modifyTimeStamp")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("CN")
                         .HasColumnType("nvarchar(max)");
 
@@ -369,7 +399,7 @@ namespace Certificate_Manager.Data.Migrations
                     b.Property<string>("pKIOverlapPeriod")
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("GUID");
+                    b.HasKey("GUID", "modifyTimeStamp");
 
                     b.ToTable("Template");
                 });
@@ -387,6 +417,9 @@ namespace Certificate_Manager.Data.Migrations
 
                     b.Property<string>("flags")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("modifiedTimeStamp")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("msPKICertTemplateOID")
                         .HasColumnType("nvarchar(max)");

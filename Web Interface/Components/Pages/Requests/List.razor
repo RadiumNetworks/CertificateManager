@@ -47,61 +47,68 @@
     </table>
 </EditForm>
 
-<QuickGrid Class="table" Items="entry" Pagination="_pagination">
-    <Paginator State="_pagination" />
-    <PropertyColumn Property="@(e => e.RequestId)" Title="Request" Sortable="true" />
-    <TemplateColumn Title="RequesterInformation">
-        @if (context.RequestCommonName != "")
-        {
-            <p style="display:inline">CN=@context.RequestCommonName<br /></p>
-        }
-        @if (context.RequestCountryRegion != "")
-        {
-            <p style="display:inline">C=@context.RequestCountryRegion<br /></p>
-        }
-        @if (context.RequestCity != "")
-        {
-            <p style="display:inline">L=@context.RequestCity<br /></p>
-        }
-        @if (context.RequestOrganization != "")
-        {
-            <p style="display:inline">O=@context.RequestOrganization<br /></p>
-        }
-        @if (context.RequestOrganizationUnit != "")
-        {
-            <p style="display:inline">OU=@context.RequestOrganizationUnit<br /></p>
-        }
-        @if (context.RequestEMailAddress != "")
-        {
-            <p style="display:inline">E=@context.RequestEMailAddress<br /></p>
-        }
-    </TemplateColumn>
-    <TemplateColumn Title=SubjectAlternativeNames>
-        @if (context.SubjectAlternativeNames != "")
-        {
-            foreach (var san in @context.SubjectAlternativeNames.Split(","))
-            {
-                <p style="display:inline">@san<br /></p>
-            }
-        }
-    </TemplateColumn>
-    <TemplateColumn Title=EnhancedKeyUsages>
-        @if (context.EKUNames != "")
-        {
-            foreach (var eku in @context.EKUNames.Split(","))
-            {
-                <p style="display:inline">@eku<br /></p>
-            }
-        }
-    </TemplateColumn>
-    <PropertyColumn Property="@(e => e.Owner)" Sortable="true" />
-    <PropertyColumn Property="@(e => e.Notes)" Sortable="true" />
-    <TemplateColumn Context="Entry">
-        <a href="@($"requests/approve?requestid={Entry.RequestId}&caconfig={Entry.CAConfig}")">Approve</a> |
-        <a href="@($"requests/deny?requestid={Entry.RequestId}&caconfig={Entry.CAConfig}")">Deny</a>
-    </TemplateColumn>
+<ErrorBoundary>
+    <ChildContent>
+        <QuickGrid Class="table" Items="entry" Pagination="_pagination">
+            <Paginator State="_pagination" />
+            <PropertyColumn Property="@(e => e.RequestId)" Title="Request" Sortable="true" />
+            <TemplateColumn Title="RequesterInformation">
+                @if (context.RequestCommonName != "")
+                {
+                    <p style="display:inline">CN=@context.RequestCommonName<br /></p>
+                }
+                @if (context.RequestCountryRegion != "")
+                {
+                    <p style="display:inline">C=@context.RequestCountryRegion<br /></p>
+                }
+                @if (context.RequestCity != "")
+                {
+                    <p style="display:inline">L=@context.RequestCity<br /></p>
+                }
+                @if (context.RequestOrganization != "")
+                {
+                    <p style="display:inline">O=@context.RequestOrganization<br /></p>
+                }
+                @if (context.RequestOrganizationUnit != "")
+                {
+                    <p style="display:inline">OU=@context.RequestOrganizationUnit<br /></p>
+                }
+                @if (context.RequestEMailAddress != "")
+                {
+                    <p style="display:inline">E=@context.RequestEMailAddress<br /></p>
+                }
+            </TemplateColumn>
+            <TemplateColumn Title=SubjectAlternativeNames>
+                @if (context.SubjectAlternativeNames != "")
+                {
+                    foreach (var san in @context.SubjectAlternativeNames.Split(","))
+                    {
+                        <p style="display:inline">@san<br /></p>
+                    }
+                }
+            </TemplateColumn>
+            <TemplateColumn Title=EnhancedKeyUsages>
+                @if (context.EKUNames != "")
+                {
+                    foreach (var eku in @context.EKUNames.Split(","))
+                    {
+                        <p style="display:inline">@eku<br /></p>
+                    }
+                }
+            </TemplateColumn>
+            <PropertyColumn Property="@(e => e.Owner)" Sortable="true" />
+            <PropertyColumn Property="@(e => e.Notes)" Sortable="true" />
+            <TemplateColumn Context="Entry">
+                <a href="@($"requests/approve?requestid={Entry.RequestId}&caconfig={Entry.CAConfig}")">Approve</a> |
+                <a href="@($"requests/deny?requestid={Entry.RequestId}&caconfig={Entry.CAConfig}")">Deny</a>
+            </TemplateColumn>
 
-</QuickGrid>
+        </QuickGrid>
+    </ChildContent>
+    <ErrorContent>
+        <div class="alert alert-danger">Failed to load data. The database may be unreachable.</div>
+    </ErrorContent>
+</ErrorBoundary>
 
 @code {
     public enum CAOptions
@@ -111,7 +118,7 @@
     }
     public CAOptions CAOption { get; set; } = CAOptions.SECURECA01;
 
-    
+
 
     public string SubjectFilter = "";
     public string OwnerFilter = "";
@@ -132,10 +139,20 @@
     private AppDbContext _context = default!;
     private PaginationState _pagination = new PaginationState { ItemsPerPage = 10 };
 
+    private string _dbError = string.Empty;
+
     protected override void OnInitialized()
     {
-        _context = certificateService.CreateDbContext();
-        _filterht["RequestDisposition"] = 9;
+        try
+        {
+            _context = certificateService.CreateDbContext();
+            _filterht["RequestDisposition"] = 9;
+        }
+        catch (Exception ex)
+        {
+            _dbError = $"Database error: {ex.Message}";
+        }
+        
     }
 
     private IQueryable<ExtendedEntry> entry => certificateService.GetCertificateEntries(_context, requestId, expirationDate, _filterht);

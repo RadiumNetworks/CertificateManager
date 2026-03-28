@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Certificate_Manager.Data.Migrations
+namespace CertificateManager.Migrations
 {
     /// <inheritdoc />
     public partial class init : Migration
@@ -77,10 +77,26 @@ namespace Certificate_Manager.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "SQLLog",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    LogDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CAConfig = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    SQLStatement = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SQLLog", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Template",
                 columns: table => new
                 {
                     GUID = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    modifyTimeStamp = table.Column<DateTime>(type: "datetime2", nullable: false),
                     CN = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     DistinguishedName = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     flags = table.Column<string>(type: "nvarchar(max)", nullable: true),
@@ -109,43 +125,7 @@ namespace Certificate_Manager.Data.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Template", x => x.GUID);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "TemplatesArchiv",
-                columns: table => new
-                {
-                    GUID = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    CN = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    DistinguishedName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    flags = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    msPKICertificateApplicationPolicy = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    msPKICertificateNameFlag = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    msPKICertificatePolicy = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    msPKICertTemplateOID = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    msPKIEnrollmentFlag = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    msPKIMinimalKeySize = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    msPKIPrivateKeyFlag = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    msPKIRAApplicationPolicies = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    msPKIRAPolicies = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    msPKIRASignature = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    msPKISupersedeTemplates = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    msPKITemplateMinorRevision = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    msPKITemplateSchemaVersion = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    pKICriticalExtensions = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    pKIDefaultCSPs = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    pKIDefaultKeySpec = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    pKIExpirationPeriod = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    pKIExtendedKeyUsage = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    pKIKeyUsage = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    pKIMaxIssuingDepth = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    pKIOverlapPeriod = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ntSecurityDescriptor = table.Column<string>(type: "nvarchar(max)", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_TemplatesArchiv", x => x.GUID);
+                    table.PrimaryKey("PK_Template", x => new { x.GUID, x.modifyTimeStamp });
                 });
 
             migrationBuilder.CreateTable(
@@ -168,6 +148,30 @@ namespace Certificate_Manager.Data.Migrations
                         columns: x => new { x.CRLRowId, x.CAConfig },
                         principalTable: "CRL",
                         principalColumns: new[] { "CRLRowId", "CAConfig" },
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Challenge",
+                columns: table => new
+                {
+                    ChallengeId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    RequestId = table.Column<int>(type: "int", nullable: false),
+                    CAConfig = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Type = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Location = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Content = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    State = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Challenge", x => x.ChallengeId);
+                    table.ForeignKey(
+                        name: "FK_Challenge_Entry_RequestId_CAConfig",
+                        columns: x => new { x.RequestId, x.CAConfig },
+                        principalTable: "Entry",
+                        principalColumns: new[] { "RequestId", "CAConfig" },
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -214,6 +218,11 @@ namespace Certificate_Manager.Data.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_Challenge_RequestId_CAConfig",
+                table: "Challenge",
+                columns: new[] { "RequestId", "CAConfig" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_EKU_RequestId_CAConfig",
                 table: "EKU",
                 columns: new[] { "RequestId", "CAConfig" });
@@ -233,6 +242,9 @@ namespace Certificate_Manager.Data.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "Challenge");
+
+            migrationBuilder.DropTable(
                 name: "EKU");
 
             migrationBuilder.DropTable(
@@ -242,10 +254,10 @@ namespace Certificate_Manager.Data.Migrations
                 name: "SAN");
 
             migrationBuilder.DropTable(
-                name: "Template");
+                name: "SQLLog");
 
             migrationBuilder.DropTable(
-                name: "TemplatesArchiv");
+                name: "Template");
 
             migrationBuilder.DropTable(
                 name: "CRL");

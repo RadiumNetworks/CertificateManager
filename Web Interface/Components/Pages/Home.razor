@@ -9,14 +9,20 @@
 
 <h1>User Claims & Roles</h1>
 
-<QuickGrid Items="_claims" Pagination="_pagination">
-    <Paginator State="_pagination" />
-    <PropertyColumn Property="@(p => p.Type)" Sortable="true" />
-    <PropertyColumn Property="@(p => p.Value)" Sortable="true" />
-    <PropertyColumn Property="@(p => GetClaimAsHumanReadable(p))" Sortable="true" Title="Translation" />
-    <PropertyColumn Property="@(p => p.Issuer)" Sortable="true" />
-</QuickGrid>
-
+<ErrorBoundary>
+    <ChildContent>
+        <QuickGrid Items="_claims" Pagination="_pagination">
+            <Paginator State="_pagination" />
+            <PropertyColumn Property="@(p => p.Type)" Sortable="true" />
+            <PropertyColumn Property="@(p => p.Value)" Sortable="true" />
+            <PropertyColumn Property="@(p => GetClaimAsHumanReadable(p))" Sortable="true" Title="Translation" />
+            <PropertyColumn Property="@(p => p.Issuer)" Sortable="true" />
+        </QuickGrid>
+    </ChildContent>
+    <ErrorContent>
+        <div class="alert alert-danger">Failed to access Active Directory. The domain may be unreachable.</div>
+    </ErrorContent>
+</ErrorBoundary>
 <h1>User Roles</h1>
 
 @if (_roles.Any())
@@ -50,11 +56,19 @@ else
 
         var authState = await AuthState;
 
-        _claims = authState.User.Claims.AsQueryable();
+        try
+        {
+            _claims = authState.User.Claims.AsQueryable();
 
-        _roles = authState.User.Claims
-            .Where(claim => (claim.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/denyonlysid") && (claim.Value == "S-1-5-21-2099237672-4193923515-138243912-512"))
-            .Select(claim => "Administator");
+            _roles = authState.User.Claims
+                .Where(claim => (claim.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/denyonlysid") && (claim.Value == "S-1-5-21-2099237672-4193923515-138243912-512"))
+                .Select(claim => "Administator");
+        }
+        catch (Exception e)
+        {
+            
+        }
+        
     }
 
     private string GetClaimAsHumanReadable(Claim claim)
