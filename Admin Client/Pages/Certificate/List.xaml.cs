@@ -56,28 +56,33 @@ namespace Certificate_Manager.Pages.Certificate
 
         private async void List_Loaded(object sender, RoutedEventArgs e)
         {
-            await LoadCAConfigOptionsAsync();
-            LoadDispositionOptions();
+            try
+            {
+                await LoadCAConfigOptionsAsync();
+                LoadDispositionOptions();
 
-            using var db = _certificateService.CreateDbContext();
-            var entries = await Task.Run(() =>
-                _certificateService.GetCertificateEntries(db)
+                using var db = _certificateService.CreateDbContext();
+                var entries = await _certificateService.GetCertificateEntries(db)
                     .OrderBy(e => e.RequestId)
-                    .ToList());
+                    .ToListAsync();
 
-            _entries = new ObservableCollection<ExtendedEntry>(entries);
-            EntryDataGrid.ItemsSource = _entries;
+                _entries = new ObservableCollection<ExtendedEntry>(entries);
+                EntryDataGrid.ItemsSource = _entries;
+            }
+            catch (Exception ex)
+            {
+                await ShowErrorDialogAsync("Failed to load data", ex.Message);
+            }
         }
 
         private async Task LoadCAConfigOptionsAsync()
         {
             using var db = _certificateService.CreateDbContext();
-            var caConfigs = await Task.Run(() =>
-                db.Entry
-                    .Select(e => e.CAConfig)
-                    .Distinct()
-                    .OrderBy(c => c)
-                    .ToList());
+            var caConfigs = await db.Entry
+                .Select(e => e.CAConfig)
+                .Distinct()
+                .OrderBy(c => c)
+                .ToListAsync();
 
             CAInput.Items.Clear();
             CAInput.Items.Add("(All)");
@@ -138,35 +143,41 @@ namespace Certificate_Manager.Pages.Certificate
 
         private async Task LoadEntriesAsync()
         {
-            if (_certificateService == null)
+            try
             {
-                
+                using var db = _certificateService.CreateDbContext();
+
+                var query = _certificateService.GetCertificateEntries(db, _requestId, _expirationDate, _filterht)
+                    .OrderBy(e => e.RequestId);
+
+                _totalCount = await query.CountAsync();
+                _totalPages = Math.Max(1, (int)Math.Ceiling((double)_totalCount / _pageSize));
+
+
+                if (_currentPage > _totalPages)
+                    _currentPage = _totalPages;
+                if (_currentPage < 1)
+                    _currentPage = 1;
+
+                var entries = await Task.Run(() =>
+                        query
+                        .Skip((_currentPage - 1) * _pageSize)
+                        .Take(_pageSize)
+                        .ToListAsync());
+
+
+                _entries = new ObservableCollection<ExtendedEntry>(entries);
+                EntryDataGrid.ItemsSource = _entries;
+
+                UpdatePaginationUI();
             }
-            using var db = _certificateService.CreateDbContext();
-
-            var query = _certificateService.GetCertificateEntries(db, _requestId, _expirationDate, _filterht)
-                .OrderBy(e => e.RequestId);
-
-            _totalCount = await Task.Run(() => query.Count());
-            _totalPages = Math.Max(1, (int)Math.Ceiling((double)_totalCount / _pageSize));
-
-            if (_currentPage > _totalPages)
-                _currentPage = _totalPages;
-            if (_currentPage < 1)
-                _currentPage = 1;
-
-            var entries = await Task.Run(() =>
-                    query
-                    .Skip((_currentPage - 1) * _pageSize)
-                    .Take(_pageSize)
-                    .ToList());
-
-
-            _entries = new ObservableCollection<ExtendedEntry>(entries);
-            EntryDataGrid.ItemsSource = _entries;
-
-            UpdatePaginationUI();
+            catch (Exception ex)
+            {
+                await ShowErrorDialogAsync("Failed to load entries", ex.Message);
+            }
         }
+    
+
 
         private async void EditActionButton_Click(object sender, RoutedEventArgs e)
         {
@@ -253,6 +264,25 @@ namespace Certificate_Manager.Pages.Certificate
                     XamlRoot = this.XamlRoot
                 };
                 await dialog.ShowAsync();
+            }
+        }
+
+        private async Task ShowErrorDialogAsync(string title, string message)
+        {
+            try
+            {
+                var dialog = new ContentDialog
+                {
+                    Title = title,
+                    Content = $"The database may be unavailable.\n\n{message}",
+                    CloseButtonText = "OK",
+                    XamlRoot = this.XamlRoot
+                };
+                await dialog.ShowAsync();
+            }
+            catch
+            {
+                // Avoid crashing if the dialog itself cannot be shown
             }
         }
 

@@ -21,28 +21,41 @@ using Windows.Foundation.Collections;
 
 namespace Certificate_Manager
 {
-    /// <summary>
-    /// Provides application-specific behavior to supplement the default Application class.
-    /// </summary>
     public partial class App : Application
     {
         private Window? _window;
 
         public static Window? MainWindow { get; private set; }
 
-        /// <summary>
-        /// Initializes the singleton application object.  This is the first line of authored code
-        /// executed, and as such is the logical equivalent of main() or WinMain().
-        /// </summary>
         public App()
         {
             InitializeComponent();
+            this.UnhandledException += App_UnhandledException;
         }
 
-        /// <summary>
-        /// Invoked when the application is launched.
-        /// </summary>
-        /// <param name="args">Details about the launch request and process.</param>
+        private async void App_UnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs ex)
+        {
+            ex.Handled = true;
+            try
+            {
+                if (MainWindow?.Content is FrameworkElement root && root.XamlRoot != null)
+                {
+                    var dialog = new ContentDialog
+                    {
+                        Title = "Unexpected Error",
+                        Content = $"An unexpected error occurred:\n\n{ex.Message}",
+                        CloseButtonText = "OK",
+                        XamlRoot = root.XamlRoot
+                    };
+                    await dialog.ShowAsync();
+                }
+            }
+            catch
+            {
+
+            }
+        }
+
         protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
             _window = new MainWindow();

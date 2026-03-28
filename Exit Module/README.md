@@ -76,9 +76,14 @@ Als Hintergrund ist hier "noch" als archivierter Artikel geschrieben. https://le
 To configure the Exit module on the certificate authority to current Settings are
 
 HKEY\_LOCAL\_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\CertSvc\\Configuration<CASanitizedName>\\ExitModules\\SendToSQL
+
 SQLConfig <ConfigurationString>
-DebugFlag <Value>
+
+DebugFlag <Value e.g. Debug>
+
 DebugLog <Log Path e.g. c:\\temp\\debug.log>
-CertificateFolder <Folder to place issued certificates e.g. c:\\temp>
-RequestFolder <Folder to place requests e.g. c:\\temp>
+
+CertificateFolder <Folder to place issued certificates e.g. c:\\temp\\>
+
+RequestFolder <Folder to place requests e.g. c:\\temp\\>
 
