@@ -1,4 +1,9 @@
 ﻿@inherits LayoutComponentBase
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@using CertificateManager.Services
+@inject UserRolesService UserRolesService
+@inject IConfiguration Configuration
 
 <div class="page">
     <div class="sidebar">
@@ -7,7 +12,7 @@
 
     <main>
         <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+            Hello @user
         </div>
 
         <article class="content px-4">
@@ -21,3 +26,31 @@
     <a href="." class="reload">Reload</a>
     <span class="dismiss">🗙</span>
 </div>
+
+
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthState { get; set; }
+
+    string user = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (UserRolesService.IsInitialized || AuthState == null)
+            return;
+
+        var authState = await AuthState;
+
+        var rolessid = Configuration.GetSection("Roles");
+
+        var roles = authState.User.Claims
+            .Where(claim => claim.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/denyonlysid"
+                         && claim.Value == rolessid["Admin"])
+            .Select(claim => "Administator");
+
+        UserRolesService.Initialize(roles, authState.User.Identity?.Name ?? "");
+
+        user = UserRolesService.Username;
+    }
+}

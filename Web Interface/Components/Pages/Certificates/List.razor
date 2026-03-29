@@ -6,8 +6,11 @@
 @using CertificateManager.Data
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using CertificateManager.Services
+@using Microsoft.AspNetCore.Components.Authorization
+
 @implements IAsyncDisposable
 @inject CertificateService certificateService
+@inject UserRolesService UserRolesService
 
 <PageTitle>Certificate Entries</PageTitle>
 
@@ -21,7 +24,7 @@
         </tr>
         <tr>
             <td><label for="OwnerFilter">Owner</label></td>
-            <td><InputText id="OwnerFilter" @bind-Value="@OwnerFilter"></InputText></td>
+            <td><InputText id="OwnerFilter" @bind-Value="@OwnerFilter" readonly="@(!_isAdmin)"></InputText></td>
         </tr>
         <tr>
             <td><label for="TemplateFilter">Template</label></td>
@@ -107,8 +110,12 @@
             <PropertyColumn Property="@(e => e.Owner)" Sortable="true" />
             <PropertyColumn Property="@(e => e.Notes)" Sortable="true" />
             <TemplateColumn Context="Entry">
-                <a href="@($"certificates/edit?requestid={Entry.RequestId}&caconfig={Entry.CAConfig}")">Edit</a> |
-                <a href="@($"certificates/revoke?requestid={Entry.RequestId}&caconfig={Entry.CAConfig}")">Revoke</a>
+                <a href="@($"certificates/edit?requestid={Entry.RequestId}&caconfig={Entry.CAConfig}")">Edit</a>
+                @if (_isAdmin)
+                {
+                    <span> | </span>
+                    <a href="@($"certificates/revoke?requestid={Entry.RequestId}&caconfig={Entry.CAConfig}")">Revoke</a>
+                }
             </TemplateColumn>
 
         </QuickGrid>
@@ -119,6 +126,7 @@
 </ErrorBoundary>
 
 @code {
+
     public enum CAOptions
     {
         SECURECA01,
@@ -144,6 +152,8 @@
     public int? requestId = null;
     public DateTime? expirationDate = null;
 
+    private bool _isAdmin = false;
+
     private System.Collections.Hashtable _filterht = new System.Collections.Hashtable();
     public void HandleSubmit(EditContext editContext)
     {
@@ -158,8 +168,15 @@
 
     private string _dbError = string.Empty;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
+        _isAdmin = UserRolesService.Roles.Contains("Administator");
+
+        if (!_isAdmin)
+        {
+            OwnerFilter = UserRolesService.Username;
+        }
+
         try
         {
             _context = certificateService.CreateDbContext();

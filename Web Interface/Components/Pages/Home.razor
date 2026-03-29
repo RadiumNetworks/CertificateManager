@@ -4,6 +4,10 @@
 @using System.Security.Principal
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.QuickGrid
+@using CertificateManager.Services
+@inject UserRolesService UserRolesService
+@inject IConfiguration Configuration
+
 
 <PageTitle>User Claims & Roles</PageTitle>
 
@@ -23,12 +27,13 @@
         <div class="alert alert-danger">Failed to access Active Directory. The domain may be unreachable.</div>
     </ErrorContent>
 </ErrorBoundary>
+
 <h1>User Roles</h1>
 
-@if (_roles.Any())
+@if (UserRolesService.Roles.Any())
 {
     <ul>
-        @foreach (var role in _roles)
+        @foreach (var role in UserRolesService.Roles)
         {
             <li>@role</li>
         }
@@ -41,7 +46,7 @@ else
 
 @code {
     private IQueryable<Claim> _claims = Enumerable.Empty<Claim>().AsQueryable();
-    private IEnumerable<string> _roles = Enumerable.Empty<string>();
+
     private PaginationState _pagination = new PaginationState { ItemsPerPage = 10 };
 
     [CascadingParameter]
@@ -60,11 +65,8 @@ else
         {
             _claims = authState.User.Claims.AsQueryable();
 
-            _roles = authState.User.Claims
-                .Where(claim => (claim.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/denyonlysid") && (claim.Value == "S-1-5-21-2099237672-4193923515-138243912-512"))
-                .Select(claim => "Administator");
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
             
         }

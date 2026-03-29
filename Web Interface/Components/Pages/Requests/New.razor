@@ -6,6 +6,7 @@
 @using CERTENROLLLib;
 @using System.Runtime.InteropServices;
 @inject CertificateService certificateService;
+@inject IConfiguration Configuration
 
 <PageTitle>Submit Certificate Requess</PageTitle>
 
@@ -524,7 +525,7 @@ The submit button will be available if the request can be parsed and is complian
                         VALUES
                         ('{requestId}','{caConfig}','{type}','{location}','{content}')";
 
-                        var connectionString = @"Data Source=DATA01\PKIDB;Initial Catalog=CADB;Integrated Security=True;Encrypt=False;TrustServerCertificate=True";
+                        var connectionString = Configuration.GetConnectionString("Default");
 
                         using (SqlConnection connection = new SqlConnection(connectionString))
                         {
