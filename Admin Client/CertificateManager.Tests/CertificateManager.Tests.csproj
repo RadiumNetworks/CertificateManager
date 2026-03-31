@@ -13,12 +13,17 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.*" />
 	<PackageReference Include="Microsoft.PowerShell.SDK" Version="7.5.5" />
 	<PackageReference Include="System.Security.Cryptography.Pkcs" Version="9.*" />
-	  <PackageReference Include="xunit.v3" Version="3.2.2" />
+	<PackageReference Include="System.DirectoryServices.Protocols" Version="9.*" />
+	<PackageReference Include="System.DirectoryServices" Version="9.*" />
+	<PackageReference Include="Microsoft.Extensions.Configuration" Version="9.*" />
+	<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.*" />
+	<PackageReference Include="xunit.v3" Version="3.2.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.*" />
   </ItemGroup>
 
   <ItemGroup>
     <Compile Include="..\Pages\Signature\SignatureHelper.cs" Link="SignatureHelper.cs" />
+	  <Compile Include="..\Pages\Templates\TemplateImportHelper.cs" Link="TemplateImportHelper.cs" />
   </ItemGroup>
 
 </Project>

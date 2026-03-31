@@ -9,6 +9,8 @@ namespace CertificateManager.Admin.Data.Models
 
         public DateTime? LogDate { get; set; }
 
+        public string Origin { get; set; } = string.Empty;
+
         public string CAConfig { get; set; } = string.Empty;
 
         public string SQLStatement { get; set; } = string.Empty;
