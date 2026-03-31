@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
-namespace Certificate_Manager.Models
+namespace CertificateManager.Admin.Models
 {
     [PrimaryKey(nameof(RequestId), nameof(CAConfig))]
     public class Entry

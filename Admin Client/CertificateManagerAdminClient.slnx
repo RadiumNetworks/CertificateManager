@@ -4,13 +4,14 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="Certificate Manager.csproj">
+  <Project Path="CertificateManager.Data/CertificateManager.Data.csproj">
+    <Platform Solution="Debug|x86" Project="x86" />
+  </Project>
+  <Project Path="CertificateManager.Tests/CertificateManager.Tests.csproj" />
+  <Project Path="CertificateManagerAdminClient.csproj">
     <Platform Solution="*|ARM64" Project="ARM64" />
     <Platform Solution="*|x64" Project="x64" />
     <Platform Solution="*|x86" Project="x86" />
     <Deploy />
-  </Project>
-  <Project Path="Certificate_Manager.Data/Certificate_Manager.Data.csproj">
-    <Platform Solution="Debug|x86" Project="x86" />
   </Project>
 </Solution>

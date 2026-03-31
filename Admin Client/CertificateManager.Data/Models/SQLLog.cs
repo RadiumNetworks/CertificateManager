@@ -1,7 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
-namespace Certificate_Manager.Data.Models
+namespace CertificateManager.Admin.Data.Models
 {
     public class SQLLog
     {

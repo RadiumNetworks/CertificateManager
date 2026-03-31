@@ -1,4 +1,4 @@
-using Certificate_Manager.Data;
+using CertificateManager.Admin.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.UI.Xaml;
@@ -7,7 +7,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 
-namespace Certificate_Manager.Pages.Statistics
+namespace CertificateManager.Admin.Pages.Statistics
 {
     public class TemplateStatistic
     {

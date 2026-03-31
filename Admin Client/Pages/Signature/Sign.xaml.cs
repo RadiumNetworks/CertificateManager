@@ -1,5 +1,5 @@
-using Certificate_Manager.Data;
-using Certificate_Manager.Data.Models;
+using CertificateManager.Admin.Data;
+using CertificateManager.Admin.Data.Models;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
@@ -16,7 +16,7 @@ using System.Text;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 
-namespace Certificate_Manager.Pages.Signature
+namespace CertificateManager.Admin.Pages.Signature
 {
     public sealed partial class Sign : Page
     {
@@ -228,41 +228,12 @@ namespace Certificate_Manager.Pages.Signature
 
         public string BuildSignatureBlock(byte[] signature)
         {
-            string base64Signature = Convert.ToBase64String(signature);
-            var sb = new StringBuilder();
-            sb.AppendLine("# SIG # Begin signature block");
-            for (int i = 0; i < base64Signature.Length; i += 64)
-            {
-                sb.AppendLine("# " + base64Signature.Substring(i, Math.Min(64, base64Signature.Length - i)));
-            }
-            sb.Append("# SIG # End signature block");
-            return sb.ToString();
+            return SignatureHelper.BuildSignatureBlock(signature);
         }
 
         public string RemoveSignatureBlock(string scriptText)
         {
-            var lines = scriptText.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
-            var sb = new StringBuilder();
-            bool signatureLine = false;
-            foreach (var line in lines)
-            {
-                switch (line)
-                {
-                    case var m when m.Contains("# SIG # Begin signature block", StringComparison.OrdinalIgnoreCase):
-                        signatureLine = true;
-                        break;
-                    case var m when m.Contains("# SIG # End signature block", StringComparison.OrdinalIgnoreCase):
-                        signatureLine = false;
-                        break;
-                    default:
-                        if (!signatureLine)
-                        {
-                            sb.AppendLine(line);
-                        }
-                        break;
-                }
-            }
-            return sb.ToString().TrimEnd();
+            return SignatureHelper.RemoveSignatureBlock(scriptText);
         }
 
         public object SignScript(string filePath, X509Certificate2 cert, string? timestampServer = null)

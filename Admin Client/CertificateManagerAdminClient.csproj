@@ -3,7 +3,7 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
-    <RootNamespace>Certificate_Manager</RootNamespace>
+    <RootNamespace>CertificateManager.Admin</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Platforms>x86;x64;ARM64</Platforms>
     <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
@@ -25,10 +25,18 @@
 
   <!-- Exclude the class library subfolder from compilation (it's a separate project) -->
   <ItemGroup>
-    <Compile Remove="Certificate_Manager.Data\**" />
-    <Content Remove="Certificate_Manager.Data\**" />
-    <EmbeddedResource Remove="Certificate_Manager.Data\**" />
-    <None Remove="Certificate_Manager.Data\**" />
+    <Compile Remove="CertificateManager.Data\**" />
+    <Compile Remove="CertificateManager.Tests\**" />
+    <Content Remove="CertificateManager.Data\**" />
+    <EmbeddedResource Remove="CertificateManager.Data\**" />
+    <EmbeddedResource Remove="CertificateManager.Tests\**" />
+    <None Remove="CertificateManager.Data\**" />
+	<Compile Remove="CertificateManager.Test\**" />
+	<Content Remove="CertificateManager.Test\**" />
+	<EmbeddedResource Remove="CertificateManager.Test\**" />
+	<None Remove="CertificateManager.Tests\**" />
+	<None Remove="CertificateManager.Test\**" />
+	<Page Remove="CertificateManager.Tests\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -61,7 +69,7 @@
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260209005" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="Certificate_Manager.Data\Certificate_Manager.Data.csproj" />
+    <ProjectReference Include="CertificateManager.Data\CertificateManager.Data.csproj" />
   </ItemGroup>
 	<ItemGroup>
 		<Content Include="appsettings.json">
@@ -73,13 +81,13 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="CERTADMINLib">
-      <HintPath>Certificate_Manager.Data\References\CERTADMINLib.dll</HintPath>
+      <HintPath>CertificateManager.Data\References\CERTADMINLib.dll</HintPath>
     </Reference>
     <Reference Include="CERTCLILib">
-      <HintPath>Certificate_Manager.Data\References\CERTCLILIB.dll</HintPath>
+      <HintPath>CertificateManager.Data\References\CERTCLILIB.dll</HintPath>
     </Reference>
     <Reference Include="CERTENROLLLib">
-      <HintPath>Certificate_Manager.Data\References\CERTENROLLLib.dll</HintPath>
+      <HintPath>CertificateManager.Data\References\CERTENROLLLib.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -132,6 +140,9 @@
     <PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
     <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
     <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
-    <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
+    <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">False</PublishTrimmed>
   </PropertyGroup>
+  <ItemGroup>
+    <PRIResource Remove="CertificateManager.Tests\**" />
+  </ItemGroup>
 </Project>

@@ -1,9 +1,9 @@
-using Certificate_Manager.Data.Models;
-using Certificate_Manager.Models;
+using CertificateManager.Admin.Data.Models;
+using CertificateManager.Admin.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
-namespace Certificate_Manager.Data
+namespace CertificateManager.Admin.Data
 {
     public class AppDbContext : DbContext
     {

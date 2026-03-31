@@ -1,6 +1,6 @@
 using CERTENROLLLib;
-using Certificate_Manager.Data.Services;
-using Certificate_Manager.Models;
+using CertificateManager.Admin.Data.Services;
+using CertificateManager.Admin.Models;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Configuration;
@@ -26,7 +26,7 @@ using System.Threading.Tasks;
 using System.Web.Services.Description;
 using Windows.Media.Protection.PlayReady;
 
-namespace Certificate_Manager.Pages.Templates
+namespace CertificateManager.Admin.Pages.Templates
 {
 
     public sealed partial class Import : Page

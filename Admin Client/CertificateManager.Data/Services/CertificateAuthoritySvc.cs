@@ -1,6 +1,6 @@
-﻿using CERTADMINLib;
+using CERTADMINLib;
 using CERTENROLLLib;
-using Certificate_Manager.Data.Models.Views;
+using CertificateManager.Admin.Data.Models.Views;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -8,7 +8,7 @@ using Microsoft.Extensions.Configuration;
 using System.Runtime.InteropServices;
 
 
-namespace Certificate_Manager.Data.Services
+namespace CertificateManager.Admin.Data.Services
 {
     public class CertificateAuthoritySvc
     {
@@ -735,7 +735,7 @@ namespace Certificate_Manager.Data.Services
 
                 ParseRequest(request);
                 
-                log?.Invoke($"Processed {rowCount} rows — " +
+                log?.Invoke($"Processed {rowCount} rows � " +
                     $"Last: RequestID = {request.RequestId}, " +
                     $"CN = {request.CommonName ?? "(none)"}, " +
                     $"Disposition = {request.DispositionMessage ?? "(none)"}");

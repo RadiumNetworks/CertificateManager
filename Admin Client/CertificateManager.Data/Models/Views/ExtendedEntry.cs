@@ -1,5 +1,5 @@
-﻿
-namespace Certificate_Manager.Models.Views
+
+namespace CertificateManager.Admin.Models.Views
 {
     public class ExtendedEntry
     {

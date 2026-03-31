@@ -1,8 +1,8 @@
 using Azure.Core;
-using Certificate_Manager.Data;
-using Certificate_Manager.Data.Services;
-using Certificate_Manager.Models;
-using Certificate_Manager.Models.Views;
+using CertificateManager.Admin.Data;
+using CertificateManager.Admin.Data.Services;
+using CertificateManager.Admin.Models;
+using CertificateManager.Admin.Models.Views;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -14,7 +14,7 @@ using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
-namespace Certificate_Manager.Pages.Certificate
+namespace CertificateManager.Admin.Pages.Certificate
 {
     public class DispositionItem
     {

@@ -18,3 +18,9 @@
 /Exit Module/SendToSQL/obj
 /Exit Module/SendToSQL/packages
 /Web Interface/wwwroot
+/Admin Client/AppPackages
+/Certificate Request Client/AppPackages
+/Admin Client/CertificateManager.Tests/bin
+/Admin Client/CertificateManager.Tests/obj
+/Admin Client/CertificateManager.Data/obj
+/Admin Client/CertificateManager.Data/bin

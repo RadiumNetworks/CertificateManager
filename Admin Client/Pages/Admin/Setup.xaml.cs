@@ -1,5 +1,5 @@
-using Certificate_Manager.Data;
-using Certificate_Manager.Data.Services;
+using CertificateManager.Admin.Data;
+using CertificateManager.Admin.Data.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -10,7 +10,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Certificate_Manager.Pages.Admin
+namespace CertificateManager.Admin.Pages.Admin
 {
     public sealed partial class Setup : Page
     {

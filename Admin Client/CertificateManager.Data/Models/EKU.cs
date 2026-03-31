@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Certificate_Manager.Models
+namespace CertificateManager.Admin.Models
 {
     [Owned]
     public class EKU

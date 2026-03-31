@@ -13,13 +13,13 @@ using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Devices.Enumeration;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
-using Certificate_Manager.Pages;
+using CertificateManager.Admin.Pages;
 using Windows.Security.Cryptography.Certificates;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace Certificate_Manager
+namespace CertificateManager.Admin
 {
     public sealed partial class MainWindow : Window
     {
@@ -40,14 +40,14 @@ namespace Certificate_Manager
                 var tag = selectedItem.Tag?.ToString();
                 var pageType = tag switch
                 {
-                    "List_Certificates" => typeof(Certificate_Manager.Pages.Certificate.List),
-                    "List_Requests" => typeof(Certificate_Manager.Pages.Request.List),
-                    "New_Request" => typeof(Certificate_Manager.Pages.Request.New),
-                    "Sign_Script" => typeof(Certificate_Manager.Pages.Signature.Sign),
-                    "Import_Templates" => typeof(Certificate_Manager.Pages.Templates.Import),
-                    "Statistics" => typeof(Certificate_Manager.Pages.Statistics.Overview),
-                    "Setup" => typeof(Certificate_Manager.Pages.Admin.Setup),
-                    _ => typeof(Certificate_Manager.Pages.Certificate.List)
+                    "List_Certificates" => typeof(CertificateManager.Admin.Pages.Certificate.List),
+                    "List_Requests" => typeof(CertificateManager.Admin.Pages.Request.List),
+                    "New_Request" => typeof(CertificateManager.Admin.Pages.Request.New),
+                    "Sign_Script" => typeof(CertificateManager.Admin.Pages.Signature.Sign),
+                    "Import_Templates" => typeof(CertificateManager.Admin.Pages.Templates.Import),
+                    "Statistics" => typeof(CertificateManager.Admin.Pages.Statistics.Overview),
+                    "Setup" => typeof(CertificateManager.Admin.Pages.Admin.Setup),
+                    _ => typeof(CertificateManager.Admin.Pages.Certificate.List)
                 };
 
                 ContentFrame.Navigate(pageType);

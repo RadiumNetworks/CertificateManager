@@ -1,8 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Certificate_Manager.Data.Models.Views
+namespace CertificateManager.Admin.Data.Models.Views
 {
     //https://learn.microsoft.com/en-us/windows/win32/api/certif/nf-certif-icertserverexit-getcertificateproperty
     public class CACertificate

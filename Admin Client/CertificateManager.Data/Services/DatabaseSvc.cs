@@ -1,11 +1,11 @@
-﻿using Certificate_Manager.Data;
-using Certificate_Manager.Models;
-using Certificate_Manager.Models.Views;
+using CertificateManager.Admin.Data;
+using CertificateManager.Admin.Models;
+using CertificateManager.Admin.Models.Views;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
-namespace Certificate_Manager.Data.Services
+namespace CertificateManager.Admin.Data.Services
 {
     public class DatabaseSvc
     {

@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 
-namespace Certificate_Manager.Data
+namespace CertificateManager.Admin.Data
 {
     /// <summary>
     /// Design-time factory for EF Core tools (add-migration, update-database).
