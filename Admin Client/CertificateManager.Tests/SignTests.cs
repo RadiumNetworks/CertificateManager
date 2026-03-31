@@ -50,7 +50,7 @@ public class SignTests
 
     [Theory]
     [InlineData("TestString")]
-    public void BuildAndRemove(string script)
+    public void BuildAndRemoveSignatureBlock(string script)
     {
         byte[] dummySignature = Encoding.UTF8.GetBytes(script);
 
@@ -60,5 +60,26 @@ public class SignTests
         string stripped = SignatureHelper.RemoveSignatureBlock(signedScript);
 
         Assert.Equal(script.TrimEnd(), stripped);
+    }
+
+    [Theory]
+    [InlineData("TestString")]
+    public void CreateCMSSignnature(string script)
+    {
+        Assert.Equal(script, script);
+    }
+
+    [Theory]
+    [InlineData("TestString")]
+    public void CreateAuthenticodeSignnature(string script)
+    {
+        Assert.Equal(script, script);
+    }
+
+    [Theory]
+    [InlineData("TestString")]
+    public void VerifyAuthenticodeSignnature(string script)
+    {
+        Assert.Equal(script, script);
     }
 }

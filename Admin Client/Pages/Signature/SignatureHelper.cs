@@ -1,4 +1,7 @@
 using System;
+using System.Management.Automation;
+using System.Security.Cryptography.Pkcs;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
 namespace CertificateManager.Admin.Pages.Signature;
@@ -42,5 +45,59 @@ public static class SignatureHelper
             }
         }
         return sb.ToString().TrimEnd();
+    }
+
+    public static string SignCms(string scriptText, X509Certificate2 cert)
+    {
+        scriptText = scriptText.Replace("\r\n", "\n").Replace("\n", "\r\n");
+        scriptText = RemoveSignatureBlock(scriptText);
+        if (!scriptText.EndsWith("\r\n"))
+            scriptText += "\r\n";
+
+        byte[] scriptBytes = Encoding.UTF8.GetBytes(scriptText);
+
+        ContentInfo contentInfo = new ContentInfo(scriptBytes);
+        SignedCms signedCms = new SignedCms(contentInfo, detached: true);
+        CmsSigner cmsSigner = new CmsSigner(SubjectIdentifierType.IssuerAndSerialNumber, cert)
+        {
+            IncludeOption = X509IncludeOption.EndCertOnly
+        };
+
+        signedCms.ComputeSignature(cmsSigner);
+        byte[] signature = signedCms.Encode();
+
+        string signatureBlock = BuildSignatureBlock(signature);
+        return scriptText + "\r\n" + signatureBlock;
+    }
+
+    public static object SignScript(string filePath, X509Certificate2 cert, string? timestampServer = null)
+    {
+        using var ps = PowerShell.Create();
+        ps.AddCommand("Set-AuthenticodeSignature")
+          .AddParameter("FilePath", filePath)
+          .AddParameter("Certificate", cert)
+          .AddParameter("HashAlgorithm", "SHA1");
+
+        if (timestampServer != null)
+            ps.AddParameter("TimestampServer", timestampServer);
+
+        var results = ps.Invoke();
+        if (ps.HadErrors)
+            throw new InvalidOperationException(string.Join(Environment.NewLine, ps.Streams.Error));
+
+        return results[0].BaseObject;
+    }
+
+    public static object VerifyScript(string filePath)
+    {
+        using var ps = PowerShell.Create();
+        ps.AddCommand("Get-AuthenticodeSignature")
+          .AddParameter("FilePath", filePath);
+
+        var results = ps.Invoke();
+        if (ps.HadErrors)
+            throw new InvalidOperationException(string.Join(Environment.NewLine, ps.Streams.Error));
+
+        return results[0].BaseObject;
     }
 }
