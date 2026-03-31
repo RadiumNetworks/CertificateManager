@@ -43,35 +43,19 @@ namespace CertificateManager.Admin.Pages.Signature
             _certificates.Clear();
             CSCertificateCombo.Items.Clear();
 
-            //var location = System.Security.Cryptography.X509Certificates.StoreLocation.CurrentUser;
             var storeTag = (StoreLocationCombo?.SelectedItem as ComboBoxItem)?.Tag?.ToString() ?? "CurrentUser";
             var location = storeTag == "LocalMachine" ? StoreLocation.LocalMachine : StoreLocation.CurrentUser;
 
-
-            // Code Signing EKU OID
-            const string codeSigOid = "1.3.6.1.5.5.7.3.3";
-
-            using var store = new X509Store(StoreName.My, location);
-            store.Open(OpenFlags.ReadOnly);
-
-            foreach (var cert in store.Certificates)
+            var certs = SignatureHelper.GetCodeSigningCertificates(location);
+            foreach (var info in certs)
             {
-                if (!cert.HasPrivateKey) continue;
-
-                bool hasCodeSigning = cert.Extensions
-                    .OfType<X509EnhancedKeyUsageExtension>()
-                    .Any(eku => eku.EnhancedKeyUsages.Cast<Oid>().Any(o => o.Value == codeSigOid));
-                if (!hasCodeSigning) continue;
-
-                if (cert.NotAfter < DateTime.Now || cert.NotBefore > DateTime.Now) continue;
-
                 var item = new CertificateItem
                 {
-                    Thumbprint = cert.Thumbprint,
-                    Subject = cert.GetNameInfo(X509NameType.SimpleName, false),
-                    Issuer = cert.GetNameInfo(X509NameType.SimpleName, true),
-                    NotAfter = cert.NotAfter,
-                    StoreLocation = location
+                    Thumbprint = info.Thumbprint,
+                    Subject = info.Subject,
+                    Issuer = info.Issuer,
+                    NotAfter = info.NotAfter,
+                    StoreLocation = info.StoreLocation
                 };
                 _certificates.Add(item);
                 CSCertificateCombo.Items.Add(item);
@@ -212,18 +196,7 @@ namespace CertificateManager.Admin.Pages.Signature
 
         private async System.Threading.Tasks.Task<string> SignAuthenticodeAsync(string scriptText, X509Certificate2 cert, string? timestampServer)
         {
-            string tempFile = Path.Combine(Path.GetTempPath(), $"sign_{Guid.NewGuid():N}.ps1");
-            await File.WriteAllTextAsync(tempFile, scriptText, new UTF8Encoding(false));
-
-            try
-            {
-                SignScript(tempFile, cert, timestampServer);
-                return await File.ReadAllTextAsync(tempFile);
-            }
-            finally
-            {
-                File.Delete(tempFile);
-            }
+            return await SignatureHelper.SignAuthenticodeAsync(scriptText, cert, timestampServer);
         }
 
         public string BuildSignatureBlock(byte[] signature)
@@ -255,9 +228,9 @@ namespace CertificateManager.Admin.Pages.Signature
 
         private async System.Threading.Tasks.Task LogSignedScriptAsync(X509Certificate2 cert, string scriptText, string signatureType)
         {
-            string hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(scriptText)));
-            string partialscript = scriptText.Length <= 4096 ? scriptText : scriptText.Substring(0, 4096);
-            
+            string hash = SignatureHelper.ComputeScriptHash(scriptText);
+            string partialscript = SignatureHelper.TruncateScript(scriptText);
+
             var record = new SignedScript
             {
                 Base64Certificate = Convert.ToBase64String(cert.RawData),

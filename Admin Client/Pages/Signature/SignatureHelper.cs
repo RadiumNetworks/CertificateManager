@@ -1,5 +1,9 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Management.Automation;
+using System.Security.Cryptography;
 using System.Security.Cryptography.Pkcs;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -85,6 +89,11 @@ public static class SignatureHelper
         if (ps.HadErrors)
             throw new InvalidOperationException(string.Join(Environment.NewLine, ps.Streams.Error));
 
+        if((timestampServer != null) && (results[0].Properties["TimeStamperCertificate"].Value == null))
+        {
+            throw new InvalidOperationException(string.Join(Environment.NewLine, "Timestampserver not reachable"));
+        }
+
         return results[0].BaseObject;
     }
 
@@ -100,4 +109,74 @@ public static class SignatureHelper
 
         return results[0].BaseObject;
     }
+
+    public static async System.Threading.Tasks.Task<string> SignAuthenticodeAsync(string scriptText, X509Certificate2 cert, string? timestampServer)
+    {
+        string tempFile = Path.Combine(Path.GetTempPath(), $"sign_{Guid.NewGuid():N}.ps1");
+        await File.WriteAllTextAsync(tempFile, scriptText, new UTF8Encoding(false));
+
+        try
+        {
+            SignScript(tempFile, cert, timestampServer);
+            return await File.ReadAllTextAsync(tempFile);
+        }
+        finally
+        {
+            File.Delete(tempFile);
+        }
+    }
+
+    public static string ComputeScriptHash(string scriptText)
+    {
+        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(scriptText)));
+    }
+
+    public static string TruncateScript(string scriptText, int maxLength = 4096)
+    {
+        return scriptText.Length <= maxLength ? scriptText : scriptText.Substring(0, maxLength);
+    }
+
+    public static List<CertificateInfo> GetCodeSigningCertificates(StoreLocation location)
+    {
+        const string codeSigOid = "1.3.6.1.5.5.7.3.3";
+        var result = new List<CertificateInfo>();
+
+        using var store = new X509Store(StoreName.My, location);
+        store.Open(OpenFlags.ReadOnly);
+
+        foreach (var cert in store.Certificates)
+        {
+            if (!cert.HasPrivateKey) continue;
+
+            bool hasCodeSigning = cert.Extensions
+                .OfType<X509EnhancedKeyUsageExtension>()
+                .Any(eku => eku.EnhancedKeyUsages.Cast<Oid>().Any(o => o.Value == codeSigOid));
+            if (!hasCodeSigning) continue;
+
+            if (cert.NotAfter < DateTime.Now || cert.NotBefore > DateTime.Now) continue;
+
+            result.Add(new CertificateInfo
+            {
+                Thumbprint = cert.Thumbprint,
+                Subject = cert.GetNameInfo(X509NameType.SimpleName, false),
+                Issuer = cert.GetNameInfo(X509NameType.SimpleName, true),
+                NotAfter = cert.NotAfter,
+                StoreLocation = location
+            });
+        }
+
+        return result;
+    }
+
+}
+
+public class CertificateInfo
+{
+    public string Thumbprint { get; set; } = "";
+    public string Subject { get; set; } = "";
+    public string Issuer { get; set; } = "";
+    public DateTime NotAfter { get; set; }
+    public StoreLocation StoreLocation { get; set; }
+
+    public override string ToString() => $"{Subject} (Issuer: {Issuer}, Expires: {NotAfter:yyyy-MM-dd})";
 }

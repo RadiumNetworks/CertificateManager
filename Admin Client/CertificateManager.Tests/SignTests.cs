@@ -1,6 +1,9 @@
 using CertificateManager.Admin.Pages.Signature;
 using System;
+using System.Collections.Generic;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace CertificateManager.Admin.Tests;
@@ -81,5 +84,47 @@ public class SignTests
     public void VerifyAuthenticodeSignnature(string script)
     {
         Assert.Equal(script, script);
+    }
+
+    [Theory]
+    [InlineData(StoreLocation.LocalMachine)]
+    [InlineData(StoreLocation.CurrentUser)]
+    public void GetCodeSigningCertificate(StoreLocation location)
+    {
+        var certificates = SignatureHelper.GetCodeSigningCertificates(location);
+        Assert.NotEmpty(certificates);
+    }
+
+    [Theory]
+    [InlineData(StoreLocation.LocalMachine, "TestString", null)]
+    [InlineData(StoreLocation.CurrentUser, "TestString", null)]
+    [InlineData(StoreLocation.LocalMachine, "TestString", "http://timestamp.digicert.com")]
+    [InlineData(StoreLocation.CurrentUser, "TestString", "http://timestamp.digicert.com")]
+    public async Task TryAuthenticodeSignature(StoreLocation location, string script, string? timestampserver)
+    {
+        try
+        {
+            var certificates = SignatureHelper.GetCodeSigningCertificates(location);
+            var certificatethumbprint = certificates[0]?.Thumbprint;
+
+            using var store = new X509Store(StoreName.My, location);
+            store.Open(OpenFlags.ReadOnly);
+            var certificatecollection = store.Certificates.Find(X509FindType.FindByThumbprint, certificatethumbprint, false);
+            
+            if(certificatecollection.Count > 0)
+            {
+                var output = await SignatureHelper.SignAuthenticodeAsync(script, certificatecollection[0], timestampserver);
+            }
+            else
+            {
+                Assert.Fail();
+            }
+
+            
+        }
+        catch
+        {
+            Assert.Fail();        
+        }
     }
 }
