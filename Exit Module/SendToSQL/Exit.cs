@@ -143,7 +143,7 @@ namespace SendToSQL
             }
         }
 
-        private void SendToSQLDB(CAInfo caInfo, CACertificate certificate, CARequest request)
+        private void SendToSQLDB(CAInfo caInfo, CACertificate certificate, CARequest request, string action)
         {
             Log(_debugFlag, _debugLog, _sqlConfig);
             Log(_debugFlag, _debugLog, _caConfig);
@@ -251,47 +251,68 @@ namespace SendToSQL
 
             try
             {
-                String sql = $@"Update Entry set 
-                Base64Request='{base64Request}',
-                Base64Certificate='{base64Certificate}',
-                SerialNumber='{serialNumber}',
-                RequestDisposition='{disposition}',
-                RequesterName='{requesterName}',
-                RequestType='{requestType}',
-                IssuedEmailAddress='{issuedEMailAddress}',
-                IssuedCommonName='{issuedCommonName}',
-                IssuedCountryRegion='{issuedCountryRegion}',
-                IssuedOrganization='{issuedOrganization}',
-                IssuedOrganizationUnit='{issuedOrganizationUnit}',
-                CallerName='{callerName}',
-                CertificateHash='{certificateHash}',
-                CertificateTemplate='{certificateTemplate}',
-                CertificateEffectiveDate='{notBefore}',
-                CertificateExpirationDate='{notAfter}',
-                PublicKeyLength='{publicKeyLength}',
-                PublicKeyAlgorithm='{publicKeyAlgorithm}',
-                RequestCountryRegion='{requestCountryRegion}',
-                RequestOrganization='{requestOrganization}',
-                RequestOrganizationUnit='{requestOrganizationUnit}',
-                RequestCommonName='{requestCommonName}',
-                RequestCity='{requestCity}',
-                RequestEmailAddress='{requestEMailAddress}'
-                where RequestID='{requestid}' and CAConfig='{_caConfig}' 
-                If @@ROWCOUNT=0 
-                Insert into Entry (Base64Request, RequestId, 
-                CAConfig, Base64Certificate, SerialNumber, RequestDisposition, RequesterName,
-                RequestType, IssuedEmailAddress, IssuedCommonName, IssuedCountryRegion, IssuedOrganization, 
-                IssuedOrganizationUnit, CallerName, CertificateHash, CertificateTemplate,
-                CertificateExpirationDate, CertificateEffectiveDate,
-                PublicKeyLength,PublicKeyAlgorithm, RequestCountryRegion, RequestOrganization, 
-                RequestOrganizationUnit, RequestCommonName, RequestCity, RequestEmailAddress) 
-                VALUES ('{base64Request}','{requestid}',
-                '{_caConfig}','{base64Certificate}','{serialNumber}','{disposition}','{requesterName}',
-                '{requestType}','{issuedEMailAddress}','{issuedCommonName}','{issuedCountryRegion}','{issuedOrganization}',
-                '{issuedOrganizationUnit}','{callerName}','{certificateHash}','{certificateTemplate}',
-                '{notAfter}','{notBefore}',
-                '{publicKeyLength}','{publicKeyAlgorithm}','{requestCountryRegion}','{requestOrganization}',
-                '{requestOrganizationUnit}','{requestCommonName}','{requestCity}','{requestEMailAddress}')";
+                String sql = String.Empty;
+
+                switch(action)
+                {
+                    case "revoked":
+
+                        sql = $@"Update Entry set 
+                        RequestDisposition='{disposition}',
+                        RequesterName='{requesterName}',
+                        RequestType='{requestType}',
+                        CallerName='{callerName}'
+                        where RequestID='{requestid}' and CAConfig='{_caConfig}'";
+
+                        break;
+
+                    default:
+
+                        sql = $@"Update Entry set 
+                        Base64Request='{base64Request}',
+                        Base64Certificate='{base64Certificate}',
+                        SerialNumber='{serialNumber}',
+                        RequestDisposition='{disposition}',
+                        RequesterName='{requesterName}',
+                        RequestType='{requestType}',
+                        IssuedEmailAddress='{issuedEMailAddress}',
+                        IssuedCommonName='{issuedCommonName}',
+                        IssuedCountryRegion='{issuedCountryRegion}',
+                        IssuedOrganization='{issuedOrganization}',
+                        IssuedOrganizationUnit='{issuedOrganizationUnit}',
+                        CallerName='{callerName}',
+                        CertificateHash='{certificateHash}',
+                        CertificateTemplate='{certificateTemplate}',
+                        CertificateEffectiveDate='{notBefore}',
+                        CertificateExpirationDate='{notAfter}',
+                        PublicKeyLength='{publicKeyLength}',
+                        PublicKeyAlgorithm='{publicKeyAlgorithm}',
+                        RequestCountryRegion='{requestCountryRegion}',
+                        RequestOrganization='{requestOrganization}',
+                        RequestOrganizationUnit='{requestOrganizationUnit}',
+                        RequestCommonName='{requestCommonName}',
+                        RequestCity='{requestCity}',
+                        RequestEmailAddress='{requestEMailAddress}'
+                        where RequestID='{requestid}' and CAConfig='{_caConfig}' 
+                        If @@ROWCOUNT=0 
+                        Insert into Entry (Base64Request, RequestId, 
+                        CAConfig, Base64Certificate, SerialNumber, RequestDisposition, RequesterName,
+                        RequestType, IssuedEmailAddress, IssuedCommonName, IssuedCountryRegion, IssuedOrganization, 
+                        IssuedOrganizationUnit, CallerName, CertificateHash, CertificateTemplate,
+                        CertificateExpirationDate, CertificateEffectiveDate,
+                        PublicKeyLength,PublicKeyAlgorithm, RequestCountryRegion, RequestOrganization, 
+                        RequestOrganizationUnit, RequestCommonName, RequestCity, RequestEmailAddress) 
+                        VALUES ('{base64Request}','{requestid}',
+                        '{_caConfig}','{base64Certificate}','{serialNumber}','{disposition}','{requesterName}',
+                        '{requestType}','{issuedEMailAddress}','{issuedCommonName}','{issuedCountryRegion}','{issuedOrganization}',
+                        '{issuedOrganizationUnit}','{callerName}','{certificateHash}','{certificateTemplate}',
+                        '{notAfter}','{notBefore}',
+                        '{publicKeyLength}','{publicKeyAlgorithm}','{requestCountryRegion}','{requestOrganization}',
+                        '{requestOrganizationUnit}','{requestCommonName}','{requestCity}','{requestEMailAddress}')";
+
+                        break;
+                }
+                
                 Log(_debugFlag, _debugLog, sql);
 
                 using (SqlConnection connection = new SqlConnection(_sqlConfig))
@@ -488,7 +509,10 @@ namespace SendToSQL
                                 }else if (san.Type == AlternativeNameType.XCN_CERT_ALT_NAME_USER_PRINCIPLE_NAME)
                                 {
                                     SubjectAlternativeNames.Add("UPN=" + san.strValue);
-                                }
+                                }else if (san.Type == AlternativeNameType.XCN_CERT_ALT_NAME_RFC822_NAME)
+				{
+    				    SubjectAlternativeNames.Add("EMAIL=" + san.strValue);
+				}
                                 else 
                                 {
                                     SubjectAlternativeNames.Add(san.Type + "=" + san.strValue);
@@ -625,351 +649,366 @@ namespace SendToSQL
 
         public void Notify(int exitEvent, int context)
         {
+            var certConfig = new CCertConfig();
+            var certGetConfig = new CCertGetConfig();
+            var certServer = new CCertServerExit();
+            var caInfo = new CAInfo();
+            var certificateInfo = new CACertificate();
+            var requestInfo = new CARequest();
+
+            //otherwise read CAServerName / CommonName from registry
+
+
+            //https://docs.microsoft.com/en-us/windows/win32/api/certif/nf-certif-icertserverexit-setcontext
+            //https://learn.microsoft.com/en-us/windows/win32/api/certif/nf-certif-icertserverexit-getcertificateproperty
+            certServer.SetContext(0);
+
+            if (_debugFlag != null && _debugLog != null)
+            {
+                Log(_debugFlag, _debugLog, Environment.NewLine + DateTime.Now);
+                Log(_debugFlag, _debugLog, Environment.NewLine + "Seen eventtype " + exitEvent);
+                Log(_debugFlag, _debugLog, Environment.NewLine + "Logging CA Infos");
+            }
+            foreach (PropertyInfo prop in typeof(CAInfo).GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            {
+                if (prop.PropertyType == typeof(string))
+                {
+                    try
+                    {
+                        prop.SetValue(caInfo, (string)GetProperty(ref certServer, prop.Name, "certificate", "string"));
+                    }
+                    catch
+                    {
+
+                    }
+                }
+                else if (prop.PropertyType == typeof(int) || prop.PropertyType == typeof(int?))
+                {
+                    try
+                    {
+                        prop.SetValue(caInfo, (int)GetProperty(ref certServer, prop.Name, "certificate", "int"));
+                    }
+                    catch
+                    {
+
+                    }
+                }
+                else if (prop.PropertyType == typeof(DateTime))
+                {
+                    try
+                    {
+                        prop.SetValue(caInfo, (DateTime)GetProperty(ref certServer, prop.Name, "certificate", "date"));
+                    }
+                    catch
+                    {
+
+                    }
+                }
+                else if (prop.PropertyType == typeof(byte[]))
+                {
+                    try
+                    {
+                        prop.SetValue(caInfo, (byte[])GetProperty(ref certServer, prop.Name, "certificate", "bytearr"));
+                    }
+                    catch
+                    {
+
+                    }
+                }
+                if (_debugFlag != null && _debugLog != null && prop.GetValue(caInfo) != null)
+                {
+                    try
+                    {
+                        if (prop.GetValue(caInfo).ToString() == "System.Byte[]")
+                        {
+                            Log(_debugFlag, _debugLog, prop.Name + " = " + Convert.ToBase64String((byte[])prop.GetValue(caInfo), Base64FormattingOptions.None));
+                        }
+                        else
+                        {
+                            Log(_debugFlag, _debugLog, prop.Name + " = " + prop.GetValue(caInfo).ToString());
+                        }
+
+                    }
+                    catch
+                    {
+
+                    }
+                }
+            }
+
+            certServer.SetContext(context);
+
+            if (_debugFlag != null && _debugLog != null)
+            {
+                Log(_debugFlag, _debugLog, Environment.NewLine + "Logging Certificate Infos");
+            }
+            foreach (PropertyInfo prop in typeof(CACertificate).GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            {
+                if (prop.PropertyType == typeof(string))
+                {
+                    try
+                    {
+                        prop.SetValue(certificateInfo, (string)GetProperty(ref certServer, prop.Name, "certificate", "string"));
+                    }
+                    catch
+                    {
+
+                    }
+                }
+                else if (prop.PropertyType == typeof(int) || prop.PropertyType == typeof(int?))
+                {
+                    try
+                    {
+                        prop.SetValue(certificateInfo, (int)GetProperty(ref certServer, prop.Name, "certificate", "int"));
+
+                    }
+                    catch
+                    {
+
+                    }
+                }
+                else if (prop.PropertyType == typeof(DateTime))
+                {
+                    try
+                    {
+                        prop.SetValue(certificateInfo, (DateTime)GetProperty(ref certServer, prop.Name, "certificate", "date"));
+                    }
+                    catch
+                    {
+
+                    }
+                }
+                else if (prop.PropertyType == typeof(byte[]))
+                {
+                    try
+                    {
+                        prop.SetValue(certificateInfo, (byte[])GetProperty(ref certServer, prop.Name, "certificate", "bytearr"));
+                    }
+                    catch
+                    {
+
+                    }
+                }
+                if (_debugFlag != null && _debugLog != null && prop.GetValue(certificateInfo) != null)
+                {
+                    try
+                    {
+                        if (prop.GetValue(certificateInfo).ToString() == "System.Byte[]")
+                        {
+                            Log(_debugFlag, _debugLog, prop.Name + " = " + Convert.ToBase64String((byte[])prop.GetValue(certificateInfo), Base64FormattingOptions.None));
+                        }
+                        else
+                        {
+                            Log(_debugFlag, _debugLog, prop.Name + " = " + prop.GetValue(certificateInfo).ToString());
+                        }
+                    }
+                    catch
+                    {
+
+                    }
+                }
+
+            }
+
+            if (_debugFlag != null && _debugLog != null)
+            {
+                Log(_debugFlag, _debugLog, Environment.NewLine + "Logging Request Infos");
+            }
+            foreach (PropertyInfo prop in typeof(CARequest).GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            {
+                if (prop.PropertyType == typeof(string))
+                {
+                    try
+                    {
+                        prop.SetValue(requestInfo, (string)GetProperty(ref certServer, prop.Name, "request", "string"));
+                    }
+                    catch
+                    {
+
+                    }
+                }
+                else if (prop.PropertyType == typeof(int) || prop.PropertyType == typeof(int?))
+                {
+                    try
+                    {
+                        prop.SetValue(requestInfo, (int)GetProperty(ref certServer, prop.Name, "request", "int"));
+
+                    }
+                    catch
+                    {
+
+                    }
+                }
+                else if (prop.PropertyType == typeof(DateTime))
+                {
+                    try
+                    {
+                        prop.SetValue(requestInfo, (DateTime)GetProperty(ref certServer, prop.Name, "request", "date"));
+                    }
+                    catch
+                    {
+
+                    }
+                }
+                else if (prop.PropertyType == typeof(byte[]))
+                {
+                    try
+                    {
+                        prop.SetValue(requestInfo, (byte[])GetProperty(ref certServer, prop.Name, "request", "bytearr"));
+                    }
+                    catch
+                    {
+
+                    }
+                }
+                if (_debugFlag != null && _debugLog != null && prop.GetValue(requestInfo) != null)
+                {
+                    try
+                    {
+                        if (prop.GetValue(requestInfo).ToString() == "System.Byte[]")
+                        {
+                            Log(_debugFlag, _debugLog, prop.Name + " = " + Convert.ToBase64String((byte[])prop.GetValue(requestInfo), Base64FormattingOptions.None));
+                        }
+                        else
+                        {
+                            Log(_debugFlag, _debugLog, prop.Name + " = " + prop.GetValue(requestInfo).ToString());
+                        }
+                    }
+                    catch
+                    {
+
+                    }
+                }
+            }
+            string outputFileName = null;
+            if (_certificateFolder != null)
+            {
+                try
+                {
+                    outputFileName = _certificateFolder + certificateInfo.RequestId.ToString() + ".cer";
+                    System.IO.File.WriteAllText(outputFileName, Convert.ToBase64String(certificateInfo.RawCertificate, Base64FormattingOptions.None));
+                }
+                catch
+                {
+
+                }
+
+            }
+            if (_requestFolder != null)
+            {
+                try
+                {
+                    outputFileName = _requestFolder + certificateInfo.RequestId.ToString() + ".req";
+                    System.IO.File.WriteAllText(outputFileName, Convert.ToBase64String(requestInfo.RawRequest, Base64FormattingOptions.None));
+                }
+                catch
+                {
+
+                }
+
+            }
+
+            switch (requestInfo.RequestType)
+            {
+                case 263168:
+
+                    if (_debugFlag != null && _debugLog != null)
+                    {
+                        var cX509CertificateRequestCMC = new CERTENROLLLib.CX509CertificateRequestCmc();
+                        try
+                        {
+                            string request = Convert.ToBase64String(requestInfo.RawRequest, Base64FormattingOptions.None);
+                            cX509CertificateRequestCMC.InitializeDecode(
+                                request,
+                                CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64_ANY);
+                            var cX509CertificateRequestPkcs10 = (IX509CertificateRequestPkcs10)cX509CertificateRequestCMC.GetInnerRequest(0);
+
+                            ParseRequestExtension(cX509CertificateRequestPkcs10);
+
+                            Log(_debugFlag, _debugLog, "Cmc successfully parsed" + Environment.NewLine);
+                        }
+                        catch
+                        {
+                            Log(_debugFlag, _debugLog, "Error reading Cmc" + Environment.NewLine);
+                        }
+                    }
+                    break;
+                case 262912:
+                    if (_debugFlag != null && _debugLog != null)
+                    {
+                        var cX509CertificateRequestPkcs7 = new CERTENROLLLib.CX509CertificateRequestPkcs7();
+                        try
+                        {
+                            string request = Convert.ToBase64String(requestInfo.RawRequest, Base64FormattingOptions.None);
+                            cX509CertificateRequestPkcs7.InitializeDecode(
+                                request,
+                                CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64_ANY);
+
+                            var cX509CertificateRequestPkcs10 = (IX509CertificateRequestPkcs10)cX509CertificateRequestPkcs7.GetInnerRequest(0);
+
+                            ParseRequestExtension(cX509CertificateRequestPkcs10);
+
+                            Log(_debugFlag, _debugLog, "PKCS7 successfully parsed");
+                        }
+                        catch
+                        {
+                            Log(_debugFlag, _debugLog, "Error reading PKCS7");
+                        }
+                    }
+                    break;
+                case 262400:
+                    if (_debugFlag != null && _debugLog != null)
+                    {
+                        var cX509CertificateRequestPkcs10 = new CERTENROLLLib.CX509CertificateRequestPkcs10();
+                        try
+                        {
+                            string request = Convert.ToBase64String(requestInfo.RawRequest, Base64FormattingOptions.None);
+                            cX509CertificateRequestPkcs10.InitializeDecode(
+                                request,
+                                CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64_ANY);
+
+                            Log(_debugFlag, _debugLog, "PKCS10 successfully parsed");
+
+                            ParseRequestExtension(cX509CertificateRequestPkcs10);
+
+                        }
+                        catch
+                        {
+                            Log(_debugFlag, _debugLog, "Error reading PKCS10");
+                        }
+                    }
+                    break;
+            }
+            if (_debugFlag != null && _debugLog != null)
+            {
+                Log(_debugFlag, _debugLog, Environment.NewLine);
+            }
             //https://learn.microsoft.com/en-us/windows/win32/api/certexit/nf-certexit-icertexit-notify
             switch (exitEvent)
             {
-                //case (int)ExitEvents.CertIssued:
-                //case (int)ExitEvents.CertPending:
-                //case (int)ExitEvents.CertRevoked:
-                //case (int)ExitEvents.CertRetrievePending:
-                //case (int)ExitEvents.CertDenied:
+                case (int)ExitEvents.CertIssued:
+                    SendToSQLDB(caInfo, certificateInfo, requestInfo, "issued");
+
+                    break;
+                case (int)ExitEvents.CertPending:
+                    SendToSQLDB(caInfo, certificateInfo, requestInfo, "pending");
+
+                    break;
+                case (int)ExitEvents.CertRevoked:
+                    SendToSQLDB(caInfo, certificateInfo, requestInfo, "revoked");
+
+                    break;
+                case (int)ExitEvents.CertRetrievePending:
+                    SendToSQLDB(caInfo, certificateInfo, requestInfo, "retrieve");
+
+                    break;
+                case (int)ExitEvents.CertDenied:
+                    SendToSQLDB(caInfo, certificateInfo, requestInfo, "denied");
+
+                    break;
                 default:
-                    var certConfig = new CCertConfig();
-                    var certGetConfig = new CCertGetConfig();
-                    var certServer = new CCertServerExit();
-                    var caInfo = new CAInfo();
-                    var certificateInfo = new CACertificate();
-                    var requestInfo = new CARequest();
                     
-                    //otherwise read CAServerName / CommonName from registry
-                    
-
-                    //https://docs.microsoft.com/en-us/windows/win32/api/certif/nf-certif-icertserverexit-setcontext
-                    //https://learn.microsoft.com/en-us/windows/win32/api/certif/nf-certif-icertserverexit-getcertificateproperty
-                    certServer.SetContext(0);
-
-                    if (_debugFlag != null && _debugLog != null)
-                    {
-                        Log(_debugFlag, _debugLog, Environment.NewLine + DateTime.Now);
-                        Log(_debugFlag, _debugLog, Environment.NewLine + "Seen eventtype " + exitEvent);
-                        Log(_debugFlag, _debugLog, Environment.NewLine + "Logging CA Infos");
-                    }
-                    foreach (PropertyInfo prop in typeof(CAInfo).GetProperties(BindingFlags.Public | BindingFlags.Instance))
-                    {
-                        if (prop.PropertyType == typeof(string))
-                        {
-                            try
-                            {
-                                prop.SetValue(caInfo, (string)GetProperty(ref certServer, prop.Name, "certificate", "string"));
-                            }
-                            catch
-                            {
-
-                            }
-                        }
-                        else if (prop.PropertyType == typeof(int) || prop.PropertyType == typeof(int?))
-                        {
-                            try
-                            {
-                                prop.SetValue(caInfo, (int)GetProperty(ref certServer, prop.Name, "certificate", "int"));
-                            }
-                            catch
-                            {
-
-                            }
-                        }
-                        else if (prop.PropertyType == typeof(DateTime))
-                        {
-                            try
-                            {
-                                prop.SetValue(caInfo, (DateTime)GetProperty(ref certServer, prop.Name, "certificate", "date"));
-                            }
-                            catch
-                            {
-
-                            }
-                        }
-                        else if (prop.PropertyType == typeof(byte[]))
-                        {
-                            try
-                            {
-                                prop.SetValue(caInfo, (byte[])GetProperty(ref certServer, prop.Name, "certificate", "bytearr"));
-                            }
-                            catch
-                            {
-
-                            }
-                        }
-                        if (_debugFlag != null && _debugLog != null && prop.GetValue(caInfo) != null)
-                        {
-                            try
-                            {
-                                if (prop.GetValue(caInfo).ToString() == "System.Byte[]")
-                                {
-                                    Log(_debugFlag, _debugLog, prop.Name + " = " + Convert.ToBase64String((byte[])prop.GetValue(caInfo), Base64FormattingOptions.None));
-                                }
-                                else
-                                {
-                                    Log(_debugFlag, _debugLog, prop.Name + " = " + prop.GetValue(caInfo).ToString());
-                                }
-
-                            }
-                            catch
-                            {
-
-                            }
-                        }
-                    }
-
-                    certServer.SetContext(context);
-
-                    if (_debugFlag != null && _debugLog != null)
-                    {
-                        Log(_debugFlag, _debugLog, Environment.NewLine + "Logging Certificate Infos");
-                    }
-                    foreach (PropertyInfo prop in typeof(CACertificate).GetProperties(BindingFlags.Public | BindingFlags.Instance))
-                    {
-                        if (prop.PropertyType == typeof(string))
-                        {
-                            try
-                            {
-                                prop.SetValue(certificateInfo, (string)GetProperty(ref certServer, prop.Name, "certificate", "string"));
-                            }
-                            catch
-                            {
-
-                            }
-                        }
-                        else if (prop.PropertyType == typeof(int) || prop.PropertyType == typeof(int?))
-                        {
-                            try
-                            {
-                                prop.SetValue(certificateInfo, (int)GetProperty(ref certServer, prop.Name, "certificate", "int"));
-
-                            }
-                            catch
-                            {
-
-                            }
-                        }
-                        else if (prop.PropertyType == typeof(DateTime))
-                        {
-                            try
-                            {
-                                prop.SetValue(certificateInfo, (DateTime)GetProperty(ref certServer, prop.Name, "certificate", "date"));
-                            }
-                            catch
-                            {
-
-                            }
-                        }
-                        else if (prop.PropertyType == typeof(byte[]))
-                        {
-                            try
-                            {
-                                prop.SetValue(certificateInfo, (byte[])GetProperty(ref certServer, prop.Name, "certificate", "bytearr"));
-                            }
-                            catch
-                            {
-
-                            }
-                        }
-                        if (_debugFlag != null && _debugLog != null && prop.GetValue(certificateInfo) != null)
-                        {
-                            try
-                            {
-                                if (prop.GetValue(certificateInfo).ToString() == "System.Byte[]")
-                                {
-                                    Log(_debugFlag, _debugLog, prop.Name + " = " + Convert.ToBase64String((byte[])prop.GetValue(certificateInfo), Base64FormattingOptions.None));
-                                }
-                                else
-                                {
-                                    Log(_debugFlag, _debugLog, prop.Name + " = " + prop.GetValue(certificateInfo).ToString());
-                                }
-                            }
-                            catch
-                            {
-
-                            }
-                        }
-
-                    }
-
-                    if (_debugFlag != null && _debugLog != null)
-                    {
-                        Log(_debugFlag, _debugLog, Environment.NewLine + "Logging Request Infos");
-                    }
-                    foreach (PropertyInfo prop in typeof(CARequest).GetProperties(BindingFlags.Public | BindingFlags.Instance))
-                    {
-                        if (prop.PropertyType == typeof(string))
-                        {
-                            try
-                            {
-                                prop.SetValue(requestInfo, (string)GetProperty(ref certServer, prop.Name, "request", "string"));
-                            }
-                            catch
-                            {
-
-                            }
-                        }
-                        else if (prop.PropertyType == typeof(int) || prop.PropertyType == typeof(int?))
-                        {
-                            try
-                            {
-                                prop.SetValue(requestInfo, (int)GetProperty(ref certServer, prop.Name, "request", "int"));
-
-                            }
-                            catch
-                            {
-
-                            }
-                        }
-                        else if (prop.PropertyType == typeof(DateTime))
-                        {
-                            try
-                            {
-                                prop.SetValue(requestInfo, (DateTime)GetProperty(ref certServer, prop.Name, "request", "date"));
-                            }
-                            catch
-                            {
-
-                            }
-                        }
-                        else if (prop.PropertyType == typeof(byte[]))
-                        {
-                            try
-                            {
-                                prop.SetValue(requestInfo, (byte[])GetProperty(ref certServer, prop.Name, "request", "bytearr"));
-                            }
-                            catch
-                            {
-
-                            }
-                        }
-                        if (_debugFlag != null && _debugLog != null && prop.GetValue(requestInfo) != null)
-                        {
-                            try
-                            {
-                                if (prop.GetValue(requestInfo).ToString() == "System.Byte[]")
-                                {
-                                    Log(_debugFlag, _debugLog, prop.Name + " = " + Convert.ToBase64String((byte[])prop.GetValue(requestInfo), Base64FormattingOptions.None));
-                                }
-                                else
-                                {
-                                    Log(_debugFlag, _debugLog, prop.Name + " = " + prop.GetValue(requestInfo).ToString());
-                                }
-                            }
-                            catch
-                            {
-
-                            }
-                        }
-                    }
-                    string outputFileName = null;
-                    if (_certificateFolder != null)
-                    {
-                        try
-                        {
-                            outputFileName = _certificateFolder + certificateInfo.RequestId.ToString() + ".cer";
-                            System.IO.File.WriteAllText(outputFileName, Convert.ToBase64String(certificateInfo.RawCertificate, Base64FormattingOptions.None));
-                        }
-                        catch
-                        {
-
-                        }
-
-                    }
-                    if (_requestFolder != null)
-                    {
-                        try
-                        {
-                            outputFileName = _requestFolder + certificateInfo.RequestId.ToString() + ".req";
-                            System.IO.File.WriteAllText(outputFileName, Convert.ToBase64String(requestInfo.RawRequest, Base64FormattingOptions.None));
-                        }
-                        catch
-                        {
-
-                        }
-
-                    }
-
-                    switch (requestInfo.RequestType)
-                    {
-                        case 263168:
-
-                            if (_debugFlag != null && _debugLog != null)
-                            {
-                                var cX509CertificateRequestCMC = new CERTENROLLLib.CX509CertificateRequestCmc();
-                                try
-                                {
-                                    string request = Convert.ToBase64String(requestInfo.RawRequest, Base64FormattingOptions.None);
-                                    cX509CertificateRequestCMC.InitializeDecode(
-                                        request,
-                                        CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64_ANY);
-                                    var cX509CertificateRequestPkcs10 = (IX509CertificateRequestPkcs10)cX509CertificateRequestCMC.GetInnerRequest(0);
-
-                                    ParseRequestExtension(cX509CertificateRequestPkcs10);
-
-                                    Log(_debugFlag, _debugLog, "Cmc successfully parsed" + Environment.NewLine);
-                                }
-                                catch
-                                {
-                                    Log(_debugFlag, _debugLog, "Error reading Cmc" + Environment.NewLine);
-                                }
-                            }
-                            break;
-                        case 262912:
-                            if (_debugFlag != null && _debugLog != null)
-                            {
-                                var cX509CertificateRequestPkcs7 = new CERTENROLLLib.CX509CertificateRequestPkcs7();
-                                try
-                                {
-                                    string request = Convert.ToBase64String(requestInfo.RawRequest, Base64FormattingOptions.None);
-                                    cX509CertificateRequestPkcs7.InitializeDecode(
-                                        request,
-                                        CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64_ANY);
-                                    
-                                    var cX509CertificateRequestPkcs10 = (IX509CertificateRequestPkcs10)cX509CertificateRequestPkcs7.GetInnerRequest(0);
-
-                                    ParseRequestExtension(cX509CertificateRequestPkcs10);
-
-                                    Log(_debugFlag, _debugLog, "PKCS7 successfully parsed");
-                                }
-                                catch
-                                {
-                                    Log(_debugFlag, _debugLog, "Error reading PKCS7");
-                                }
-                            }
-                            break;
-                        case 262400:
-                            if (_debugFlag != null && _debugLog != null)
-                            {
-                                var cX509CertificateRequestPkcs10 = new CERTENROLLLib.CX509CertificateRequestPkcs10();
-                                try
-                                {
-                                    string request = Convert.ToBase64String(requestInfo.RawRequest, Base64FormattingOptions.None);
-                                    cX509CertificateRequestPkcs10.InitializeDecode(
-                                        request,
-                                        CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64_ANY);
-
-                                    Log(_debugFlag, _debugLog, "PKCS10 successfully parsed");
-
-                                    ParseRequestExtension(cX509CertificateRequestPkcs10);
-
-                                }
-                                catch
-                                {
-                                    Log(_debugFlag, _debugLog, "Error reading PKCS10");
-                                }
-                            }
-                            break;
-                    }
-                    if (_debugFlag != null && _debugLog != null)
-                    {
-                        Log(_debugFlag, _debugLog, Environment.NewLine);
-                    }
-                    SendToSQLDB(caInfo, certificateInfo, requestInfo);
-
+                    SendToSQLDB(caInfo, certificateInfo, requestInfo, "default");
                     
                     break;
             }

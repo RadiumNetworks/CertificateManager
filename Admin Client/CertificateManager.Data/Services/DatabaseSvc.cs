@@ -114,14 +114,15 @@ namespace CertificateManager.Admin.Data.Services
 
             foreach (string key in filterht.Keys)
             {
-                if (filterht[key] != null && filterht[key] != "")
+                var filterValue = filterht[key]?.ToString();
+                if (!string.IsNullOrEmpty(filterValue))
                 {
                     var property = Expression.Property(parameter, key);
                     var notNull = Expression.NotEqual(property, Expression.Constant(null, typeof(string)));
                     var contains = Expression.Call(
                         property,
                         typeof(string).GetMethod(nameof(string.Contains), new[] { typeof(string) })!,
-                        Expression.Constant(filterht[key].ToString()));
+                        Expression.Constant(filterValue));
                     combinedFilter = CombineAnd(combinedFilter, Expression.AndAlso(notNull, contains));
                 }
             }
