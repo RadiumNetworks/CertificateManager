@@ -49,6 +49,15 @@ namespace CertificateManager.Admin.Data
 
                 var connectionString = configuration.GetConnectionString("DefaultConnection");
                 optionsBuilder.UseSqlServer(connectionString);
+
+                optionsBuilder.LogTo(
+                    message =>
+                    {
+                        System.Diagnostics.Debug.WriteLine(message);
+                        File.AppendAllText(Path.Combine(AppContext.BaseDirectory, "efcore.log"), message + Environment.NewLine);
+                    },
+                    Microsoft.Extensions.Logging.LogLevel.Information);
+                optionsBuilder.EnableSensitiveDataLogging();
             }
         }
 
