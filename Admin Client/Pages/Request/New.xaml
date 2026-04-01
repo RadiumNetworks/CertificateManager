@@ -9,6 +9,57 @@
     mc:Ignorable="d">
 
     <Grid>
+        <ScrollViewer Padding="24">
+            <StackPanel Spacing="16" MaxWidth="900" HorizontalAlignment="Left">
+
+                <TextBlock Text="Submit Certificate Request" Style="{StaticResource TitleTextBlockStyle}" />
+                <TextBlock Text="Insert the Base64 encoded CMC request. The Submit button becomes available after the request is parsed successfully."
+                       TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Base64 Request" />
+                    <TextBox x:Name="Base64RequestInput"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         Height="160"
+                         PlaceholderText="Paste your Base64 encoded CMC request here..." />
+                </StackPanel>
+
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Certificate Authority" />
+                    <ComboBox x:Name="CAConfigCombo" Width="400" SelectedIndex="0">
+                        <ComboBoxItem Content="CA01.cool.ice.corp.com\SECURECA01" Tag="CA01.cool.ice.corp.com\SECURECA01" />
+                        <ComboBoxItem Content="CA02.cool.ice.corp.com\SECURECA02" Tag="CA02.cool.ice.corp.com\SECURECA02" />
+                    </ComboBox>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button x:Name="ParseButton" Content="Parse" Click="ParseButton_Click" Style="{StaticResource AccentButtonStyle}" />
+                    <Button x:Name="SubmitButton" Content="Submit" Click="SubmitButton_Click" IsEnabled="False" />
+                    <Button x:Name="RetrieveButton" Content="Retrieve" Click="RetrieveButton_Click" IsEnabled="False" />
+                    <ProgressRing x:Name="LoadingRing" IsActive="False" Width="24" Height="24" VerticalAlignment="Center" />
+                </StackPanel>
+
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Parsed Data" />
+                    <TextBox x:Name="ParsedDataOutput"
+                         IsReadOnly="True"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         Height="140" />
+                </StackPanel>
+
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Certificate or Message" />
+                    <TextBox x:Name="OutputBox"
+                         IsReadOnly="True"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         Height="140" />
+                </StackPanel>
+
+            </StackPanel>
+        </ScrollViewer>
 
     </Grid>
 </Page>

@@ -39,6 +39,9 @@ namespace CertificateManager.Admin.Data.Services
 
         public List<string> SubjectAlternativeNames { get; set; } = new List<string>();
         public List<string> EKUs { get; set; } = new List<string>();
+        public string Subject { get; set; }
+        public string TemplateInfo { get; set; }
+
 
         internal enum PropertyType : int
         {
@@ -99,6 +102,16 @@ namespace CertificateManager.Admin.Data.Services
             var cX509ExtensionSubjectKeyIdentifier = new CX509ExtensionSubjectKeyIdentifier();
             var cX509ExtensionTemplateName = new CX509ExtensionTemplateName();
             var cX509ExtensionSmimeCapabilities = new CX509ExtensionSmimeCapabilities();
+
+            try
+            {
+               Subject = cX509CertificateRequestPkcs10.Subject.Name;
+                
+            }
+            catch
+            {
+                Subject += " Could not read subject";
+            }
 
             for (var i = 0; i < cX509CertificateRequestPkcs10.X509Extensions.Count; i++)
             {
@@ -201,6 +214,9 @@ namespace CertificateManager.Admin.Data.Services
                         {
                             string sTemplate = (cX509CertificateRequestPkcs10.X509Extensions[i].RawData[CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64]);
                             cX509ExtensionTemplate.InitializeDecode(EncodingType.XCN_CRYPT_STRING_BASE64, sTemplate);
+                            string templateOid = cX509ExtensionTemplate.TemplateOid.Value;
+                            string resolvedName = ResolveTemplateOidToName(templateOid);
+                            TemplateInfo = resolvedName ?? templateOid;
                         }
                         catch
                         {
@@ -257,6 +273,29 @@ namespace CertificateManager.Admin.Data.Services
                         break;
 
                 }
+            }
+        }
+
+        public string ResolveTemplateOidToName(string templateOid)
+        {
+            try
+            {
+                string connectionString = LoadConnectionString();
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    string sql = "SELECT TOP 1 CN FROM Template WHERE msPKICertTemplateOID = @TemplateOid";
+                    using (SqlCommand command = new SqlCommand(sql, connection))
+                    {
+                        command.Parameters.AddWithValue("@TemplateOid", templateOid);
+                        connection.Open();
+                        object result = command.ExecuteScalar();
+                        return result as string;
+                    }
+                }
+            }
+            catch
+            {
+                return null;
             }
         }
 
@@ -545,7 +584,6 @@ namespace CertificateManager.Admin.Data.Services
                         var cX509CertificateRequestPkcs7toPkcs10 = (IX509CertificateRequestPkcs10)cX509CertificateRequestPkcs7.GetInnerRequest(0);
 
                         ParseRequestExtension(cX509CertificateRequestPkcs7toPkcs10);
-
                     }
                     catch
                     {

@@ -54,7 +54,7 @@ namespace CertificateManager.Admin.Data
                     message =>
                     {
                         System.Diagnostics.Debug.WriteLine(message);
-                        File.AppendAllText(Path.Combine(AppContext.BaseDirectory, "efcore.log"), message + Environment.NewLine);
+                        //File.AppendAllText(Path.Combine(AppContext.BaseDirectory, "efcore.log"), message + Environment.NewLine);
                     },
                     Microsoft.Extensions.Logging.LogLevel.Information);
                 optionsBuilder.EnableSensitiveDataLogging();
