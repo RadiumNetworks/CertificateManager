@@ -114,19 +114,23 @@ namespace CertificateManager.Admin.Data.Services
                             {
                                 if (san.Type == AlternativeNameType.XCN_CERT_ALT_NAME_DNS_NAME)
                                 {
-                                    SubjectAlternativeNames.Add("DNS = " + san.strValue);
+                                    SubjectAlternativeNames.Add("DNS Name=" + san.strValue);
                                 }
                                 else if (san.Type == AlternativeNameType.XCN_CERT_ALT_NAME_DIRECTORY_NAME)
                                 {
-                                    SubjectAlternativeNames.Add("DN = " + san.strValue);
+                                    SubjectAlternativeNames.Add("Directory Name=" + san.strValue);
                                 }
                                 else if (san.Type == AlternativeNameType.XCN_CERT_ALT_NAME_USER_PRINCIPLE_NAME)
                                 {
-                                    SubjectAlternativeNames.Add("UPN = " + san.strValue);
+                                    SubjectAlternativeNames.Add("UPN=" + san.strValue);
+                                }
+                                else if (san.Type == AlternativeNameType.XCN_CERT_ALT_NAME_RFC822_NAME)
+                                {
+                                    SubjectAlternativeNames.Add("EMAIL=" + san.strValue);
                                 }
                                 else
                                 {
-                                    SubjectAlternativeNames.Add(san.Type + " = " + san.strValue);
+                                    SubjectAlternativeNames.Add(san.Type + "=" + san.strValue);
                                 }
                             }
                         }

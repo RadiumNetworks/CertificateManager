@@ -22,6 +22,13 @@ namespace CertificateManager.Admin.Pages.Certificate
         public int? Value { get; set; }
         public override string ToString() => Name;
     }
+
+    public class OptionItem
+    {
+        public string Name { get; set; }
+        public int Value { get; set; }
+    }
+
     public sealed partial class List : Page
     {
         private ObservableCollection<ExtendedEntry> _entries = new();
@@ -61,13 +68,13 @@ namespace CertificateManager.Admin.Pages.Certificate
                 await LoadCAConfigOptionsAsync();
                 LoadDispositionOptions();
 
-                using var db = _certificateService.CreateDbContext();
-                var entries = await _certificateService.GetCertificateEntries(db)
-                    .OrderBy(e => e.RequestId)
-                    .ToListAsync();
+                //using var db = _certificateService.CreateDbContext();
+                //var entries = await _certificateService.GetCertificateEntries(db)
+                //    .OrderBy(e => e.RequestId)
+                //    .ToListAsync();
 
-                _entries = new ObservableCollection<ExtendedEntry>(entries);
-                EntryDataGrid.ItemsSource = _entries;
+                //_entries = new ObservableCollection<ExtendedEntry>(entries);
+                //EntryDataGrid.ItemsSource = _entries;
             }
             catch (Exception ex)
             {
@@ -159,11 +166,11 @@ namespace CertificateManager.Admin.Pages.Certificate
                 if (_currentPage < 1)
                     _currentPage = 1;
 
-                var entries = await Task.Run(() =>
-                        query
+                var entries = await query
                         .Skip((_currentPage - 1) * _pageSize)
                         .Take(_pageSize)
-                        .ToListAsync());
+                        .ToListAsync();
+
 
 
                 _entries = new ObservableCollection<ExtendedEntry>(entries);
@@ -183,7 +190,6 @@ namespace CertificateManager.Admin.Pages.Certificate
         {
             if (sender is Button button && button.CommandParameter is ExtendedEntry entry)
             {
-                // TODO: Replace with your desired action (e.g. navigate to detail page)
                 var detailsPanel = new StackPanel { Spacing = 12, MinWidth = 400 };
 
                 detailsPanel.Children.Add(new TextBlock
@@ -252,18 +258,99 @@ namespace CertificateManager.Admin.Pages.Certificate
             }
         }
 
+        private async Task ShowDialogAsync(string title, string message)
+        {
+            try
+            {
+                var dialog = new ContentDialog
+                {
+                    Title = title,
+                    Content = $"{message}",
+                    CloseButtonText = "OK",
+                    XamlRoot = this.XamlRoot
+                };
+                await dialog.ShowAsync();
+            }
+            catch
+            {
+                // Avoid crashing if the dialog itself cannot be shown
+            }
+        }
+
         private async void RevokeActionButton_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button button && button.CommandParameter is ExtendedEntry entry)
             {
+                var panel = new StackPanel { Spacing = 8 };
+
+                panel.Children.Add(new TextBlock
+                {
+                    Text = "Please select a revocation date:",
+                    FontSize = 16
+                });
+
+                var datePicker = new DatePicker
+                {
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    SelectedDate = DateTimeOffset.Now 
+                };
+                panel.Children.Add(datePicker);
+
+                var comboBox = new ComboBox
+                {
+                    Width = 200,
+                    Margin = new Thickness(0, 10, 0, 0),
+                    DisplayMemberPath = "Name", 
+                    SelectedValuePath = "Value" 
+                };
+
+                var items = new List<OptionItem>
+                {
+                    new OptionItem { Name = "Unspecified", Value = 0 },
+                    new OptionItem { Name = "Key compromise", Value = 1 },
+                    new OptionItem { Name = "CA compromise", Value = 2 },
+                    new OptionItem { Name = "Affiliation changed", Value = 3 },
+                    new OptionItem { Name = "Superseded", Value = 4 },
+                    new OptionItem { Name = "Cessation of Operation", Value = 5 },
+                    new OptionItem { Name = "Certificate Hold", Value = 6 }
+
+                };
+
+                comboBox.ItemsSource = items;
+                comboBox.SelectedIndex = 0;
+
+                panel.Children.Add(comboBox);
+
+                panel.Children.Add(new TextBlock
+                {
+                    Text = $"\nRequestId: {entry.RequestId}\nCA: {entry.CAConfig}\nOwner: {entry.Owner}\nSerialNumber: {entry.SerialNumber}\nCN: {entry.RequestCommonName}\nEKU:\n{entry.EKUNamesFormatted}\nSAN:\n{entry.SubjectAlternativeNamesFormatted}",
+                    FontSize = 16
+                });
+
                 var dialog = new ContentDialog
                 {
                     Title = $"Certificate Details",
-                    Content = $"RequestId: {entry.RequestId}\nCA: {entry.CAConfig}\nOwner: {entry.Owner}\nCN: {entry.RequestCommonName}",
-                    CloseButtonText = "Close",
+                    Content = panel,
+                    PrimaryButtonText = "Ok",
+                    CloseButtonText = "Cancel",
                     XamlRoot = this.XamlRoot
                 };
-                await dialog.ShowAsync();
+                var result = await dialog.ShowAsync();
+                if(result == ContentDialogResult.Primary)
+                {
+                    try
+                    {
+                        var certAdmin = new CERTADMINLib.CCertAdmin();
+                        certAdmin.RevokeCertificate(entry.CAConfig, entry.SerialNumber, (int)comboBox.SelectedValue, datePicker.Date.UtcDateTime);
+                        await ShowDialogAsync("Certificate revoced", $"Certificate {entry.RequestId} {entry.SerialNumber} has been revoked using the Reason {comboBox.SelectedValue} and the effective revocationdate {datePicker.Date.UtcDateTime.ToString("yyyy/MM/dd")}.");
+
+                    }
+                    catch (Exception ex)
+                    {
+                        await ShowDialogAsync("Certificate revocation failed", $"Certificate {entry.RequestId} revocation failed.");
+                    }
+                }
             }
         }
 
