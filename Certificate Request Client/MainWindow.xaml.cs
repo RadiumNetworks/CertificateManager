@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -21,11 +22,23 @@ namespace CertificateManager
 {
     public sealed partial class MainWindow : Window
     {
-        private static readonly HttpClient _httpClient = new()
+        private static readonly HttpClient _httpClient;
+
+        static MainWindow()
         {
-            BaseAddress = new Uri("https://localhost:5301"),
-            Timeout = TimeSpan.FromSeconds(10)
-        };
+            var config = new ConfigurationBuilder()
+                .SetBasePath(AppContext.BaseDirectory)
+                .AddJsonFile("appsettings.json", optional: false)
+                .Build();
+
+            var apiHost = config["APIHost:URI"] ?? "https://localhost:5301";
+
+            _httpClient = new HttpClient
+            {
+                BaseAddress = new Uri(apiHost),
+                Timeout = TimeSpan.FromSeconds(10)
+            };
+        }
 
         private static readonly JsonSerializerOptions _jsonOptions = new()
         {
