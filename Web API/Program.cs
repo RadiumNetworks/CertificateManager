@@ -4,6 +4,37 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Host.UseWindowsService();
+
+builder.WebHost.ConfigureKestrel((context, options) =>
+{
+    var port = context.Configuration.GetValue<int>("ListeningPort", 5301);
+    options.ListenAnyIP(port, listenOptions =>
+    {
+        var certConfig = context.Configuration.GetSection("Certificate");
+        var storeName = certConfig.GetValue<string>("StoreName");
+        var thumbprint = certConfig.GetValue<string>("Thumbprint");
+
+        if (!string.IsNullOrEmpty(storeName) && !string.IsNullOrEmpty(thumbprint))
+        {
+            listenOptions.UseHttps(httpsOptions =>
+            {
+                var store = new System.Security.Cryptography.X509Certificates.X509Store(
+                    storeName, System.Security.Cryptography.X509Certificates.StoreLocation.LocalMachine);
+                store.Open(System.Security.Cryptography.X509Certificates.OpenFlags.ReadOnly);
+                var certs = store.Certificates.Find(
+                    System.Security.Cryptography.X509Certificates.X509FindType.FindByThumbprint, thumbprint, false);
+                store.Close();
+
+                if (certs.Count == 0)
+                    throw new InvalidOperationException($"Certificate with thumbprint '{thumbprint}' not found in store '{storeName}'.");
+
+                httpsOptions.ServerCertificate = certs[0];
+            });
+        }
+    });
+});
+
 var connectionString = builder.Configuration.GetConnectionString("Default")
     ?? throw new InvalidOperationException("Connection string 'Default' not found.");
 
@@ -24,8 +55,6 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
-
-app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
