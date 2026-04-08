@@ -67,6 +67,16 @@ Ausserdem müsse die GetConfig Funktionen wie folgt angepasst werden
 *GetConfig([in] int32 Flags,[out] native int pstrOut) runtime managed internalcall*
 
 
+Die aus dem Projekt kompilierte DLL muss nach
+ 
+c:\Windows\System32 und C:\Windows\SysWOW64 
+
+kopiert und per
+
+C:\Windows\Microsoft.NET\Framework64\v4.0.30319\regasm.exe c:\Windows\System32\SendToSQL.dll 
+
+im System registriert werden.
+
 Als Hintergrund ist hier "noch" als archivierter Artikel geschrieben. https://learn.microsoft.com/en-us/archive/blogs/alejacma/how-to-modify-an-interop-assembly-to-change-the-return-type-of-a-method-vb-net
 
 
@@ -86,4 +96,5 @@ DebugLog <Log Path e.g. c:\\temp\\debug.log>
 CertificateFolder <Folder to place issued certificates e.g. c:\\temp\\>
 
 RequestFolder <Folder to place requests e.g. c:\\temp\\>
+
 
