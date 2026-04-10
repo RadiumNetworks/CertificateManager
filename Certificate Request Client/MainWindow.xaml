@@ -16,7 +16,7 @@
     <Grid>
         <ScrollViewer Padding="24">
             <StackPanel Spacing="16" MaxWidth="900" HorizontalAlignment="Left">
-
+                <TextBlock Text="{x:Bind viewModel.APIString, Mode=OneWay}" />
                 <TextBlock Text="Submit Certificate Request" Style="{StaticResource TitleTextBlockStyle}" />
                 <TextBlock Text="Insert the Base64 encoded CMC request. The Submit button becomes available after the request is parsed successfully."
                        TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
@@ -32,10 +32,7 @@
 
                 <StackPanel Spacing="4">
                     <TextBlock Text="Certificate Authority" />
-                    <ComboBox x:Name="CAConfigCombo" Width="400" SelectedIndex="0">
-                        <ComboBoxItem Content="CA01.cool.ice.corp.com\SECURECA01" Tag="CA01.cool.ice.corp.com\SECURECA01" />
-                        <ComboBoxItem Content="CA02.cool.ice.corp.com\SECURECA02" Tag="CA02.cool.ice.corp.com\SECURECA02" />
-                    </ComboBox>
+                    <ComboBox x:Name="CAConfigCombo" Width="400" SelectedIndex="0" />
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Spacing="8">
