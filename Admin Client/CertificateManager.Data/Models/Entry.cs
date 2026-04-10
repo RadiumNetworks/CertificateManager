@@ -84,8 +84,8 @@ namespace CertificateManager.Admin.Models
         public string? Successor { get; set; } = string.Empty;
         public string? Monitoring { get; set; } = string.Empty;
 
-        public ICollection<SAN> SAN { get; set; }
+        public ICollection<SAN>? SAN { get; set; }
 
-        public ICollection<EKU> EKU { get; set; }
+        public ICollection<EKU>? EKU { get; set; }
     }
 }

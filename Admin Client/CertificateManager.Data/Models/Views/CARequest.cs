@@ -14,7 +14,7 @@ namespace CertificateManager.Admin.Data.Models.Views
         public string DispositionMessage { get; set; } = string.Empty;
         public DateTime ResolvedWhen { get; set; }
         public DateTime SubmittedWhen { get; set; }
-        public byte[] RawCertificate { get; set; } = null;
+        public byte[]? RawCertificate { get; set; } = null;
         public string RequesterName { get; set; } = string.Empty;
         public string DistinguishedName { get; set; } = string.Empty;
         public string RequestAttributes { get; set; } = string.Empty;
@@ -25,7 +25,7 @@ namespace CertificateManager.Admin.Data.Models.Views
         public string Locality { get; set; } = string.Empty;
         public string Country { get; set; } = string.Empty;
         public string State { get; set; } = string.Empty;
-        public byte[] RawRequest { get; set; } = null;
+        public byte[]? RawRequest { get; set; } = null;
         public string CallerName { get; set; } = string.Empty;
     }
 }

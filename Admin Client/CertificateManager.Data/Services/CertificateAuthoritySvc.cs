@@ -39,8 +39,8 @@ namespace CertificateManager.Admin.Data.Services
 
         public List<string> SubjectAlternativeNames { get; set; } = new List<string>();
         public List<string> EKUs { get; set; } = new List<string>();
-        public string Subject { get; set; }
-        public string TemplateInfo { get; set; }
+        public string? Subject { get; set; }
+        public string? TemplateInfo { get; set; }
 
 
         internal enum PropertyType : int
@@ -288,7 +288,7 @@ namespace CertificateManager.Admin.Data.Services
                     {
                         command.Parameters.AddWithValue("@TemplateOid", templateOid);
                         connection.Open();
-                        object result = command.ExecuteScalar();
+                        object result = command.ExecuteScalar() ?? "No Template";
                         return result as string;
                     }
                 }
@@ -330,7 +330,7 @@ namespace CertificateManager.Admin.Data.Services
 
             return configuration.GetConnectionString("DefaultConnection");
         }
-        public void UpdateOrInsertEKUs(string connectionString, string caConfig, CARequest request, CACertificate certificate, Action<string> log = null)
+        public void UpdateOrInsertEKUs(string connectionString, string caConfig, CARequest request, CACertificate certificate, Action<string>? log = null)
         {
             foreach (string eku in EKUs)
             {
@@ -352,7 +352,7 @@ namespace CertificateManager.Admin.Data.Services
             }
         }
 
-        public void UpdateOrInsertSANs(string connectionString, string caConfig, CARequest request, CACertificate certificate, Action<string> log = null)
+        public void UpdateOrInsertSANs(string connectionString, string caConfig, CARequest request, CACertificate certificate, Action<string>? log = null)
         {
             foreach (string san in SubjectAlternativeNames)
             {
@@ -374,7 +374,7 @@ namespace CertificateManager.Admin.Data.Services
             }
         }
 
-        public void UpdateOrInsertEntry(string connectionString, string caConfig, CARequest request, CACertificate certificate, Action<string> log = null)
+        public void UpdateOrInsertEntry(string connectionString, string caConfig, CARequest request, CACertificate certificate, Action<string>? log = null)
         {
             string requestid = "";
             string serialNumber = "";

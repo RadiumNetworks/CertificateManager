@@ -1,5 +1,5 @@
 using CertificateManager.Admin.Data;
-using CertificateManager.Admin.Data.Models;
+using CertificateManager.Admin.Models;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;

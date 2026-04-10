@@ -15,9 +15,9 @@ namespace CertificateManager.Admin.Data.Models.Views
         public string CertificateHash { get; set; } = string.Empty;
         public DateTime NotBefore { get; set; }
         public DateTime NotAfter { get; set; }
-        public byte[] RawCertificate { get; set; } = null;
-        public byte[] RawPublicKey { get; set; } = null;
-        public byte[] RawPublicKeyAlgorithmParameters { get; set; } = null;
+        public byte[]? RawCertificate { get; set; } = null;
+        public byte[]? RawPublicKey { get; set; } = null;
+        public byte[]? RawPublicKeyAlgorithmParameters { get; set; } = null;
         public int? RequestType { get; set; } = null;
         public string CommonName { get; set; } = string.Empty;
         public string Organization { get; set; } = string.Empty;

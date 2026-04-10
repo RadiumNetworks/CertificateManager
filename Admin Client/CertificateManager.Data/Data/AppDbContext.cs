@@ -1,4 +1,3 @@
-using CertificateManager.Admin.Data.Models;
 using CertificateManager.Admin.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;

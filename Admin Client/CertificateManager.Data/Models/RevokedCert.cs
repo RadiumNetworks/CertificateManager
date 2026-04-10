@@ -11,7 +11,7 @@ namespace CertificateManager.Admin.Models
         public int RevokedCertId { get; set; }
 
         [ForeignKey("CRLRowId,CAConfig")]
-        public CRL CRL { get; set; }
+        public required CRL CRL { get; set; }
 
         public string? SerialNumber { get; set; } = string.Empty;
 

@@ -24,6 +24,6 @@ namespace CertificateManager.Admin.Models
 
         public DateTime? CRLNextPublish { get; set; }
 
-        public ICollection<RevokedCert> RevokedCert { get; set; }
+        public ICollection<RevokedCert>? RevokedCert { get; set; }
     }
 }

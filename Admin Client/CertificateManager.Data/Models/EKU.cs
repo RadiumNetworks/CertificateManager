@@ -10,7 +10,7 @@ namespace CertificateManager.Admin.Models
         public int SANId { get; set; }
 
         [ForeignKey("RequestId,CAConfig")]
-        public Entry Entry { get; set; }
+        public required Entry Entry { get; set; }
 
         public string? Name { get; set; } = string.Empty;
 
