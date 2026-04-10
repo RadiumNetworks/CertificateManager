@@ -11,13 +11,13 @@
   <Identity
     Name="1326f9f4-89d3-45e1-92ed-6bfb227859fb"
     Publisher="CN=René Mau"
-    Version="1.0.0.0" />
+    Version="1.0.2.0" />
 
   <mp:PhoneIdentity PhoneProductId="1326f9f4-89d3-45e1-92ed-6bfb227859fb" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
-    <DisplayName>CertificateManager</DisplayName>
-    <PublisherDisplayName>Admin</PublisherDisplayName>
+    <DisplayName>CertificateManagerRequestClient</DisplayName>
+    <PublisherDisplayName>René Mau</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 
@@ -35,8 +35,8 @@
       Executable="$targetnametoken$.exe"
       EntryPoint="$targetentrypoint$">
       <uap:VisualElements
-        DisplayName="CertificateManager"
-        Description="CertificateManager"
+        DisplayName="CertificateManagerRequestClient"
+        Description="CertificateManagerRequestClient"
         BackgroundColor="transparent"
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png">

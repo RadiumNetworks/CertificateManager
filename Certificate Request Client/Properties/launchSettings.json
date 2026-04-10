@@ -1,9 +1,9 @@
 {
   "profiles": {
-    "CertificateManager (Package)": {
+    "CertificateManagerRequestClient (Package)": {
       "commandName": "MsixPackage"
     },
-    "CertificateManager (Unpackaged)": {
+    "CertificateManagerRequestClient (Unpackaged)": {
       "commandName": "Project"
     }
   }

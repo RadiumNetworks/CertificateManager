@@ -9,7 +9,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Windows.Storage;
 
-namespace CertificateManager
+namespace CertificateManager.Request
 {
     public sealed partial class MainWindow : Window
     {
