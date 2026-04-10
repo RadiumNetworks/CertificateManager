@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
-namespace CertificateManager.Data.Models
+namespace CertificateManager.Models
 {
     public class SignedScript
     {

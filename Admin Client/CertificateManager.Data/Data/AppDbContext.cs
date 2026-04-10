@@ -68,10 +68,7 @@ namespace CertificateManager.Admin.Data
         public DbSet<CRL> CRL { get; set; }
         public DbSet<RevokedCert> RevokedCert { get; set; }
         public DbSet<Template> Template { get; set; }
-        public DbSet<TemplateArchive> TemplatesArchiv { get; set; }
         public DbSet<SQLLog> SQLLog { get; set; }
-
-
         public DbSet<SignedScript> SignedScript { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
