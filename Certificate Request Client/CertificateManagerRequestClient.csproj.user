@@ -5,6 +5,14 @@
     <AppxShowAllApps>False</AppxShowAllApps>
     <AppxBuildConfigurationSelection>x86|x64</AppxBuildConfigurationSelection>
     <PackageOptionalProjectsInIdeBuilds>False</PackageOptionalProjectsInIdeBuilds>
+    <Source>C:\Github\CertificateManager\Certificate Request Client\Assets\Logo.png</Source>
+    <SmallTileSource>C:\Github\CertificateManager\Certificate Request Client\Assets\Logo.png</SmallTileSource>
+    <MediumTileSource>C:\Github\CertificateManager\Certificate Request Client\Assets\Logo.png</MediumTileSource>
+    <WideTileSource>C:\Github\CertificateManager\Certificate Request Client\Assets\Logo.png</WideTileSource>
+    <LargeTileSource>C:\Github\CertificateManager\Certificate Request Client\Assets\Logo.png</LargeTileSource>
+    <AppIconSource>C:\Github\CertificateManager\Certificate Request Client\Assets\Logo.png</AppIconSource>
+    <SplashScreenSource>C:\Github\CertificateManager\Certificate Request Client\Assets\Logo.png</SplashScreenSource>
+    <PackageLogoSource>C:\Github\CertificateManager\Certificate Request Client\Assets\Logo.png</PackageLogoSource>
   </PropertyGroup>
   <ItemGroup>
     <None Update="App.xaml">
