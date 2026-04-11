@@ -215,7 +215,7 @@ namespace CertificateManager.Admin.Data.Services
                             string sTemplate = (cX509CertificateRequestPkcs10.X509Extensions[i].RawData[CERTENROLLLib.EncodingType.XCN_CRYPT_STRING_BASE64]);
                             cX509ExtensionTemplate.InitializeDecode(EncodingType.XCN_CRYPT_STRING_BASE64, sTemplate);
                             string templateOid = cX509ExtensionTemplate.TemplateOid.Value;
-                            string resolvedName = ResolveTemplateOidToName(templateOid);
+                            string? resolvedName = ResolveTemplateOidToName(templateOid);
                             TemplateInfo = resolvedName ?? templateOid;
                         }
                         catch
@@ -276,11 +276,11 @@ namespace CertificateManager.Admin.Data.Services
             }
         }
 
-        public string ResolveTemplateOidToName(string templateOid)
+        public string? ResolveTemplateOidToName(string templateOid)
         {
             try
             {
-                string connectionString = LoadConnectionString();
+                string? connectionString = LoadConnectionString();
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     string sql = "SELECT TOP 1 CN FROM Template WHERE msPKICertTemplateOID = @TemplateOid";
@@ -299,7 +299,7 @@ namespace CertificateManager.Admin.Data.Services
             }
         }
 
-        public string LoadConnectionString()
+        public string? LoadConnectionString()
         {
             var basePaths = new[]
                     {
@@ -652,8 +652,8 @@ namespace CertificateManager.Admin.Data.Services
                     {
 
                         int flags = BinaryColumns.Contains(colName) ? CV_OUT_BASE64 : CV_OUT_BASE64HEADER;
-                        object val = enumCol.GetValue(flags);
-                        if (val == null)
+                        object? val = enumCol.GetValue(flags);
+                        if (val is null)
                         {
                             continue;
                         }
@@ -667,7 +667,7 @@ namespace CertificateManager.Admin.Data.Services
                                     certificate.RequestId = id;
                                     break;
                                 case "Request.RequesterName":
-                                    request.RequesterName = val.ToString();
+                                    request.RequesterName = val.ToString()!;
                                     break;
                                 case "Request.SubmittedWhen":
                                     request.SubmittedWhen = (DateTime)val;
@@ -676,7 +676,7 @@ namespace CertificateManager.Admin.Data.Services
                                     request.ResolvedWhen = (DateTime)val;
                                     break;
                                 case "Request.RawRequest":
-                                    request.RawRequest = Convert.FromBase64String(val.ToString());
+                                    request.RawRequest = Convert.FromBase64String(val.ToString()!);
                                     break;
                                 case "Request.RequestType":
                                     request.RequestType = Convert.ToInt32(val);
@@ -688,48 +688,48 @@ namespace CertificateManager.Admin.Data.Services
                                     request.Disposition = Convert.ToInt32(val);
                                     break;
                                 case "Request.DispositionMessage":
-                                    request.DispositionMessage = val.ToString();
+                                    request.DispositionMessage = val.ToString()!;
                                     break;
                                 case "Request.CallerName":
-                                    request.CallerName = val.ToString();
-                                    certificate.CallerName = val.ToString();
+                                    request.CallerName = val.ToString()!;
+                                    certificate.CallerName = val.ToString()!;
                                     break;
                                 case "Request.DistinguishedName":
-                                    request.DistinguishedName = val.ToString();
+                                    request.DistinguishedName = val.ToString()!;
                                     break;
                                 case "Request.RequestAttributes":
-                                    request.RequestAttributes = val.ToString();
+                                    request.RequestAttributes = val.ToString()!;
                                     break;
                                 case "CommonName":
-                                    request.CommonName = val.ToString();
-                                    certificate.CommonName = val.ToString();
+                                    request.CommonName = val.ToString()!;
+                                    certificate.CommonName = val.ToString()!;
                                     break;
                                 case "Organization":
-                                    request.Organization = val.ToString();
-                                    certificate.Organization = val.ToString();
+                                    request.Organization = val.ToString()!;
+                                    certificate.Organization = val.ToString()!;
                                     break;
                                 case "OrgUnit":
-                                    request.OrgUnit = val.ToString();
-                                    certificate.OrgUnit = val.ToString();
+                                    request.OrgUnit = val.ToString()!;
+                                    certificate.OrgUnit = val.ToString()!;
                                     break;
                                 case "EMail":
-                                    request.EMail = val.ToString();
-                                    certificate.EMail = val.ToString();
+                                    request.EMail = val.ToString()!;
+                                    certificate.EMail = val.ToString()!;
                                     break;
                                 case "Locality":
-                                    request.Locality = val.ToString();
-                                    certificate.Locality = val.ToString();
+                                    request.Locality = val.ToString()!;
+                                    certificate.Locality = val.ToString()!;
                                     break;
                                 case "Country":
-                                    request.Country = val.ToString();
-                                    certificate.Country = val.ToString();
+                                    request.Country = val.ToString()!;
+                                    certificate.Country = val.ToString()!;
                                     break;
                                 case "State":
-                                    request.State = val.ToString();
-                                    certificate.State = val.ToString();
+                                    request.State = val.ToString()!;
+                                    certificate.State = val.ToString()!;
                                     break;
                                 case "SerialNumber":
-                                    certificate.SerialNumber = val.ToString();
+                                    certificate.SerialNumber = val.ToString()!;
                                     hasCertData = true;
                                     break;
                                 case "NotBefore":
@@ -739,13 +739,13 @@ namespace CertificateManager.Admin.Data.Services
                                     certificate.NotAfter = (DateTime)val;
                                     break;
                                 case "CertificateHash":
-                                    certificate.CertificateHash = val.ToString();
+                                    certificate.CertificateHash = val.ToString()!;
                                     break;
                                 case "CertificateTemplate":
-                                    certificate.CertificateTemplate = val.ToString();
+                                    certificate.CertificateTemplate = val.ToString()!;
                                     break;
                                 case "RawCertificate":
-                                    byte[] certBytes = Convert.FromBase64String(val.ToString());
+                                    byte[] certBytes = Convert.FromBase64String(val.ToString()!);
                                     request.RawCertificate = certBytes;
                                     certificate.RawCertificate = certBytes;
                                     hasCertData = true;
@@ -754,13 +754,13 @@ namespace CertificateManager.Admin.Data.Services
                                     certificate.PublicKeyLength = Convert.ToInt32(val);
                                     break;
                                 case "PublicKeyAlgorithm":
-                                    certificate.PublicKeyAlgorithm = val.ToString();
+                                    certificate.PublicKeyAlgorithm = val.ToString()!;
                                     break;
                                 case "Request.RevokedWhen":
                                     certificate.RevocationDate = (DateTime)val;
                                     break;
                                 case "Request.RevokedReason":
-                                    certificate.RevocationReason = val.ToString();
+                                    certificate.RevocationReason = val.ToString()!;
                                     break;
                             }
                         }

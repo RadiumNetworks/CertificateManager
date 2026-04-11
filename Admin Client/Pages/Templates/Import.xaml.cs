@@ -189,8 +189,9 @@ namespace CertificateManager.Admin.Pages.Templates
             {
                 foreach (SearchResultEntryCollection entryCollection in entries)
                 {
-                    foreach (SearchResultEntry entry in entryCollection)
+                    foreach (SearchResultEntry? entry in entryCollection)
                     {
+                        if (entry is null) continue;
                         string cn = "";
                         string distinguishedName = "";
                         string flags = "";
@@ -228,29 +229,29 @@ namespace CertificateManager.Admin.Pages.Templates
                         if (entry.Attributes["cn"] != null)
                         {
 
-                            cn = entry.Attributes["cn"][0].ToString();
+                            cn = entry.Attributes["cn"][0].ToString()!;
                             AppendImportLog($"[Certificate Template] {cn}");
                         }
-                        if (entry.Attributes["distinguishedName"] != null)
+                        if (entry.Attributes["distinguishedName"] is null)
                         {
-                            distinguishedName = entry.Attributes["distinguishedName"][0].ToString();
+                            distinguishedName = entry.Attributes["distinguishedName"][0].ToString()!;
                         }
                         if (entry.Attributes["flags"] != null)
                         {
-                            flags = entry.Attributes["flags"][0].ToString();
+                            flags = entry.Attributes["flags"][0].ToString()!;
                         }
                         if (entry.Attributes["msPKI-Certificate-Application-Policy"] != null)
                         {
                             var oids = new List<string>();
                             for (int i = 0; i < entry.Attributes["msPKI-Certificate-Application-Policy"].Count; i++)
                             {
-                                oids.Add(entry.Attributes["msPKI-Certificate-Application-Policy"][i].ToString());
+                                oids.Add(entry.Attributes["msPKI-Certificate-Application-Policy"][i].ToString()!);
                             }
                             msPKI_Certificate_Application_Policy = TemplateImportHelper.ResolveOidNames(oids);
                         }
                         if (entry.Attributes["msPKI-Certificate-Name-Flag"] != null)
                         {
-                            var msPKICertificateNameFlag = long.Parse(entry.Attributes["msPKI-Certificate-Name-Flag"][0].ToString());
+                            var msPKICertificateNameFlag = long.Parse(entry.Attributes["msPKI-Certificate-Name-Flag"][0].ToString()!);
 
                             msPKI_Certificate_Name_Flag = TemplateImportHelper.DecodeCertificateNameFlags(msPKICertificateNameFlag);
                         }
@@ -258,15 +259,15 @@ namespace CertificateManager.Admin.Pages.Templates
 
                         if (entry.Attributes["msPKI-Certificate-Policy"] != null)
                         {
-                            msPKI_Certificate_Policy = entry.Attributes["msPKI-Certificate-Policy"][0].ToString();
+                            msPKI_Certificate_Policy = entry.Attributes["msPKI-Certificate-Policy"][0].ToString()!;
                         }
                         if (entry.Attributes["msPKI-Cert-Template-OID"] != null)
                         {
-                            msPKI_Cert_Template_OID = entry.Attributes["msPKI-Cert-Template-OID"][0].ToString();
+                            msPKI_Cert_Template_OID = entry.Attributes["msPKI-Cert-Template-OID"][0].ToString()!;
                         }
                         if (entry.Attributes["msPKI-Enrollment-Flag"] != null)
                         {
-                            var msPKIEnrollmentFlag = long.Parse(entry.Attributes["msPKI-Enrollment-Flag"][0].ToString());
+                            var msPKIEnrollmentFlag = long.Parse(entry.Attributes["msPKI-Enrollment-Flag"][0].ToString()!);
                             msPKI_Enrollment_Flag = TemplateImportHelper.DecodeEnrollmentFlags(msPKIEnrollmentFlag);
                         }
                         AppendImportLog($" [Enrollment Flags] {msPKI_Enrollment_Flag}");
@@ -278,38 +279,38 @@ namespace CertificateManager.Admin.Pages.Templates
 
                         if (entry.Attributes["msPKI-Minimal-Key-Size"] != null)
                         {
-                            msPKI_Minimal_Key_Size = entry.Attributes["msPKI-Minimal-Key-Size"][0].ToString();
+                            msPKI_Minimal_Key_Size = entry.Attributes["msPKI-Minimal-Key-Size"][0].ToString()!;
                         }
 
                         if (entry.Attributes["msPKI-Private-Key-Flag"] != null)
                         {
-                            var msPKIPrivateKeyFlag = long.Parse(entry.Attributes["msPKI-Private-Key-Flag"][0].ToString());
+                            var msPKIPrivateKeyFlag = long.Parse(entry.Attributes["msPKI-Private-Key-Flag"][0].ToString()!);
                             msPKI_Private_Key_Flag = TemplateImportHelper.DecodePrivateKeyFlags(msPKIPrivateKeyFlag);
                         }
                         if (entry.Attributes["msPKI-RA-Application-Policies"] != null)
                         {
-                            msPKI_RA_Application_Policies = entry.Attributes["msPKI-RA-Application-Policies"][0].ToString();
+                            msPKI_RA_Application_Policies = entry.Attributes["msPKI-RA-Application-Policies"][0].ToString()!;
                         }
                         if (entry.Attributes["msPKI-RA-Policies"] != null)
                         {
-                            msPKI_RA_Policies = entry.Attributes["msPKI-RA-Policies"][0].ToString();
+                            msPKI_RA_Policies = entry.Attributes["msPKI-RA-Policies"][0].ToString()!;
                         }
                         if (entry.Attributes["msPKI-RA-Signature"] != null)
                         {
-                            msPKI_RA_Signature = entry.Attributes["msPKI-RA-Signature"][0].ToString();
+                            msPKI_RA_Signature = entry.Attributes["msPKI-RA-Signature"][0].ToString()!;
                         }
 
                         if (entry.Attributes["msPKI-Supersede-Templates"] != null)
                         {
-                            msPKI_Supersede_Templates = entry.Attributes["msPKI-Supersede-Templates"][0].ToString();
+                            msPKI_Supersede_Templates = entry.Attributes["msPKI-Supersede-Templates"][0].ToString()!;
                         }
                         if (entry.Attributes["msPKI-Template-Minor-Revision"] != null)
                         {
-                            msPKI_Template_Minor_Revision = entry.Attributes["msPKI-Template-Minor-Revision"][0].ToString();
+                            msPKI_Template_Minor_Revision = entry.Attributes["msPKI-Template-Minor-Revision"][0].ToString()!;
                         }
                         if (entry.Attributes["msPKI-Template-Schema-Version"] != null)
                         {
-                            msPKI_Template_Schema_Version = entry.Attributes["msPKI-Template-Schema-Version"][0].ToString();
+                            msPKI_Template_Schema_Version = entry.Attributes["msPKI-Template-Schema-Version"][0].ToString()!;
                         }
                         if (entry.Attributes["objectGUID"] != null)
                         {
@@ -318,15 +319,15 @@ namespace CertificateManager.Admin.Pages.Templates
 
                         if (entry.Attributes["pKICriticalExtensions"] != null)
                         {
-                            pKICriticalExtensions = entry.Attributes["pKICriticalExtensions"][0].ToString();
+                            pKICriticalExtensions = entry.Attributes["pKICriticalExtensions"][0].ToString()!;
                         }
                         if (entry.Attributes["pKIDefaultCSPs"] != null)
                         {
-                            pKIDefaultCSPs = entry.Attributes["pKIDefaultCSPs"][0].ToString();
+                            pKIDefaultCSPs = entry.Attributes["pKIDefaultCSPs"][0].ToString()!;
                         }
                         if (entry.Attributes["pKIDefaultKeySpec"] != null)
                         {
-                            pKIDefaultKeySpec = entry.Attributes["pKIDefaultKeySpec"][0].ToString();
+                            pKIDefaultKeySpec = entry.Attributes["pKIDefaultKeySpec"][0].ToString()!;
                         }
                         if (entry.Attributes["pKIExpirationPeriod"] != null)
                         {
@@ -338,7 +339,7 @@ namespace CertificateManager.Admin.Pages.Templates
                             var oids = new List<string>();
                             for (int i=0; i< entry.Attributes["pKIExtendedKeyUsage"].Count; i++)
                             {
-                                oids.Add(entry.Attributes["pKIExtendedKeyUsage"][i].ToString());
+                                oids.Add(entry.Attributes["pKIExtendedKeyUsage"][i].ToString()!);
                             }
                             pKIExtendedKeyUsage = TemplateImportHelper.ResolveOidNames(oids);
                             AppendImportLog($" [ExtendedKeyUsage] {pKIExtendedKeyUsage}");
@@ -353,13 +354,13 @@ namespace CertificateManager.Admin.Pages.Templates
                             }
                             catch 
                             {
-                                pKIKeyUsage = entry.Attributes["pKIKeyUsage"][0].ToString();
+                                pKIKeyUsage = entry.Attributes["pKIKeyUsage"][0].ToString()!;
                             }
 
                         }
                         if (entry.Attributes["pKIMaxIssuingDepth"] != null)
                         {
-                            pKIMaxIssuingDepth = entry.Attributes["pKIMaxIssuingDepth"][0].ToString();
+                            pKIMaxIssuingDepth = entry.Attributes["pKIMaxIssuingDepth"][0].ToString()!;
                         }
                         if (entry.Attributes["pKIOverlapPeriod"] != null)
                         {
@@ -376,7 +377,7 @@ namespace CertificateManager.Admin.Pages.Templates
                                 try
                                 {
                                     string accountlookupldapFilter = $"(objectsid={sid})";
-                                    string[] accountlookupattributelist = null;
+                                    string[]? accountlookupattributelist = null;
                                     var accountSearchScope = SearchScope.Subtree;
                                     string accountlookupsearchRoot = _defaultNamingContext;
 
@@ -398,8 +399,12 @@ namespace CertificateManager.Admin.Pages.Templates
                         }
                         if (entry.Attributes["modifyTimeStamp"] != null)
                         {
-                            string timestamp = entry.Attributes["modifyTimeStamp"][0].ToString();
-                            modifyTimeStamp = TemplateImportHelper.ParseModifyTimestamp(timestamp);
+                            string? timestamp = entry.Attributes["modifyTimeStamp"][0].ToString();
+                            if(!(timestamp is null))
+                            {
+                                modifyTimeStamp = TemplateImportHelper.ParseModifyTimestamp(timestamp);
+                            }
+                            
                         }
 
                         AppendImportLog("");

@@ -280,7 +280,7 @@ namespace CertificateManager.Admin.Pages.Request
                     }
                     catch (Exception ex)
                     {
-                        await ShowDialogAsync("Certificate Request approval failed", $"Request {entry.RequestId} approval failed.");
+                        await ShowDialogAsync("Certificate Request approval failed", $"Request {entry.RequestId} approval failed.{ex.Message}");
                     }
                 }
             }
@@ -310,7 +310,7 @@ namespace CertificateManager.Admin.Pages.Request
                     }
                     catch (Exception ex)
                     {
-                        await ShowDialogAsync("Certificate Request denial failed", $"Request {entry.RequestId} denial failed.");
+                        await ShowDialogAsync("Certificate Request denial failed", $"Request {entry.RequestId} denial failed. {ex.Message}");
                     }
                 }
             }

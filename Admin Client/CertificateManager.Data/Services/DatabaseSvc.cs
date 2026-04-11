@@ -193,7 +193,7 @@ namespace CertificateManager.Admin.Data.Services
             }
         }
 
-        public Entry GetCertificate(int requestId, string caConfig)
+        public Entry? GetCertificate(int requestId, string caConfig)
         {
             using (var context = _dbContextFactory.CreateDbContext())
             {

@@ -25,7 +25,7 @@ namespace CertificateManager.Admin.Pages.Certificate
 
     public class OptionItem
     {
-        public string Name { get; set; }
+        public required string Name { get; set; }
         public int Value { get; set; }
     }
 
@@ -348,7 +348,7 @@ namespace CertificateManager.Admin.Pages.Certificate
                     }
                     catch (Exception ex)
                     {
-                        await ShowDialogAsync("Certificate revocation failed", $"Certificate {entry.RequestId} revocation failed.");
+                        await ShowDialogAsync($"Certificate revocation failed", $"Certificate {entry.RequestId} revocation failed.{ex.Message}");
                     }
                 }
             }

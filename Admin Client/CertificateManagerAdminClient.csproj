@@ -45,7 +45,6 @@
     <Content Include="Assets\Square150x150Logo.scale-200.png" />
     <Content Include="Assets\Square44x44Logo.scale-200.png" />
     <Content Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
-    <Content Include="Assets\StoreLogo.png" />
     <Content Include="Assets\Wide310x150Logo.scale-200.png" />
   </ItemGroup>
 
@@ -155,5 +154,16 @@
   </PropertyGroup>
   <ItemGroup>
     <PRIResource Remove="CertificateManager.Tests\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Remove="Assets\.scale-125.png" />
+    <Content Remove="Assets\.scale-150.png" />
+    <Content Remove="Assets\.scale-200.png" />
+    <Content Remove="Assets\.scale-400.png" />
+    <Content Remove="Assets\StoreLogo.scale-100.png" />
+    <Content Remove="Assets\StoreLogo.scale-125.png" />
+    <Content Remove="Assets\StoreLogo.scale-150.png" />
+    <Content Remove="Assets\StoreLogo.scale-200.png" />
+    <Content Remove="Assets\StoreLogo.scale-400.png" />
   </ItemGroup>
 </Project>
