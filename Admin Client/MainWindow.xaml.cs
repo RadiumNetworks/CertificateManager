@@ -31,6 +31,7 @@ namespace CertificateManager.Admin
         private void NavView_Loaded(object sender, RoutedEventArgs e)
         {
             NavView.SelectedItem = NavView.MenuItems[0];
+            AppWindow.SetIcon("Assets\\Logo.ico");
         }
 
         private void NavView_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)

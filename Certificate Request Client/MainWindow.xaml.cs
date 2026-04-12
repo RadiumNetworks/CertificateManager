@@ -67,6 +67,7 @@ namespace CertificateManager.Request
         public MainWindow()
         {
             InitializeComponent();
+            AppWindow.SetIcon("Assets\\Logo.ico");
             viewModel.APIString = $"API located at {_apihost}";
 
             CAConfigCombo.ItemsSource = _certificateAuthorities;
