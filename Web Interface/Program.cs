@@ -13,9 +13,9 @@ var connectionString = builder.Configuration.GetConnectionString("Default")
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-builder.Services.AddTransient<CertificateService>();
-builder.Services.AddScoped<UserRolesService>();
-builder.Services.AddSingleton<CAOptionsService>();
+builder.Services.AddTransient<CertificateService>(); //stateless
+builder.Services.AddScoped<UserRolesService>(); //maintain state during request/session
+builder.Services.AddSingleton<CAOptionsService>(); //application wide state
 
 builder.Services.AddAuthentication(NegotiateDefaults.AuthenticationScheme)
    .AddNegotiate();
