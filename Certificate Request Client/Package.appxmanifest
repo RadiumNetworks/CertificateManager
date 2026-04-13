@@ -11,7 +11,7 @@
   <Identity
     Name="1326f9f4-89d3-45e1-92ed-6bfb227859fb"
     Publisher="CN=René Mau"
-    Version="1.0.2.0" />
+    Version="1.0.3.0" />
 
   <mp:PhoneIdentity PhoneProductId="1326f9f4-89d3-45e1-92ed-6bfb227859fb" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 

@@ -155,15 +155,4 @@
   <ItemGroup>
     <PRIResource Remove="CertificateManager.Tests\**" />
   </ItemGroup>
-  <ItemGroup>
-    <Content Remove="Assets\.scale-125.png" />
-    <Content Remove="Assets\.scale-150.png" />
-    <Content Remove="Assets\.scale-200.png" />
-    <Content Remove="Assets\.scale-400.png" />
-    <Content Remove="Assets\StoreLogo.scale-100.png" />
-    <Content Remove="Assets\StoreLogo.scale-125.png" />
-    <Content Remove="Assets\StoreLogo.scale-150.png" />
-    <Content Remove="Assets\StoreLogo.scale-200.png" />
-    <Content Remove="Assets\StoreLogo.scale-400.png" />
-  </ItemGroup>
 </Project>
