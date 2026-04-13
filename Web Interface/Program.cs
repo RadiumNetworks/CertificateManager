@@ -15,7 +15,7 @@ builder.Services.AddDbContextFactory<AppDbContext>(options =>
 
 builder.Services.AddTransient<CertificateService>();
 builder.Services.AddScoped<UserRolesService>();
-
+builder.Services.AddSingleton<CAOptionsService>();
 
 builder.Services.AddAuthentication(NegotiateDefaults.AuthenticationScheme)
    .AddNegotiate();

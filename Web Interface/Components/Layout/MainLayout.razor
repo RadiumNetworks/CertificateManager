@@ -45,8 +45,9 @@
         var rolessid = Configuration.GetSection("Roles");
 
         var roles = authState.User.Claims
-            .Where(claim => claim.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/denyonlysid"
-                         && claim.Value == rolessid["Admin"])
+            .Where(claim => ((claim.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/denyonlysid")
+                    || (claim.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/groupsid"))
+                    && claim.Value == rolessid["Admin"])
             .Select(claim => "Administator");
 
         UserRolesService.Initialize(roles, authState.User.Identity?.Name ?? "");

@@ -11,6 +11,7 @@
 @implements IAsyncDisposable
 @inject CertificateService certificateService
 @inject UserRolesService UserRolesService
+@inject CAOptionsService CAOptionsService
 
 <PageTitle>Certificate Entries</PageTitle>
 
@@ -33,7 +34,7 @@
         <tr>
             <td><label for="CAFilter">Certificate Authority</label></td>
             <td><InputSelect id="CAFilter" @bind-Value="@CAOption">
-                    @foreach (var option in Enum.GetValues<CAOptions>())
+                    @foreach (var option in _caOptions)
                     {
                         <option value="@option">@option</option>
                     }
@@ -127,13 +128,8 @@
 
 @code {
 
-    public enum CAOptions
-    {
-        SECURECA01,
-        SECURECA02,
-        Extern
-    }
-    public CAOptions CAOption { get; set; } = CAOptions.SECURECA01;
+    private string[] _caOptions = [];
+    public string CAOption { get; set; } = string.Empty;
 
     public enum DispositionOptions
     {
@@ -170,6 +166,9 @@
 
     protected override async Task OnInitializedAsync()
     {
+        _caOptions = CAOptionsService.Options;
+        CAOption = CAOptionsService.Default;
+
         _isAdmin = UserRolesService.Roles.Contains("Administator");
 
         if (!_isAdmin)

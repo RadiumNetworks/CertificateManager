@@ -6,8 +6,10 @@
 @using CertificateManager.Data
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using CertificateManager.Services
+
 @implements IAsyncDisposable
 @inject CertificateService certificateService
+@inject CAOptionsService CAOptionsService
 
 <PageTitle>List Certificate Requests</PageTitle>
 
@@ -31,7 +33,7 @@
             <td><label for="CAFilter">Certificate Authority</label></td>
             <td>
                 <InputSelect id="CAFilter" @bind-Value="@CAOption">
-                    @foreach (var option in Enum.GetValues<CAOptions>())
+                    @foreach (var option in _caOptions)
                     {
                         <option value="@option">@option</option>
                     }
@@ -111,13 +113,9 @@
 </ErrorBoundary>
 
 @code {
-    public enum CAOptions
-    {
-        SECURECA01,
-        SECURECA02
-    }
-    public CAOptions CAOption { get; set; } = CAOptions.SECURECA01;
 
+    private string[] _caOptions = [];
+    public string CAOption { get; set; } = string.Empty;
 
 
     public string SubjectFilter = "";
@@ -143,6 +141,9 @@
 
     protected override void OnInitialized()
     {
+        _caOptions = CAOptionsService.Options;
+        CAOption = CAOptionsService.Default;
+
         try
         {
             _context = certificateService.CreateDbContext();
