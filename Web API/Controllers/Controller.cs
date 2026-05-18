@@ -25,7 +25,6 @@ namespace CertificateManager.Controllers
 
             return Ok(new ParseResponse
             {
-                //Result = $"Hello! You sent: \"{request.Input}\" (received at {DateTime.Now:HH:mm:ss})"
                 Result = $"{result.Status}; {result.ParsedData}; {result.ChallengeData}; {result.Message}"
             });
         }
@@ -35,12 +34,23 @@ namespace CertificateManager.Controllers
     [Route("api/submit")]
     public class SubmitController : ControllerBase
     {
-        [HttpPost]
-        public ActionResult<SubmitResponse> Post([FromBody] SubmitRequest request)
+        private readonly Validation _validation;
+
+        public SubmitController(Validation validation)
         {
+            _validation = validation;
+        }
+
+        [HttpPost]
+        public async Task<ActionResult<SubmitResponse>> Post([FromBody] SubmitRequest request)
+        {
+            var verifyResult = await _validation.VerifyAllChallenges(request.Input);
+            bool allChallengesPassed = verifyResult.Status == "Success";
+
+            var submitResult = _validation.SubmitToCA(request.Input, request.CAConfig, allChallengesPassed);
             return Ok(new SubmitResponse
             {
-                Result = $"Hello! You sent: \"{request.Input}\" (received at {DateTime.Now:HH:mm:ss})"
+                Result = $"{submitResult.Status}; {verifyResult.Output}; {submitResult.Output}; {submitResult.Message}"
             });
         }
     }
@@ -58,6 +68,7 @@ namespace CertificateManager.Controllers
     public class SubmitRequest
     {
         public string Input { get; set; } = string.Empty;
+        public string CAConfig { get; set; } = string.Empty;
     }
 
     public class SubmitResponse

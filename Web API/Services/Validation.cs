@@ -1,9 +1,12 @@
-﻿using CERTCLILib;
+﻿using CERTADMINLib;
+using CERTCLILib;
 using CERTENROLLLib;
 using CertificateManager.Controllers;
 using CertificateManager.Models;
 using DnsClient;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using System.Text;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Model;
 
 namespace CertificateManager.Services
@@ -11,9 +14,11 @@ namespace CertificateManager.Services
     public class Validation
     {
         private readonly CertificateService _certificateService;
-        public Validation(CertificateService certificateService)
+        private readonly IHttpClientFactory _httpClientFactory;
+        public Validation(CertificateService certificateService, IHttpClientFactory httpClientFactory)
         {
             _certificateService = certificateService;
+            _httpClientFactory = httpClientFactory;
         }
 
         const int CR_IN_ANY = 0;
@@ -181,6 +186,24 @@ namespace CertificateManager.Services
             }
         }
 
+        private static string ComputeChallengeHash(string name)
+        {
+            string date = DateTime.UtcNow.ToString("yyyy-MM-dd:00:00:00");
+            string challengeContent = $"{name}:{date}";
+
+            byte[] bytes = Encoding.UTF8.GetBytes(challengeContent);
+            using (SHA256 sha256 = SHA256.Create())
+            {
+                byte[] hashBytes = sha256.ComputeHash(bytes);
+
+                StringBuilder sb = new StringBuilder();
+                foreach (byte b in hashBytes)
+                    sb.Append(b.ToString("x2"));
+
+                return sb.ToString();
+            }
+        }
+
         public void ParseRequestExtension(IX509CertificateRequestPkcs10 cX509CertificateRequestPkcs10)
         {
             var extensionAlternativeNames = new CX509ExtensionAlternativeNames();
@@ -201,9 +224,9 @@ namespace CertificateManager.Services
                     if (subjectinfo.StartsWith("CN="))
                     {
                         string cn = subjectinfo.Split("=")[1];
-                        Guid token = Guid.NewGuid();
-                        Guid content = Guid.NewGuid();
-                        _challenges.Add($"HTTP http://{cn}/{token.ToString()} {content.ToString()}");
+                        string challengeHash = ComputeChallengeHash(cn);
+
+                        _challenges.Add($"HTTP http://{cn}/{challengeHash}.html");
                     }
                 }
             }
@@ -230,16 +253,24 @@ namespace CertificateManager.Services
                                 {
                                     case AlternativeNameType.XCN_CERT_ALT_NAME_DNS_NAME:
                                         CurrentRequestData += " DNS = " + san.strValue + Environment.NewLine;
-                                        Guid token = Guid.NewGuid();
-                                        Guid content = Guid.NewGuid();
+                                        
+                                        string challengeHash = ComputeChallengeHash(san.strValue);
+                                        
                                         if (san.strValue.StartsWith("*."))
                                         {
-
-                                            _challenges.Add($"DNS_TXT {san.strValue.Remove(0, 2)} {token.ToString()}");
+                                            _challenges.Add($"DNS_TXT {san.strValue.Remove(0, 2)} {challengeHash}");
                                         }
                                         else
                                         {
-                                            _challenges.Add($"HTTP http://{san.strValue}/{token.ToString()} {content.ToString()}");
+                                            if(_challenges.Contains($"HTTP http://{san.strValue}/{challengeHash}.html"))
+                                            {
+
+                                            }
+                                            else
+                                            {
+                                                _challenges.Add($"HTTP http://{san.strValue}/{challengeHash}.html");
+                                            }
+                                            
                                         }
 
                                         break;
@@ -382,6 +413,7 @@ namespace CertificateManager.Services
             {
                 ChallengeData = @"For automatic enrollment, the following files or entries must be created." + Environment.NewLine;
             }
+
             foreach (string challenge in _challenges)
             {
                 ChallengeData += challenge + Environment.NewLine;
@@ -389,27 +421,38 @@ namespace CertificateManager.Services
 
         }
 
-        async Task<bool> CheckChallenge(string type, string location, string content)
+        async Task<(bool Success, string Message)> CheckChallenge(string type, string location, string content)
         {
             if (type == "HTTP")
             {
                 try
                 {
-                    using (HttpClient client = new HttpClient())
+                    using (HttpClient client = _httpClientFactory.CreateClient())
                     {
                         client.Timeout = TimeSpan.FromSeconds(10);
                         HttpResponseMessage response = await client.GetAsync(location);
-                        response.EnsureSuccessStatusCode();
+                        if (!response.IsSuccessStatusCode)
+                        {
+                            return (false, $"HTTP challenge failed for {location}: server returned {(int)response.StatusCode} {response.ReasonPhrase}");
+                        }
                         string filecontent = await response.Content.ReadAsStringAsync();
                         if (filecontent == content)
                         {
-                            return true;
+                            return (true, $"HTTP challenge succeeded for {location}");
+                        }
+                        else
+                        {
+                            return (false, $"HTTP challenge failed for {location}: content does not match expected hash");
                         }
                     }
                 }
-                catch
+                catch (TaskCanceledException)
                 {
-
+                    return (false, $"HTTP challenge failed for {location}: request timed out");
+                }
+                catch (HttpRequestException ex)
+                {
+                    return (false, $"HTTP challenge failed for {location}: {ex.Message}");
                 }
             }
             else if (type == "DNS_TXT")
@@ -418,22 +461,154 @@ namespace CertificateManager.Services
                 {
                     var lookup = new LookupClient();
                     var result = await lookup.QueryAsync(location, QueryType.TXT);
-                    var txtRecords = result.Answers.TxtRecords();
+                    var txtRecords = result.Answers.TxtRecords().ToList();
+                    if (txtRecords.Count == 0)
+                    {
+                        return (false, $"DNS_TXT challenge failed for {location}: no TXT records found");
+                    }
                     foreach (var txt in txtRecords)
                     {
                         string txtValue = string.Join("", txt.Text);
                         if (txtValue == content)
                         {
-                            return true;
+                            return (true, $"DNS_TXT challenge succeeded for {location}");
                         }
                     }
+                    return (false, $"DNS_TXT challenge failed for {location}: no TXT record matches expected hash");
                 }
-                catch
+                catch (Exception ex)
                 {
-
+                    return (false, $"DNS_TXT challenge failed for {location}: {ex.Message}");
                 }
             }
-            return false;
+            return (false, $"Unknown challenge type: {type}");
+        }
+
+        public async Task<SubmitResponse> VerifyAllChallenges(string request)
+        {
+            var parseResult = ParseRequest(request);
+            if (parseResult.Status != "Parsed")
+            {
+                return new SubmitResponse
+                {
+                    Status = "Error",
+                    Message = parseResult.Message
+                };
+            }
+
+            var results = new List<string>();
+            bool allPassed = true;
+
+            foreach (string challenge in _challenges)
+            {
+                string[] parts = challenge.Split(' ', 3);
+                string type = parts[0];
+                string location = parts[1];
+                string content = parts.Length > 2 ? parts[2] : string.Empty;
+
+                // For HTTP challenges the hash is part of the URL, content to check is the hash
+                if (type == "HTTP")
+                {
+                    // URL format: http://host/hash — the hash is what should be served at that URL
+                    string hash = location.Substring(location.LastIndexOf('/') + 1);
+                    var (success, message) = await CheckChallenge(type, location, "HTTP");
+                    if (!success) allPassed = false;
+                    results.Add(message);
+                }
+                else if (type == "DNS_TXT")
+                {
+                    // Format: DNS_TXT <domain> <hash>
+                    var (success, message) = await CheckChallenge(type, location, content);
+                    if (!success) allPassed = false;
+                    results.Add(message);
+                }
+            }
+
+            return new SubmitResponse
+            {
+                Status = allPassed ? "Success" : "Failed",
+                ParsedData = parseResult.ParsedData,
+                ChallengeData = parseResult.ChallengeData,
+                Output = string.Join(Environment.NewLine, results),
+                Message = allPassed
+                    ? "All challenges verified successfully"
+                    : "One or more challenges failed verification"
+            };
+        }
+
+        public SubmitResponse SubmitToCA(string base64Request, string caConfig, bool allChallengesPassed)
+        {
+            var submitResponse = new SubmitResponse();
+            try
+            {
+                var certRequest = new CCertRequest();
+                int disposition = certRequest.Submit(
+                    CR_IN_BASE64 | CR_IN_ANY,
+                    base64Request,
+                    null,
+                    caConfig);
+
+                int requestId = certRequest.GetRequestId();
+
+                if (disposition == CR_DISP_ISSUED)
+                {
+                    string base64Cert = certRequest.GetCertificate(CR_OUT_BASE64);
+                    submitResponse.Status = "Issued" + Environment.NewLine;
+                    submitResponse.Output = base64Cert + Environment.NewLine;
+                    submitResponse.Message = $"Certificate issued successfully (RequestId: {requestId})";
+                }
+                else if (disposition == CR_DISP_PENDING)
+                {
+                    if (allChallengesPassed)
+                    {
+                        try
+                        {
+                            var certAdmin = new CCertAdmin();
+                            certAdmin.ResubmitRequest(caConfig, requestId);
+
+                            // Retrieve the certificate after approval
+                            disposition = certRequest.RetrievePending(requestId, caConfig);
+                            if (disposition == CR_DISP_ISSUED)
+                            {
+                                string base64Cert = certRequest.GetCertificate(CR_OUT_BASE64);
+                                submitResponse.Status = "Issued" + Environment.NewLine;
+                                submitResponse.Output = base64Cert + Environment.NewLine;
+                                submitResponse.Message = $"Certificate approved and issued successfully (RequestId: {requestId})";
+                            }
+                            else
+                            {
+                                submitResponse.Status = "Pending" + Environment.NewLine;
+                                submitResponse.Output = $"RequestId: {requestId}" + Environment.NewLine;
+                                submitResponse.Message = $"Certificate request was approved but is still pending (RequestId: {requestId})";
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            submitResponse.Status = "Pending" + Environment.NewLine;
+                            submitResponse.Output = $"RequestId: {requestId}" + Environment.NewLine;
+                            submitResponse.Message = $"Certificate request is pending; auto-approve failed: {ex.Message} (RequestId: {requestId})";
+                        }
+                    }
+                    else
+                    {
+                        submitResponse.Status = "Pending" + Environment.NewLine;
+                        submitResponse.Output = $"RequestId: {requestId}" + Environment.NewLine;
+                        submitResponse.Message = $"Certificate request is pending approval, not all challenges were verified (RequestId: {requestId})";
+                    }
+                }
+                else
+                {
+                    string dispositionMessage = certRequest.GetDispositionMessage();
+                    submitResponse.Status = "Denied" + Environment.NewLine;
+                    submitResponse.Message = $"Certificate request was denied (RequestId: {requestId}): {dispositionMessage}";
+                }
+            }
+            catch (Exception ex)
+            {
+                submitResponse.Status = "Error";
+                submitResponse.Message = $"Failed to submit request to CA: {ex.Message}";
+            }
+            return submitResponse;
         }
 
 
@@ -461,8 +636,6 @@ namespace CertificateManager.Services
                 parseResponse.Message = $"Failed to parse request: {ex.Message}";
                 return parseResponse;
             }
-
-
         }
     }
 }
