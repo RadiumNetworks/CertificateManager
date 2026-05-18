@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using CertificateManager.Admin.Data;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.DirectoryServices.ActiveDirectory;
@@ -336,6 +337,12 @@ namespace CertificateManager.Admin.Pages.Templates
 
         public static string LoadConnectionString()
         {
+            // Check user settings first
+            var userSettings = UserSettings.Load();
+            if (!string.IsNullOrWhiteSpace(userSettings.ConnectionString))
+                return userSettings.ConnectionString;
+
+            // Fall back to appsettings.json
             var basePaths = new[]
             {
             AppContext.BaseDirectory,

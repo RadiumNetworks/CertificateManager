@@ -237,6 +237,28 @@ namespace CertificateManager.Admin.Pages.Request
             }
         }
 
+        private void ColumnVisibility_Changed(object sender, RoutedEventArgs e)
+        {
+            ColRequesterInfoColumn.Visibility = ColRequesterInfo.IsChecked == true
+                ? Visibility.Visible : Visibility.Collapsed;
+            ColSANColumn.Visibility = ColSAN.IsChecked == true
+                ? Visibility.Visible : Visibility.Collapsed;
+            ColExpirationColumn.Visibility = ColExpiration.IsChecked == true
+                ? Visibility.Visible : Visibility.Collapsed;
+            ColCAConfigColumn.Visibility = ColCAConfig.IsChecked == true
+                ? Visibility.Visible : Visibility.Collapsed;
+            ColDispositionColumn.Visibility = ColDisposition.IsChecked == true
+                ? Visibility.Visible : Visibility.Collapsed;
+            ColRequesterNameColumn.Visibility = ColRequesterName.IsChecked == true
+                ? Visibility.Visible : Visibility.Collapsed;
+            ColTemplateColumn.Visibility = ColTemplate.IsChecked == true
+                ? Visibility.Visible : Visibility.Collapsed;
+            ColEffectiveDateColumn.Visibility = ColEffectiveDate.IsChecked == true
+                ? Visibility.Visible : Visibility.Collapsed;
+            ColKeyLengthColumn.Visibility = ColKeyLength.IsChecked == true
+                ? Visibility.Visible : Visibility.Collapsed;
+        }
+
         private async Task ShowDialogAsync(string title, string message)
         {
             try

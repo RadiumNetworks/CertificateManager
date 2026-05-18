@@ -27,10 +27,7 @@
 
                 <StackPanel Spacing="4">
                     <TextBlock Text="Certificate Authority" />
-                    <ComboBox x:Name="CAConfigCombo" Width="400" SelectedIndex="0">
-                        <ComboBoxItem Content="CA01.cool.ice.corp.com\SECURECA01" Tag="CA01.cool.ice.corp.com\SECURECA01" />
-                        <ComboBoxItem Content="CA02.cool.ice.corp.com\SECURECA02" Tag="CA02.cool.ice.corp.com\SECURECA02" />
-                    </ComboBox>
+                    <ComboBox x:Name="CAConfigCombo" Width="400" PlaceholderText="Loading..." />
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Spacing="8">
