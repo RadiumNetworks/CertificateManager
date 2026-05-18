@@ -94,6 +94,7 @@ namespace CertificateManager.Request
                         {
                             ParsedDataOutput.Text = data[1];
                             ChallengeDataOutput.Text = data[2];
+                            SubmitButton.IsEnabled = true;
                         }
                         else
                         {
@@ -114,7 +115,9 @@ namespace CertificateManager.Request
         private async void SubmitButton_Click(object sender, RoutedEventArgs e)
         {
             var input = Base64RequestInput.Text?.Trim();
-            var request = new { Input = input };
+            var caConfig = CAConfigCombo.SelectedItem?.ToString();            
+            var request = new { Input = input, CAConfig = caConfig };
+
             try
             {
                 var response = await _httpClient.PostAsJsonAsync("api/submit", request);
