@@ -78,6 +78,11 @@ namespace CertificateManager.Admin.Data.Services
                 Owner = e.Owner,
                 Notes = e.Notes,
                 CertificateExpirationDate = e.CertificateExpirationDate,
+                CertificateEffectiveDate = e.CertificateEffectiveDate,
+                RequestDisposition = e.RequestDisposition,
+                RequesterName = e.RequesterName,
+                CertificateTemplate = e.CertificateTemplate,
+                PublicKeyLength = e.PublicKeyLength,
                 SubjectAlternativeNames = string.Join(", ", e.SAN.Select(s => s.SubjectAlternativeName)),
                 EKUNames = string.Join(", ", e.EKU.Select(s => s.Name))
             });
@@ -148,6 +153,11 @@ namespace CertificateManager.Admin.Data.Services
                 Owner = e.Owner,
                 Notes = e.Notes,
                 CertificateExpirationDate = e.CertificateExpirationDate,
+                CertificateEffectiveDate = e.CertificateEffectiveDate,
+                RequestDisposition = e.RequestDisposition,
+                RequesterName = e.RequesterName,
+                CertificateTemplate = e.CertificateTemplate,
+                PublicKeyLength = e.PublicKeyLength,
                 SubjectAlternativeNames = string.Join(", ", e.SAN.Select(s => s.SubjectAlternativeName)),
                 EKUNames = string.Join(", ", e.EKU.Select(s => s.Name))
             });
@@ -172,6 +182,11 @@ namespace CertificateManager.Admin.Data.Services
                     Owner = e.Owner,
                     Notes = e.Notes,
                     CertificateExpirationDate = e.CertificateExpirationDate,
+                    CertificateEffectiveDate = e.CertificateEffectiveDate,
+                    RequestDisposition = e.RequestDisposition,
+                    RequesterName = e.RequesterName,
+                    CertificateTemplate = e.CertificateTemplate,
+                    PublicKeyLength = e.PublicKeyLength,
                     SubjectAlternativeNames = string.Join(", ", e.SAN.Select(s => s.SubjectAlternativeName)),
                     EKUNames = string.Join(", ", e.EKU.Select(s => s.Name))
                 });
