@@ -62,13 +62,41 @@
                 Header="Choose maximum expiration date" />
             
         </StackPanel>
-        <Button x:Name="SearchButton"
-                Grid.Row="3"
-                 Content="Search"
-                 Click="SearchButton_Click"
-                 VerticalAlignment="Bottom"
-                 Style="{StaticResource AccentButtonStyle}"
-                 Padding="24,8" />
+        <StackPanel Orientation="Horizontal" Spacing="16" Grid.Row="3">
+            <Button x:Name="SearchButton"
+                     Content="Search"
+                     Click="SearchButton_Click"
+                     VerticalAlignment="Bottom"
+                     Style="{StaticResource AccentButtonStyle}"
+                     Padding="24,8" />
+
+            <DropDownButton Content="Optional Columns" VerticalAlignment="Bottom" Padding="12,8">
+                <DropDownButton.Flyout>
+                    <Flyout Placement="Bottom">
+                        <StackPanel Spacing="8" MinWidth="220">
+                            <CheckBox x:Name="ColCAConfig" Content="CAConfig"
+                                      Checked="ColumnVisibility_Changed" Unchecked="ColumnVisibility_Changed" />
+                            <CheckBox x:Name="ColRequesterInfo" Content="RequesterInformation"
+                                      Checked="ColumnVisibility_Changed" Unchecked="ColumnVisibility_Changed" />
+                            <CheckBox x:Name="ColSAN" Content="SubjectAlternativeName"
+                                      Checked="ColumnVisibility_Changed" Unchecked="ColumnVisibility_Changed" />
+                            <CheckBox x:Name="ColDisposition" Content="RequestDisposition"
+                                      Checked="ColumnVisibility_Changed" Unchecked="ColumnVisibility_Changed" />
+                            <CheckBox x:Name="ColRequesterName" Content="RequesterName"
+                                      Checked="ColumnVisibility_Changed" Unchecked="ColumnVisibility_Changed" />
+                            <CheckBox x:Name="ColTemplate" Content="CertificateTemplate"
+                                      Checked="ColumnVisibility_Changed" Unchecked="ColumnVisibility_Changed" />
+                            <CheckBox x:Name="ColEffectiveDate" Content="CertificateEffectiveDate"
+                                      Checked="ColumnVisibility_Changed" Unchecked="ColumnVisibility_Changed" />
+                            <CheckBox x:Name="ColExpiration" Content="ExpirationDate"
+                                      Checked="ColumnVisibility_Changed" Unchecked="ColumnVisibility_Changed" />
+                            <CheckBox x:Name="ColKeyLength" Content="PublicKeyLength"
+                                      Checked="ColumnVisibility_Changed" Unchecked="ColumnVisibility_Changed" />
+                        </StackPanel>
+                    </Flyout>
+                </DropDownButton.Flyout>
+            </DropDownButton>
+        </StackPanel>
 
         <!-- Sortable DataGrid -->
         <controls:DataGrid
@@ -90,18 +118,60 @@
                                               Binding="{Binding RequestId}"
                                               Tag="RequestId"
                                               Width="80" />
+                <controls:DataGridTextColumn Header="CAConfig"
+                                              x:Name="ColCAConfigColumn"
+                                              Binding="{Binding CAConfig}"
+                                              Tag="CAConfig"
+                                              Visibility="Collapsed"
+                                              Width="150" />
                 <controls:DataGridTextColumn Header="RequesterInformation"
+                                              x:Name="ColRequesterInfoColumn"
                                               Binding="{Binding RequesterInformation}"
                                               Tag="RequesterInformation"
+                                              Visibility="Collapsed"
                                               Width="200" />
                 <controls:DataGridTextColumn Header="SubjectAlternativeName"
+                                              x:Name="ColSANColumn"
                                               Binding="{Binding SubjectAlternativeNamesFormatted}"
                                               Tag="SubjectAlternativeNames"
+                                              Visibility="Collapsed"
                                               Width="200" />
+                <controls:DataGridTextColumn Header="RequestDisposition"
+                                              x:Name="ColDispositionColumn"
+                                              Binding="{Binding RequestDisposition}"
+                                              Tag="RequestDisposition"
+                                              Visibility="Collapsed"
+                                              Width="150" />
+                <controls:DataGridTextColumn Header="RequesterName"
+                                              x:Name="ColRequesterNameColumn"
+                                              Binding="{Binding RequesterName}"
+                                              Tag="RequesterName"
+                                              Visibility="Collapsed"
+                                              Width="150" />
+                <controls:DataGridTextColumn Header="CertificateTemplate"
+                                              x:Name="ColTemplateColumn"
+                                              Binding="{Binding CertificateTemplate}"
+                                              Tag="CertificateTemplate"
+                                              Visibility="Collapsed"
+                                              Width="180" />
+                <controls:DataGridTextColumn Header="EffectiveDate"
+                                              x:Name="ColEffectiveDateColumn"
+                                              Binding="{Binding CertificateEffectiveDate}"
+                                              Tag="CertificateEffectiveDate"
+                                              Visibility="Collapsed"
+                                              Width="150" />
                 <controls:DataGridTextColumn Header="ExpirationDate"
+                                              x:Name="ColExpirationColumn"
                                               Binding="{Binding CertificateExpirationDate}"
                                               Tag="CertificateExpirationDate"
+                                              Visibility="Collapsed"
                                               Width="150" />
+                <controls:DataGridTextColumn Header="PublicKeyLength"
+                                              x:Name="ColKeyLengthColumn"
+                                              Binding="{Binding PublicKeyLength}"
+                                              Tag="PublicKeyLength"
+                                              Visibility="Collapsed"
+                                              Width="120" />
                 <controls:DataGridTextColumn Header="Owner"
                                               Binding="{Binding Owner}"
                                               Tag="Owner"
