@@ -18,35 +18,43 @@ namespace CertificateManager.Admin.Data
         {
             if (!optionsBuilder.IsConfigured)
             {
-                // Try multiple paths to locate appsettings.json at runtime
-                var basePaths = new[]
-                {
-                    AppContext.BaseDirectory,
-                    Directory.GetCurrentDirectory(),
-                    Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? ""
-                };
+                // Check user settings first, fall back to appsettings.json
+                var userSettings = UserSettings.Load();
+                string? connectionString = userSettings.ConnectionString;
 
-                string? configPath = null;
-                foreach (var basePath in basePaths)
+                if (string.IsNullOrWhiteSpace(connectionString))
                 {
-                    var candidate = Path.Combine(basePath, "appsettings.json");
-                    if (File.Exists(candidate))
+                    // Try multiple paths to locate appsettings.json at runtime
+                    var basePaths = new[]
                     {
-                        configPath = basePath;
-                        break;
+                        AppContext.BaseDirectory,
+                        Directory.GetCurrentDirectory(),
+                        Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? ""
+                    };
+
+                    string? configPath = null;
+                    foreach (var basePath in basePaths)
+                    {
+                        var candidate = Path.Combine(basePath, "appsettings.json");
+                        if (File.Exists(candidate))
+                        {
+                            configPath = basePath;
+                            break;
+                        }
                     }
+
+                    if (configPath == null)
+                        throw new FileNotFoundException(
+                            $"Could not find appsettings.json. Searched: {string.Join(", ", basePaths)}");
+
+                    var configuration = new ConfigurationBuilder()
+                        .SetBasePath(configPath)
+                        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                        .Build();
+
+                    connectionString = configuration.GetConnectionString("DefaultConnection");
                 }
 
-                if (configPath == null)
-                    throw new FileNotFoundException(
-                        $"Could not find appsettings.json. Searched: {string.Join(", ", basePaths)}");
-
-                var configuration = new ConfigurationBuilder()
-                    .SetBasePath(configPath)
-                    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                    .Build();
-
-                var connectionString = configuration.GetConnectionString("DefaultConnection");
                 optionsBuilder.UseSqlServer(connectionString);
 
                 optionsBuilder.LogTo(

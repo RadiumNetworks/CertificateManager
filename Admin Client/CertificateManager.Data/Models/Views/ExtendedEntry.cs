@@ -18,6 +18,11 @@ namespace CertificateManager.Admin.Models.Views
         public string? EKUNames { get; set; } = string.Empty;
 
         public DateTime? CertificateExpirationDate { get; set; }
+        public DateTime? CertificateEffectiveDate { get; set; }
+        public string? RequestDisposition { get; set; } = string.Empty;
+        public string? RequesterName { get; set; } = string.Empty;
+        public string? CertificateTemplate { get; set; } = string.Empty;
+        public string? PublicKeyLength { get; set; } = string.Empty;
 
         public string SubjectAlternativeNamesFormatted =>
             string.IsNullOrWhiteSpace(SubjectAlternativeNames)

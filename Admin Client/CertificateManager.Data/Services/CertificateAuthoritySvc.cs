@@ -1,5 +1,6 @@
 using CERTADMINLib;
 using CERTENROLLLib;
+using CertificateManager.Admin.Data;
 using CertificateManager.Admin.Data.Models.Views;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -301,6 +302,12 @@ namespace CertificateManager.Admin.Data.Services
 
         public string? LoadConnectionString()
         {
+            // Check user settings first
+            var userSettings = UserSettings.Load();
+            if (!string.IsNullOrWhiteSpace(userSettings.ConnectionString))
+                return userSettings.ConnectionString;
+
+            // Fall back to appsettings.json
             var basePaths = new[]
                     {
                         AppContext.BaseDirectory,
@@ -613,12 +620,44 @@ namespace CertificateManager.Admin.Data.Services
             }
         }
 
-        public (List<CARequest> Requests, List<CACertificate> Certificates) ReadCADbEntries(string caConfig, Action<string> log = null)
+        public int GetLastCARequestId(string caConfig)
+        {
+            const int CVR_SEEK_LE = 0x4;
+            const int CVR_SORT_DESCEND = 2;
+
+            ICertView certView = new CCertView();
+            certView.OpenConnection(caConfig);
+
+            int colIndex = certView.GetColumnIndex(0, "RequestID");
+            certView.SetResultColumnCount(1);
+            certView.SetResultColumn(colIndex);
+
+            certView.SetRestriction(colIndex, CVR_SEEK_LE, CVR_SORT_DESCEND, int.MaxValue);
+
+            IEnumCERTVIEWROW enumRow = certView.OpenView();
+            if (enumRow.Next() != -1)
+            {
+                IEnumCERTVIEWCOLUMN enumCol = enumRow.EnumCertViewColumn();
+                if (enumCol.Next() != -1)
+                {
+                    object? val = enumCol.GetValue(CV_OUT_BASE64HEADER);
+                    if (val != null)
+                        return Convert.ToInt32(val);
+                }
+            }
+
+            return 0;
+        }
+
+        public (List<CARequest> Requests, List<CACertificate> Certificates) ReadCADbEntries(string caConfig, Action<string> log = null, Action<int> progressCallback = null)
         {
             var connectionString = LoadConnectionString();
 
             var requests = new List<CARequest>();
             var certificates = new List<CACertificate>();
+
+            int lastRequestId = GetLastCARequestId(caConfig);
+            log?.Invoke($"Last RequestID in CA database: {lastRequestId}");
 
             ICertView certView = new CCertView();
 
@@ -777,7 +816,7 @@ namespace CertificateManager.Admin.Data.Services
 
                 ParseRequest(request);
                 
-                log?.Invoke($"Processed {rowCount} rows — " +
+                log?.Invoke($"Processed {rowCount} rows ï¿½ " +
                     $"Last: RequestID = {request.RequestId}, " +
                     $"CN = {request.CommonName ?? "(none)"}, " +
                     $"Disposition = {request.DispositionMessage ?? "(none)"}");
@@ -794,8 +833,216 @@ namespace CertificateManager.Admin.Data.Services
                     log?.Invoke($"Processed {rowCount} rows so far...");
                 }
 
+                if (lastRequestId > 0 && request.RequestId > 0)
+                {
+                    int pct = (int)((double)request.RequestId / lastRequestId * 100);
+                    progressCallback?.Invoke(pct > 100 ? 100 : pct);
+                }
+
             }
 
+            progressCallback?.Invoke(100);
+            return (requests, certificates);
+        }
+
+        public (List<CARequest> Requests, List<CACertificate> Certificates) ReadCADbEntries(string caConfig, int firstRequestId, Action<string> log = null, Action<int> progressCallback = null)
+        {
+            const int CVR_SEEK_GE = 0x10;
+            const int CVR_SORT_ASCEND = 1;
+
+            var connectionString = LoadConnectionString();
+
+            var requests = new List<CARequest>();
+            var certificates = new List<CACertificate>();
+
+            int lastRequestId = GetLastCARequestId(caConfig);
+            log?.Invoke($"Last RequestID in CA database: {lastRequestId}");
+
+            ICertView certView = new CCertView();
+
+            certView.OpenConnection(caConfig);
+
+            certView.SetResultColumnCount(ResultColumns.Length);
+            foreach (string col in ResultColumns)
+            {
+                int colIndex = certView.GetColumnIndex(0, col);
+                certView.SetResultColumn(colIndex);
+            }
+
+            int requestIdColIndex = certView.GetColumnIndex(0, "RequestID");
+            certView.SetRestriction(requestIdColIndex, CVR_SEEK_GE, CVR_SORT_ASCEND, firstRequestId);
+
+            log?.Invoke($"Filtering CA database starting at RequestID >= {firstRequestId}");
+
+            IEnumCERTVIEWROW enumRow = certView.OpenView();
+
+            int rowCount = 0;
+
+            while (enumRow.Next() != -1)
+            {
+                rowCount++;
+                var request = new CARequest();
+                var certificate = new CACertificate();
+                bool hasCertData = false;
+
+                IEnumCERTVIEWCOLUMN enumCol = enumRow.EnumCertViewColumn();
+
+                while (enumCol.Next() != -1)
+                {
+                    IntPtr variantNamePtr = Marshal.AllocHGlobal(2048);
+                    string colName = enumCol.GetName();
+                    try
+                    {
+                        int flags = BinaryColumns.Contains(colName) ? CV_OUT_BASE64 : CV_OUT_BASE64HEADER;
+                        object? val = enumCol.GetValue(flags);
+                        if (val is null)
+                        {
+                            continue;
+                        }
+                        else
+                        {
+                            switch (colName)
+                            {
+                                case "RequestID":
+                                    int id = Convert.ToInt32(val);
+                                    request.RequestId = id;
+                                    certificate.RequestId = id;
+                                    break;
+                                case "Request.RequesterName":
+                                    request.RequesterName = val.ToString()!;
+                                    break;
+                                case "Request.SubmittedWhen":
+                                    request.SubmittedWhen = (DateTime)val;
+                                    break;
+                                case "Request.ResolvedWhen":
+                                    request.ResolvedWhen = (DateTime)val;
+                                    break;
+                                case "Request.RawRequest":
+                                    request.RawRequest = Convert.FromBase64String(val.ToString()!);
+                                    break;
+                                case "Request.RequestType":
+                                    request.RequestType = Convert.ToInt32(val);
+                                    break;
+                                case "Request.StatusCode":
+                                    request.StatusCode = Convert.ToInt32(val);
+                                    break;
+                                case "Request.Disposition":
+                                    request.Disposition = Convert.ToInt32(val);
+                                    break;
+                                case "Request.DispositionMessage":
+                                    request.DispositionMessage = val.ToString()!;
+                                    break;
+                                case "Request.CallerName":
+                                    request.CallerName = val.ToString()!;
+                                    certificate.CallerName = val.ToString()!;
+                                    break;
+                                case "Request.DistinguishedName":
+                                    request.DistinguishedName = val.ToString()!;
+                                    break;
+                                case "Request.RequestAttributes":
+                                    request.RequestAttributes = val.ToString()!;
+                                    break;
+                                case "CommonName":
+                                    request.CommonName = val.ToString()!;
+                                    certificate.CommonName = val.ToString()!;
+                                    break;
+                                case "Organization":
+                                    request.Organization = val.ToString()!;
+                                    certificate.Organization = val.ToString()!;
+                                    break;
+                                case "OrgUnit":
+                                    request.OrgUnit = val.ToString()!;
+                                    certificate.OrgUnit = val.ToString()!;
+                                    break;
+                                case "EMail":
+                                    request.EMail = val.ToString()!;
+                                    certificate.EMail = val.ToString()!;
+                                    break;
+                                case "Locality":
+                                    request.Locality = val.ToString()!;
+                                    certificate.Locality = val.ToString()!;
+                                    break;
+                                case "Country":
+                                    request.Country = val.ToString()!;
+                                    certificate.Country = val.ToString()!;
+                                    break;
+                                case "State":
+                                    request.State = val.ToString()!;
+                                    certificate.State = val.ToString()!;
+                                    break;
+                                case "SerialNumber":
+                                    certificate.SerialNumber = val.ToString()!;
+                                    hasCertData = true;
+                                    break;
+                                case "NotBefore":
+                                    certificate.NotBefore = (DateTime)val;
+                                    break;
+                                case "NotAfter":
+                                    certificate.NotAfter = (DateTime)val;
+                                    break;
+                                case "CertificateHash":
+                                    certificate.CertificateHash = val.ToString()!;
+                                    break;
+                                case "CertificateTemplate":
+                                    certificate.CertificateTemplate = val.ToString()!;
+                                    break;
+                                case "RawCertificate":
+                                    byte[] certBytes = Convert.FromBase64String(val.ToString()!);
+                                    request.RawCertificate = certBytes;
+                                    certificate.RawCertificate = certBytes;
+                                    hasCertData = true;
+                                    break;
+                                case "PublicKeyLength":
+                                    certificate.PublicKeyLength = Convert.ToInt32(val);
+                                    break;
+                                case "PublicKeyAlgorithm":
+                                    certificate.PublicKeyAlgorithm = val.ToString()!;
+                                    break;
+                                case "Request.RevokedWhen":
+                                    certificate.RevocationDate = (DateTime)val;
+                                    break;
+                                case "Request.RevokedReason":
+                                    certificate.RevocationReason = val.ToString()!;
+                                    break;
+                            }
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+
+                requests.Add(request);
+                if (hasCertData)
+                    certificates.Add(certificate);
+
+                ParseRequest(request);
+
+                log?.Invoke($"Processed {rowCount} rows â€” " +
+                    $"Last: RequestID = {request.RequestId}, " +
+                    $"CN = {request.CommonName ?? "(none)"}, " +
+                    $"Disposition = {request.DispositionMessage ?? "(none)"}");
+
+                UpdateOrInsertEntry(connectionString, caConfig, request, certificate, log);
+                UpdateOrInsertEKUs(connectionString, caConfig, request, certificate, log);
+                UpdateOrInsertSANs(connectionString, caConfig, request, certificate, log);
+
+                SubjectAlternativeNames = new List<string>();
+                EKUs = new List<string>();
+
+                if (rowCount % 10 == 0)
+                {
+                    log?.Invoke($"Processed {rowCount} rows so far...");
+                }
+
+                if (lastRequestId > 0 && request.RequestId > 0)
+                {
+                    int pct = (int)((double)request.RequestId / lastRequestId * 100);
+                    progressCallback?.Invoke(pct > 100 ? 100 : pct);
+                }
+            }
+
+            progressCallback?.Invoke(100);
             return (requests, certificates);
         }
     }
