@@ -1,5 +1,6 @@
 using CertificateManager.Admin.Data;
 using CertificateManager.Admin.Data.Services;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -17,6 +18,67 @@ namespace CertificateManager.Admin.Pages.Admin
         public Setup()
         {
             InitializeComponent();
+            LoadConnectionString();
+        }
+
+        private void LoadConnectionString()
+        {
+            var settings = UserSettings.Load();
+            if (!string.IsNullOrWhiteSpace(settings.ConnectionString))
+            {
+                ConnectionStringBox.Text = settings.ConnectionString;
+            }
+        }
+
+        private void SaveConnectionButton_Click(object sender, RoutedEventArgs e)
+        {
+            var connStr = ConnectionStringBox.Text?.Trim();
+            if (string.IsNullOrWhiteSpace(connStr))
+            {
+                ConnectionInfoBar.Message = "Connection string cannot be empty.";
+                ConnectionInfoBar.Severity = InfoBarSeverity.Warning;
+                ConnectionInfoBar.IsOpen = true;
+                return;
+            }
+
+            var settings = UserSettings.Load();
+            settings.ConnectionString = connStr;
+            settings.Save();
+
+            ConnectionInfoBar.Message = "Connection string saved. It will be used for all future database operations.";
+            ConnectionInfoBar.Severity = InfoBarSeverity.Success;
+            ConnectionInfoBar.IsOpen = true;
+        }
+
+        private async void TestConnectionButton_Click(object sender, RoutedEventArgs e)
+        {
+            var connStr = ConnectionStringBox.Text?.Trim();
+            if (string.IsNullOrWhiteSpace(connStr))
+            {
+                ConnectionInfoBar.Message = "Please enter a connection string first.";
+                ConnectionInfoBar.Severity = InfoBarSeverity.Warning;
+                ConnectionInfoBar.IsOpen = true;
+                return;
+            }
+
+            try
+            {
+                TestConnectionButton.IsEnabled = false;
+                using var connection = new SqlConnection(connStr);
+                await connection.OpenAsync();
+                ConnectionInfoBar.Message = $"Connection successful. Server: {connection.DataSource}, Database: {connection.Database}";
+                ConnectionInfoBar.Severity = InfoBarSeverity.Success;
+            }
+            catch (Exception ex)
+            {
+                ConnectionInfoBar.Message = $"Connection failed: {ex.Message}";
+                ConnectionInfoBar.Severity = InfoBarSeverity.Error;
+            }
+            finally
+            {
+                ConnectionInfoBar.IsOpen = true;
+                TestConnectionButton.IsEnabled = true;
+            }
         }
 
         private async void CheckButton_Click(object sender, RoutedEventArgs e)
@@ -196,8 +258,27 @@ namespace CertificateManager.Admin.Pages.Admin
                 AppendImportLog($"Connecting to: {caConfig}");
 
                 var svc = new CertificateAuthoritySvc();
+
+                int startRequestId = 0;
+                if (!double.IsNaN(StartRequestIdInput.Value) && StartRequestIdInput.Value > 0)
+                {
+                    startRequestId = (int)StartRequestIdInput.Value;
+                    AppendImportLog($"Starting import from RequestID >= {startRequestId}");
+                }
+
+                Action<int> progressCallback = (pct) =>
+                {
+                    DispatcherQueue.TryEnqueue(() =>
+                    {
+                        ImportProgressBar.Value = pct;
+                        ImportProgressText.Text = $"{pct}% Progress on Import";
+                    });
+                };
+
                 var (requests, certificates) = await Task.Run(() =>
-                    svc.ReadCADbEntries(caConfig, AppendImportLog));
+                    startRequestId > 0
+                        ? svc.ReadCADbEntries(caConfig, startRequestId, AppendImportLog, progressCallback)
+                        : svc.ReadCADbEntries(caConfig, AppendImportLog, progressCallback));
 
                 AppendImportLog($"Read {requests.Count} requests and {certificates.Count} certificates.");
                 ShowStatus($"Successfully read {requests.Count} requests and {certificates.Count} certificates from CA database.", InfoBarSeverity.Success);
