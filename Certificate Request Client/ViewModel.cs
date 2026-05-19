@@ -27,6 +27,23 @@ namespace CertificateManager.Request
             }
         }
 
+        public string _ConfigPath = string.Empty;
+
+        public string ConfigPath
+        {
+            get => _ConfigPath;
+            set
+            {
+                if (_ConfigPath != value)
+                {
+                    _ConfigPath = value;
+                    PropertyChanged?.Invoke(
+                        this,
+                        new PropertyChangedEventArgs(nameof(ConfigPath)));
+                }
+            }
+        }
+
         public event PropertyChangedEventHandler? PropertyChanged;
     }
 }

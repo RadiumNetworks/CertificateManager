@@ -14,9 +14,9 @@
     </Window.SystemBackdrop>
 
     <Grid>
+
         <ScrollViewer Padding="24">
             <StackPanel Spacing="16" MaxWidth="900" HorizontalAlignment="Left">
-                <TextBlock Text="{x:Bind viewModel.APIString, Mode=OneWay}" />
                 <TextBlock Text="Submit Certificate Request" Style="{StaticResource TitleTextBlockStyle}" />
                 <TextBlock Text="Insert the Base64 encoded CMC request. The Submit button becomes available after the request is parsed successfully."
                        TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
@@ -71,6 +71,7 @@
 
             </StackPanel>
         </ScrollViewer>
-
+        <Button x:Name="InfoButton" Content="&#xE946;" FontFamily="Segoe MDL2 Assets" FontSize="16"                
+                Click="InfoButton_Click" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="24" />
     </Grid>
 </Window>

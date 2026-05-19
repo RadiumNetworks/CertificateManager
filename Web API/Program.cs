@@ -31,6 +31,7 @@ builder.WebHost.ConfigureKestrel((context, options) =>
 
                 httpsOptions.ServerCertificate = certs[0];
             });
+            listenOptions.Protocols = Microsoft.AspNetCore.Server.Kestrel.Core.HttpProtocols.Http1AndHttp2;
         }
     });
 });

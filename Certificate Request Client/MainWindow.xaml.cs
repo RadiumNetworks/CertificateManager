@@ -17,6 +17,8 @@ namespace CertificateManager.Request
 
         private static string _apihost;
 
+        private static string _configPath;
+
         private static List<string> _certificateAuthorities;
 
         public ViewModel viewModel { get; } = new();
@@ -41,9 +43,11 @@ namespace CertificateManager.Request
                     .SetBasePath(userPath)
                     .AddJsonFile("appsettings.user.json", optional: false, reloadOnChange: false)
                     .Build();
+                _configPath = userconfigPath;
             }
             else
             {
+                _configPath = appconfigPath;
                 File.WriteAllText(userconfigPath, jsonContent);
             }
 
@@ -69,6 +73,7 @@ namespace CertificateManager.Request
             InitializeComponent();
             AppWindow.SetIcon("Assets\\Logo.ico");
             viewModel.APIString = $"API located at {_apihost}";
+            viewModel.ConfigPath = $"Config: {_configPath}";
 
             CAConfigCombo.ItemsSource = _certificateAuthorities;
             if (_certificateAuthorities.Count > 0)
@@ -83,6 +88,9 @@ namespace CertificateManager.Request
             {
                 var response = await _httpClient.PostAsJsonAsync("api/parse", request);
                 response.EnsureSuccessStatusCode();
+
+                // $body = @{ Input = "MIIJQwYJKoZI..." } | ConvertTo-Json
+                // Invoke-WebRequest -Uri "http://localhost:5301/api/parse" -Method Post -Body $body -ContentType "application/json"
 
                 var result = await response.Content.ReadFromJsonAsync<Response>(_jsonOptions);
                 if (result != null)
@@ -115,13 +123,15 @@ namespace CertificateManager.Request
         private async void SubmitButton_Click(object sender, RoutedEventArgs e)
         {
             var input = Base64RequestInput.Text?.Trim();
-            var caConfig = CAConfigCombo.SelectedItem?.ToString();            
+            var caConfig = CAConfigCombo.SelectedItem?.ToString();
             var request = new { Input = input, CAConfig = caConfig };
-
             try
             {
                 var response = await _httpClient.PostAsJsonAsync("api/submit", request);
                 response.EnsureSuccessStatusCode();
+
+                // $body = @{ Input = "MIIJQwYJKoZ..." ; CAConfig = "CA01.cool.ice.corp.com\SECURECA01" } | ConvertTo-Json
+                // Invoke-WebRequest -Uri "http://localhost:5301/api/submit" -Method Post -Body $body -ContentType "application/json"
 
                 var result = await response.Content.ReadFromJsonAsync<Response>(_jsonOptions);
                 OutputBox.Text = result?.Result ?? "No response received";
@@ -131,6 +141,24 @@ namespace CertificateManager.Request
                 OutputBox.Text = ex.Message;
             }
 
+        }
+
+        private async void InfoButton_Click(object sender, RoutedEventArgs e)
+        {
+            var textBlock = new Microsoft.UI.Xaml.Controls.TextBlock 
+            { Text = $"{viewModel.APIString}\n{viewModel.ConfigPath}", 
+                TextWrapping = Microsoft.UI.Xaml.TextWrapping.Wrap 
+            };            
+            
+            var dialog = new Microsoft.UI.Xaml.Controls.ContentDialog 
+            { 
+                Title = "Info", 
+                Content = textBlock, 
+                CloseButtonText = "OK", 
+                XamlRoot = Content.XamlRoot
+            };
+            dialog.Resources["ContentDialogMaxWidth"] = 1000.0; 
+            await dialog.ShowAsync();
         }
 
         private void RetrieveButton_Click(object sender, RoutedEventArgs e)
