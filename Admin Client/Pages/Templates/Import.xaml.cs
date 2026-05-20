@@ -462,7 +462,7 @@ namespace CertificateManager.Admin.Pages.Templates
                 sqlstatement = sqlstatement.Replace("'", "''");
                 string sqlTime = DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss");
                 string sql = $@"Insert into SQLLog(LogDate, Origin, UserName, SQLStatement)
-                            VALUES('{sqlTime}', 'ExitModule', '{identity}', N'{sqlstatement}')";
+                            VALUES('{sqlTime}', 'AdminClient', '{identity}', N'{sqlstatement}')";
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     using (SqlCommand command = new SqlCommand(sql, connection))
