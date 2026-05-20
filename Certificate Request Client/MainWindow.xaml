@@ -14,7 +14,6 @@
     </Window.SystemBackdrop>
 
     <Grid>
-
         <ScrollViewer Padding="24">
             <StackPanel Spacing="16" MaxWidth="900" HorizontalAlignment="Left">
                 <TextBlock Text="Submit Certificate Request" Style="{StaticResource TitleTextBlockStyle}" />
@@ -71,7 +70,12 @@
 
             </StackPanel>
         </ScrollViewer>
-        <Button x:Name="InfoButton" Content="&#xE946;" FontFamily="Segoe MDL2 Assets" FontSize="16"                
-                Click="InfoButton_Click" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="24" />
+        <Button x:Name="InfoButton" Content="&#xE946;" FontFamily="Segoe MDL2 Assets" FontSize="16"
+                Click="InfoButton_Click" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="24">
+            <ToolTipService.ToolTip>
+                <ToolTip x:Name="InfoToolTip" />
+            </ToolTipService.ToolTip>
+        </Button>
+
     </Grid>
 </Window>

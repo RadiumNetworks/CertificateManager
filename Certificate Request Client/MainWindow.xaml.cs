@@ -75,6 +75,8 @@ namespace CertificateManager.Request
             viewModel.APIString = $"API located at {_apihost}";
             viewModel.ConfigPath = $"Config: {_configPath}";
 
+            InfoToolTip.Content = $"{viewModel.APIString}\n{viewModel.ConfigPath}";
+
             CAConfigCombo.ItemsSource = _certificateAuthorities;
             if (_certificateAuthorities.Count > 0)
                 CAConfigCombo.SelectedIndex = 0;
@@ -143,21 +145,23 @@ namespace CertificateManager.Request
 
         }
 
+
         private async void InfoButton_Click(object sender, RoutedEventArgs e)
         {
-            var textBlock = new Microsoft.UI.Xaml.Controls.TextBlock 
-            { Text = $"{viewModel.APIString}\n{viewModel.ConfigPath}", 
-                TextWrapping = Microsoft.UI.Xaml.TextWrapping.Wrap 
-            };            
-            
-            var dialog = new Microsoft.UI.Xaml.Controls.ContentDialog 
-            { 
-                Title = "Info", 
-                Content = textBlock, 
-                CloseButtonText = "OK", 
+            var textBlock = new Microsoft.UI.Xaml.Controls.TextBlock
+            {
+                Text = $"{viewModel.APIString}\n{viewModel.ConfigPath}",
+                TextWrapping = Microsoft.UI.Xaml.TextWrapping.Wrap,
+                IsTextSelectionEnabled = true
+            };
+            var dialog = new Microsoft.UI.Xaml.Controls.ContentDialog
+            {
+                Title = "Info",
+                Content = textBlock,
+                CloseButtonText = "OK",
                 XamlRoot = Content.XamlRoot
             };
-            dialog.Resources["ContentDialogMaxWidth"] = 1000.0; 
+            dialog.Resources["ContentDialogMaxWidth"] = 1000.0;
             await dialog.ShowAsync();
         }
 
