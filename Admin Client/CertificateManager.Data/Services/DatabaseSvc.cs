@@ -226,22 +226,33 @@ namespace CertificateManager.Admin.Data.Services
 
         public void UpdateCertificate(int requestId, string caConfig, string owner, string notes)
         {
-            var entry = GetCertificate(requestId, caConfig);
-            if (entry == null)
-            {
-                throw new Exception("Certificate entry does not exist");
-            }
-            else
-            {
-                entry.Owner = owner;
-                entry.Notes = notes;
-
-            }
             using (var context = _dbContextFactory.CreateDbContext())
             {
-                context.Update(entry);
+                var entry = context.Entry.SingleOrDefault(x => x.RequestId == requestId && x.CAConfig == caConfig);
+                if (entry == null)
+                {
+                    throw new Exception("Certificate entry does not exist");
+                }
+                entry.Owner = owner;
+                entry.Notes = notes;
                 context.SaveChanges();
-            }  
+            }
+            SqlLog(caConfig, System.Security.Principal.WindowsIdentity.GetCurrent().Name, $"UPDATE Entry SET Owner = '{owner}', Notes = '{notes}' WHERE RequestId = {requestId} AND CAConfig = '{caConfig}'");        }
+
+        public void SqlLog(string caConfig, string identity, string sqlStatement)
+        {
+            using (var context = _dbContextFactory.CreateDbContext())
+            {
+                context.SQLLog.Add(new SQLLog
+                {
+                    LogDate = DateTime.Now,
+                    Origin = "AdminClient",
+                    Identity = identity,
+                    CAConfig = caConfig,
+                    SQLStatement = sqlStatement
+                });
+                context.SaveChanges();
+            }
         }
     }
 }

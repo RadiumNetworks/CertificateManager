@@ -463,9 +463,36 @@ namespace CertificateManager.Admin.Pages.Templates
                                 command.ExecuteNonQuery();
                             }
                         }
+                        SQLLog(sql, System.Security.Principal.WindowsIdentity.GetCurrent().Name, connectionString);
                     }
                 }
             }
         }
+
+        private void SQLLog(string sqlstatement, string identity, string connectionString)
+        {
+            try
+            {
+                sqlstatement = sqlstatement.Replace("'", "''");
+                string sqlTime = DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss");
+                string sql = $@"Insert into SQLLog(LogDate, Origin, Identity, SQLStatement)
+                            VALUES('{sqlTime}', 'ExitModule', {identity}, N'{sqlstatement}')";
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    using (SqlCommand command = new SqlCommand(sql, connection))
+                    {
+                        connection.Open();
+                        command.ExecuteNonQuery();
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+
+            }
+        }
+
+
+
     }
 }

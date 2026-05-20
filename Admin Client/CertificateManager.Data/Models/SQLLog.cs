@@ -11,6 +11,8 @@ namespace CertificateManager.Admin.Models
 
         public string Origin { get; set; } = string.Empty;
 
+        public string Identity { get; set; } = string.Empty;
+
         public string CAConfig { get; set; } = string.Empty;
 
         public string SQLStatement { get; set; } = string.Empty;
