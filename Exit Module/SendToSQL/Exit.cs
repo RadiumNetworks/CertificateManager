@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Serialization;
 using SendToSQL.Models;
+using System.Data.SqlTypes;
 
 namespace SendToSQL
 {
@@ -140,6 +141,30 @@ namespace SendToSQL
                 {
 
                 }
+            }
+        }
+
+        private void SQLLog(string sqlstatement)
+        {
+            try
+            {
+                sqlstatement = sqlstatement.Replace("'", "''");
+                string sqlTime = DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss");
+                string sql = $@"Insert into SQLLog(LogDate, Origin, CAConfig, SQLStatement)
+                            VALUES('{sqlTime}', 'ExitModule', '{_caConfig}', N'{sqlstatement}')";
+                Log(_debugFlag, _debugLog, sql);
+                using (SqlConnection connection = new SqlConnection(_sqlConfig))
+                {
+                    using (SqlCommand command = new SqlCommand(sql, connection))
+                    {
+                        connection.Open();
+                        command.ExecuteNonQuery();
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Log(_debugFlag, _debugLog, e.Message);
             }
         }
 
@@ -322,6 +347,7 @@ namespace SendToSQL
                         connection.Open();
                         command.ExecuteNonQuery();
                     }
+                    SQLLog(sql);
                     Log(_debugFlag, _debugLog, "Update or Import successful");
                 }
             }
@@ -349,6 +375,7 @@ namespace SendToSQL
                             connection.Open();
                             command.ExecuteNonQuery();
                         }
+                        SQLLog(ekusql);
                         Log(_debugFlag, _debugLog, "Update or Import successful");
                     }
                 }
@@ -376,6 +403,7 @@ namespace SendToSQL
                             connection.Open();
                             command.ExecuteNonQuery();
                         }
+                        SQLLog(sansql);
                         Log(_debugFlag, _debugLog, "Update or Import successful");
                     }
                 }
