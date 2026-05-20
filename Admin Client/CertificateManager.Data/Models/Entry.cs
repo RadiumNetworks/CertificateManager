@@ -87,5 +87,6 @@ namespace CertificateManager.Admin.Models
         public ICollection<SAN>? SAN { get; set; }
 
         public ICollection<EKU>? EKU { get; set; }
+        public ICollection<Challenge> Challenge { get; set; }
     }
 }

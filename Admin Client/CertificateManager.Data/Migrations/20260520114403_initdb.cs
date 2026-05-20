@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace CertificateManager.Admin.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class init : Migration
+    public partial class initdb : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -173,6 +173,30 @@ namespace CertificateManager.Admin.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Challenge",
+                columns: table => new
+                {
+                    ChallengeId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    RequestId = table.Column<int>(type: "int", nullable: false),
+                    CAConfig = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Type = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Location = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Content = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    State = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Challenge", x => x.ChallengeId);
+                    table.ForeignKey(
+                        name: "FK_Challenge_Entry_RequestId_CAConfig",
+                        columns: x => new { x.RequestId, x.CAConfig },
+                        principalTable: "Entry",
+                        principalColumns: new[] { "RequestId", "CAConfig" },
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "EKU",
                 columns: table => new
                 {
@@ -215,6 +239,11 @@ namespace CertificateManager.Admin.Data.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_Challenge_RequestId_CAConfig",
+                table: "Challenge",
+                columns: new[] { "RequestId", "CAConfig" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_EKU_RequestId_CAConfig",
                 table: "EKU",
                 columns: new[] { "RequestId", "CAConfig" });
@@ -233,6 +262,9 @@ namespace CertificateManager.Admin.Data.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "Challenge");
+
             migrationBuilder.DropTable(
                 name: "EKU");
 

@@ -17,7 +17,7 @@ namespace CertificateManager.Admin.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.3")
+                .HasAnnotation("ProductVersion", "10.0.8")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -48,6 +48,40 @@ namespace CertificateManager.Admin.Data.Migrations
                     b.HasKey("CRLRowId", "CAConfig");
 
                     b.ToTable("CRL");
+                });
+
+            modelBuilder.Entity("CertificateManager.Admin.Models.Challenge", b =>
+                {
+                    b.Property<int>("ChallengeId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ChallengeId"));
+
+                    b.Property<string>("CAConfig")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Content")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Location")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("RequestId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("State")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Type")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("ChallengeId");
+
+                    b.HasIndex("RequestId", "CAConfig");
+
+                    b.ToTable("Challenge");
                 });
 
             modelBuilder.Entity("CertificateManager.Admin.Models.EKU", b =>
@@ -405,6 +439,17 @@ namespace CertificateManager.Admin.Data.Migrations
                     b.ToTable("Template");
                 });
 
+            modelBuilder.Entity("CertificateManager.Admin.Models.Challenge", b =>
+                {
+                    b.HasOne("CertificateManager.Admin.Models.Entry", "Entry")
+                        .WithMany("Challenge")
+                        .HasForeignKey("RequestId", "CAConfig")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Entry");
+                });
+
             modelBuilder.Entity("CertificateManager.Admin.Models.EKU", b =>
                 {
                     b.HasOne("CertificateManager.Admin.Models.Entry", "Entry")
@@ -445,6 +490,8 @@ namespace CertificateManager.Admin.Data.Migrations
 
             modelBuilder.Entity("CertificateManager.Admin.Models.Entry", b =>
                 {
+                    b.Navigation("Challenge");
+
                     b.Navigation("EKU");
 
                     b.Navigation("SAN");

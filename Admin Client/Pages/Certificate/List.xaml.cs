@@ -1,4 +1,3 @@
-using Azure.Core;
 using CertificateManager.Admin.Data;
 using CertificateManager.Admin.Data.Services;
 using CertificateManager.Admin.Models;
