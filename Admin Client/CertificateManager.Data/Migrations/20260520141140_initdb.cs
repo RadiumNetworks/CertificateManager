@@ -104,7 +104,8 @@ namespace CertificateManager.Admin.Data.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     LogDate = table.Column<DateTime>(type: "datetime2", nullable: true),
                     Origin = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CAConfig = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    UserName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CAConfig = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     SQLStatement = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>

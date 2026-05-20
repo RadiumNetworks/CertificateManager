@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CertificateManager.Admin.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260520114403_initdb")]
+    [Migration("20260520141140_initdb")]
     partial class initdb
     {
         /// <inheritdoc />
@@ -298,7 +298,6 @@ namespace CertificateManager.Admin.Data.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("CAConfig")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("LogDate")
@@ -310,6 +309,9 @@ namespace CertificateManager.Admin.Data.Migrations
 
                     b.Property<string>("SQLStatement")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserName")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");

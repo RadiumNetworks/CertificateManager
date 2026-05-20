@@ -295,7 +295,6 @@ namespace CertificateManager.Admin.Data.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("CAConfig")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("LogDate")
@@ -307,6 +306,9 @@ namespace CertificateManager.Admin.Data.Migrations
 
                     b.Property<string>("SQLStatement")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserName")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");

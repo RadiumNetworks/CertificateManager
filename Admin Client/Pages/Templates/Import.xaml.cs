@@ -1,9 +1,4 @@
-using CERTENROLLLib;
-using CertificateManager.Admin.Data.Services;
-using CertificateManager.Admin.Models;
 using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using Microsoft.Extensions.Configuration;
 using Microsoft.UI;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
@@ -14,17 +9,8 @@ using System;
 using System.Collections.Generic;
 using System.DirectoryServices.ActiveDirectory;
 using System.DirectoryServices.Protocols;
-using System.Globalization;
-using System.IO;
-using System.Runtime.ConstrainedExecution;
-using System.Security.AccessControl;
-using System.Security.Cryptography;
-using System.Security.Principal;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Web.Services.Description;
-using Windows.Media.Protection.PlayReady;
 
 namespace CertificateManager.Admin.Pages.Templates
 {
@@ -112,7 +98,7 @@ namespace CertificateManager.Admin.Pages.Templates
                         paragraph.Inlines.Add(new Run { Text = $"[{timestamp}] {message}" });
                         break;
                 }
-                
+
             }
             ImportLog.Blocks.Add(paragraph);
             ImportLogScroller.UpdateLayout();
@@ -174,7 +160,7 @@ namespace CertificateManager.Admin.Pages.Templates
 
             string searchRoot = $"CN=Public Key Services,CN=Services,{_configurationNamingContext}";
             string ldapFilter = "(objectclass=pKICertificateTemplate)";
-            string[] attributelist = new string[] { 
+            string[] attributelist = new string[] {
                 "cn","distinguishedName","flags","msPKI-Certificate-Application-Policy","msPKI-Certificate-Name-Flag",
                 "msPKI-Certificate-Policy","msPKI-Cert-Template-OID","msPKI-Enrollment-Flag","msPKI-Minimal-Key-Size",
                 "msPKI-Private-Key-Flag","msPKI-RA-Application-Policies","msPKI-RA-Policies","msPKI-RA-Signature",
@@ -337,7 +323,7 @@ namespace CertificateManager.Admin.Pages.Templates
                         if (entry.Attributes["pKIExtendedKeyUsage"] != null)
                         {
                             var oids = new List<string>();
-                            for (int i=0; i< entry.Attributes["pKIExtendedKeyUsage"].Count; i++)
+                            for (int i = 0; i < entry.Attributes["pKIExtendedKeyUsage"].Count; i++)
                             {
                                 oids.Add(entry.Attributes["pKIExtendedKeyUsage"][i].ToString()!);
                             }
@@ -352,7 +338,7 @@ namespace CertificateManager.Admin.Pages.Templates
                                 byte[] bytearr_pKIKeyUsage = (byte[])entry.Attributes["pKIKeyUsage"][0];
                                 pKIKeyUsage = TemplateImportHelper.FormatKeyUsageBytes(bytearr_pKIKeyUsage);
                             }
-                            catch 
+                            catch
                             {
                                 pKIKeyUsage = entry.Attributes["pKIKeyUsage"][0].ToString()!;
                             }
@@ -400,11 +386,11 @@ namespace CertificateManager.Admin.Pages.Templates
                         if (entry.Attributes["modifyTimeStamp"] != null)
                         {
                             string? timestamp = entry.Attributes["modifyTimeStamp"][0].ToString();
-                            if(!(timestamp is null))
+                            if (!(timestamp is null))
                             {
                                 modifyTimeStamp = TemplateImportHelper.ParseModifyTimestamp(timestamp);
                             }
-                            
+
                         }
 
                         AppendImportLog("");
@@ -451,7 +437,7 @@ namespace CertificateManager.Admin.Pages.Templates
                             '{pKICriticalExtensions}','{pKIDefaultCSPs}','{pKIDefaultKeySpec}','{pKIExpirationPeriod}','{pKIExtendedKeyUsage}',
                             '{pKIKeyUsage}','{pKIMaxIssuingDepth}','{pKIOverlapPeriod}','{nTSecurityDescriptor}','{modifyTimeStamp}')";
 
-                        
+
 
                         var connectionString = LoadConnectionString();
 
@@ -475,8 +461,8 @@ namespace CertificateManager.Admin.Pages.Templates
             {
                 sqlstatement = sqlstatement.Replace("'", "''");
                 string sqlTime = DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss");
-                string sql = $@"Insert into SQLLog(LogDate, Origin, Identity, SQLStatement)
-                            VALUES('{sqlTime}', 'ExitModule', {identity}, N'{sqlstatement}')";
+                string sql = $@"Insert into SQLLog(LogDate, Origin, UserName, SQLStatement)
+                            VALUES('{sqlTime}', 'ExitModule', '{identity}', N'{sqlstatement}')";
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     using (SqlCommand command = new SqlCommand(sql, connection))

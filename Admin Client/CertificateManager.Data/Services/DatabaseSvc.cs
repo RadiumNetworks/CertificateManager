@@ -247,7 +247,7 @@ namespace CertificateManager.Admin.Data.Services
                 {
                     LogDate = DateTime.Now,
                     Origin = "AdminClient",
-                    Identity = identity,
+                    UserName = identity,
                     CAConfig = caConfig,
                     SQLStatement = sqlStatement
                 });
