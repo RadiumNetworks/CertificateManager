@@ -48,6 +48,28 @@
                     <FontIcon Glyph="&#xE9D9;"/>
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
+            <NavigationViewItem Content="Views">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE8A9;"/>
+                </NavigationViewItem.Icon>
+                <NavigationViewItem.MenuItems>
+                    <NavigationViewItem Content="Expiring (30 days)" Tag="Views_Expiring30days" >
+                        <NavigationViewItem.Icon>
+                            <FontIcon Glyph="&#xE823;"/>
+                        </NavigationViewItem.Icon>
+                    </NavigationViewItem>
+                    <NavigationViewItem Content="Code Signing" Tag="Views_CodeSigning" >
+                        <NavigationViewItem.Icon>
+                            <FontIcon Glyph="&#xE8D7;"/>
+                        </NavigationViewItem.Icon>
+                    </NavigationViewItem>
+                    <NavigationViewItem Content="Wildcard" Tag="Views_Wildcard" >
+                        <NavigationViewItem.Icon>
+                            <FontIcon Glyph="&#xE71B;"/>
+                        </NavigationViewItem.Icon>
+                    </NavigationViewItem>
+                </NavigationViewItem.MenuItems>
+            </NavigationViewItem>
             <NavigationViewItem Content="Setup" Tag="Setup" >
                 <NavigationViewItem.Icon>
                     <SymbolIcon Symbol="Admin" />

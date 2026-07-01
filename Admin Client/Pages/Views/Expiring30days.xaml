@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="CertificateManager.Admin.Pages.Views.Expiring30days"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:CertificateManager.Admin.Pages.Views"
+    xmlns:controls="using:CommunityToolkit.WinUI.UI.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid Padding="24" RowSpacing="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Orientation="Horizontal" Spacing="16" Grid.Row="0" VerticalAlignment="Center">
+            <TextBlock Text="Certificates Expiring Within 30 Days"
+                Style="{StaticResource TitleTextBlockStyle}" />
+            <Button x:Name="ExportButton"
+                    Content="Export CSV"
+                    Click="ExportButton_Click"
+                    Style="{StaticResource AccentButtonStyle}"
+                    Padding="16,8" />
+        </StackPanel>
+
+        <!-- DataGrid -->
+        <controls:DataGrid
+            x:Name="EntryDataGrid"
+            Grid.Row="1"
+            AutoGenerateColumns="False"
+            CanUserSortColumns="True"
+            CanUserReorderColumns="True"
+            CanUserResizeColumns="True"
+            IsReadOnly="True"
+            GridLinesVisibility="Horizontal"
+            AlternatingRowBackground="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="4">
+
+            <controls:DataGrid.Columns>
+                <controls:DataGridTextColumn Header="ID"
+                                              Binding="{Binding RequestId}"
+                                              Tag="RequestId"
+                                              Width="80" />
+                <controls:DataGridTextColumn Header="CAConfig"
+                                              Binding="{Binding CAConfig}"
+                                              Tag="CAConfig"
+                                              Width="150" />
+                <controls:DataGridTextColumn Header="Subject"
+                                              Binding="{Binding RequestCommonName}"
+                                              Tag="RequestCommonName"
+                                              Width="200" />
+                <controls:DataGridTextColumn Header="Template"
+                                              Binding="{Binding CertificateTemplate}"
+                                              Tag="CertificateTemplate"
+                                              Width="180" />
+                <controls:DataGridTextColumn Header="ExpirationDate"
+                                              Binding="{Binding CertificateExpirationDate}"
+                                              Tag="CertificateExpirationDate"
+                                              Width="150" />
+                <controls:DataGridTextColumn Header="Owner"
+                                              Binding="{Binding Owner}"
+                                              Tag="Owner"
+                                              Width="120" />
+                <controls:DataGridTextColumn Header="Notes"
+                                              Binding="{Binding Notes}"
+                                              Tag="Notes"
+                                              Width="120" />
+            </controls:DataGrid.Columns>
+        </controls:DataGrid>
+
+        <!-- Pagination -->
+        <Grid Grid.Row="2" Padding="0,8,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Orientation="Horizontal" Spacing="8" Grid.Column="0">
+                <Button x:Name="FirstPageButton" Content="&#xE72B;" FontFamily="Segoe MDL2 Assets"
+                        Click="FirstPageButton_Click" ToolTipService.ToolTip="First Page" Padding="8,6" />
+                <Button x:Name="PreviousPageButton" Content="&#xE76B;" FontFamily="Segoe MDL2 Assets"
+                        Click="PreviousPageButton_Click" ToolTipService.ToolTip="Previous Page" Padding="8,6" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Spacing="12"
+                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                        Grid.Column="1">
+                <TextBlock x:Name="PageInfoText" Text="Page 1 of 1"
+                           VerticalAlignment="Center" />
+                <TextBlock Text="|" VerticalAlignment="Center"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <TextBlock x:Name="TotalCountText" Text="0 entries"
+                           VerticalAlignment="Center" />
+                <TextBlock Text="|" VerticalAlignment="Center"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <TextBlock Text="Page size:" VerticalAlignment="Center" />
+                <ComboBox x:Name="PageSizeCombo" SelectedIndex="0"
+                          SelectionChanged="PageSizeCombo_SelectionChanged" Width="80">
+                    <x:String>10</x:String>
+                    <x:String>20</x:String>
+                    <x:String>50</x:String>
+                    <x:String>100</x:String>
+                </ComboBox>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Spacing="8" Grid.Column="2">
+                <Button x:Name="NextPageButton" Content="&#xE76C;" FontFamily="Segoe MDL2 Assets"
+                        Click="NextPageButton_Click" ToolTipService.ToolTip="Next Page" Padding="8,6" />
+                <Button x:Name="LastPageButton" Content="&#xE72A;" FontFamily="Segoe MDL2 Assets"
+                        Click="LastPageButton_Click" ToolTipService.ToolTip="Last Page" Padding="8,6" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+
+</Page>

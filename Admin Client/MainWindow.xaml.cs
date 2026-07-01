@@ -47,6 +47,9 @@ namespace CertificateManager.Admin
                     "Sign_Script" => typeof(CertificateManager.Admin.Pages.Signature.Sign),
                     "Import_Templates" => typeof(CertificateManager.Admin.Pages.Templates.Import),
                     "Statistics" => typeof(CertificateManager.Admin.Pages.Statistics.Overview),
+                    "Views_Expiring30days" => typeof(CertificateManager.Admin.Pages.Views.Expiring30days),
+                    "Views_CodeSigning" => typeof(CertificateManager.Admin.Pages.Views.CodeSigning),
+                    "Views_Wildcard" => typeof(CertificateManager.Admin.Pages.Views.Wildcard),
                     "Setup" => typeof(CertificateManager.Admin.Pages.Admin.Setup),
                     _ => typeof(CertificateManager.Admin.Pages.Certificate.List)
                 };
