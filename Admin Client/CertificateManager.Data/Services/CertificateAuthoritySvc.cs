@@ -338,30 +338,17 @@ namespace CertificateManager.Admin.Data.Services
             return configuration.GetConnectionString("DefaultConnection");
         }
 
-        private void SQLLog(string sqlstatement, string identity, string connectionString)
+        private void SQLLog(string sqlstatement, string identity, SqlConnection connection, SqlTransaction transaction)
         {
-            try
-            {
-                sqlstatement = sqlstatement.Replace("'", "''");
-                string sqlTime = DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss");
-                string sql = $@"Insert into SQLLog(LogDate, Origin, UserName, SQLStatement)
+            sqlstatement = sqlstatement.Replace("'", "''");
+            string sqlTime = DateTime.Now.ToString("yyyy-MM-dd hh:mm:ss");
+            string sql = $@"Insert into SQLLog(LogDate, Origin, UserName, SQLStatement)
                             VALUES('{sqlTime}', 'AdminClient', '{identity}', N'{sqlstatement}')";
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    using (SqlCommand command = new SqlCommand(sql, connection))
-                    {
-                        connection.Open();
-                        command.ExecuteNonQuery();
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-
-            }
+            using SqlCommand command = new SqlCommand(sql, connection, transaction);
+            command.ExecuteNonQuery();
         }
 
-        public void UpdateOrInsertEKUs(string connectionString, string caConfig, CARequest request, CACertificate certificate, Action<string>? log = null)
+        public void UpdateOrInsertEKUs(SqlConnection connection, SqlTransaction transaction, string caConfig, CARequest request, CACertificate certificate, Action<string>? log = null, bool writeSqlLog = true)
         {
             foreach (string eku in EKUs)
             {
@@ -371,20 +358,18 @@ namespace CertificateManager.Admin.Data.Services
                     Insert into EKU (Name, RequestId, CAConfig) 
                     VALUES ('{eku}','{request.RequestId}','{caConfig}')";
 
-                SQLLog(ekusql, System.Security.Principal.WindowsIdentity.GetCurrent().Name, connectionString);
-                using (SqlConnection connection = new SqlConnection(connectionString))
+                if (writeSqlLog)
+                    SQLLog(ekusql, System.Security.Principal.WindowsIdentity.GetCurrent().Name, connection, transaction);
+
+                using (SqlCommand command = new SqlCommand(ekusql, connection, transaction))
                 {
-                    using (SqlCommand command = new SqlCommand(ekusql, connection))
-                    {
-                        connection.Open();
-                        command.ExecuteNonQuery();
-                    }
-                    log?.Invoke($"EKU Update or Import successful");
+                    command.ExecuteNonQuery();
                 }
+                log?.Invoke($"EKU Update or Import successful");
             }
         }
 
-        public void UpdateOrInsertSANs(string connectionString, string caConfig, CARequest request, CACertificate certificate, Action<string>? log = null)
+        public void UpdateOrInsertSANs(SqlConnection connection, SqlTransaction transaction, string caConfig, CARequest request, CACertificate certificate, Action<string>? log = null, bool writeSqlLog = true)
         {
             foreach (string san in SubjectAlternativeNames)
             {
@@ -394,20 +379,18 @@ namespace CertificateManager.Admin.Data.Services
                     Insert into SAN (SubjectAlternativeName, RequestId, CAConfig) 
                     VALUES ('{san}','{request.RequestId}','{caConfig}')";
 
-                SQLLog(sansql, System.Security.Principal.WindowsIdentity.GetCurrent().Name, connectionString);
-                using (SqlConnection connection = new SqlConnection(connectionString))
+                if (writeSqlLog)
+                    SQLLog(sansql, System.Security.Principal.WindowsIdentity.GetCurrent().Name, connection, transaction);
+
+                using (SqlCommand command = new SqlCommand(sansql, connection, transaction))
                 {
-                    using (SqlCommand command = new SqlCommand(sansql, connection))
-                    {
-                        connection.Open();
-                        command.ExecuteNonQuery();
-                    }
-                    log?.Invoke($"SAN Update or Import successful");
+                    command.ExecuteNonQuery();
                 }
+                log?.Invoke($"SAN Update or Import successful");
             }
         }
 
-        public void UpdateOrInsertEntry(string connectionString, string caConfig, CARequest request, CACertificate certificate, Action<string>? log = null)
+        public void UpdateOrInsertEntry(SqlConnection connection, SqlTransaction transaction, string caConfig, CARequest request, CACertificate certificate, Action<string>? log = null, bool writeSqlLog = true)
         {
             string requestid = "";
             string serialNumber = "";
@@ -564,20 +547,19 @@ namespace CertificateManager.Admin.Data.Services
                     '{publicKeyLength}','{publicKeyAlgorithm}','{requestCountryRegion}','{requestOrganization}',
                     '{requestOrganizationUnit}','{requestCommonName}','{requestCity}','{requestEMailAddress}')";
 
-                SQLLog(sql, System.Security.Principal.WindowsIdentity.GetCurrent().Name, connectionString);
-                using (SqlConnection connection = new SqlConnection(connectionString))
+                if (writeSqlLog)
+                    SQLLog(sql, System.Security.Principal.WindowsIdentity.GetCurrent().Name, connection, transaction);
+
+                using (SqlCommand command = new SqlCommand(sql, connection, transaction))
                 {
-                    using (SqlCommand command = new SqlCommand(sql, connection))
-                    {
-                        connection.Open();
-                        command.ExecuteNonQuery();
-                    }
-                    log?.Invoke("Update or Import successful");
+                    command.ExecuteNonQuery();
                 }
+                log?.Invoke("Update or Import successful");
             }
             catch (Exception e)
             {
                 log?.Invoke(e.Message);
+                throw;
             }
         }
 
@@ -676,7 +658,7 @@ namespace CertificateManager.Admin.Data.Services
             return 0;
         }
 
-        public (List<CARequest> Requests, List<CACertificate> Certificates) ReadCADbEntries(string caConfig, Action<string> log = null, Action<int> progressCallback = null)
+        public (List<CARequest> Requests, List<CACertificate> Certificates) ReadCADbEntries(string caConfig, Action<string> log = null, Action<int> progressCallback = null, bool writeSqlLog = true)
         {
             var connectionString = LoadConnectionString();
 
@@ -701,9 +683,15 @@ namespace CertificateManager.Admin.Data.Services
 
             int rowCount = 0;
 
-            while (enumRow.Next() != -1)
+            using SqlConnection sqlConnection = new SqlConnection(connectionString);
+            sqlConnection.Open();
+            using SqlTransaction transaction = sqlConnection.BeginTransaction();
+
+            try
             {
-                rowCount++;
+                while (enumRow.Next() != -1)
+                {
+                    rowCount++;
                 var request = new CARequest();
                 var certificate = new CACertificate();
                 bool hasCertData = false;
@@ -848,9 +836,9 @@ namespace CertificateManager.Admin.Data.Services
                     $"CN = {request.CommonName ?? "(none)"}, " +
                     $"Disposition = {request.DispositionMessage ?? "(none)"}");
 
-                UpdateOrInsertEntry(connectionString, caConfig, request, certificate, log);
-                UpdateOrInsertEKUs(connectionString, caConfig, request, certificate, log);
-                UpdateOrInsertSANs(connectionString, caConfig, request, certificate, log);
+                UpdateOrInsertEntry(sqlConnection, transaction, caConfig, request, certificate, log, writeSqlLog);
+                UpdateOrInsertEKUs(sqlConnection, transaction, caConfig, request, certificate, log, writeSqlLog);
+                UpdateOrInsertSANs(sqlConnection, transaction, caConfig, request, certificate, log, writeSqlLog);
 
                 SubjectAlternativeNames = new List<string>();
                 EKUs = new List<string>();
@@ -865,6 +853,14 @@ namespace CertificateManager.Admin.Data.Services
                     int pct = (int)((double)request.RequestId / lastRequestId * 100);
                     progressCallback?.Invoke(pct > 100 ? 100 : pct);
                 }
+                }
+
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
 
             }
 
@@ -872,10 +868,13 @@ namespace CertificateManager.Admin.Data.Services
             return (requests, certificates);
         }
 
-        public (List<CARequest> Requests, List<CACertificate> Certificates) ReadCADbEntries(string caConfig, int firstRequestId, Action<string> log = null, Action<int> progressCallback = null)
+        public (List<CARequest> Requests, List<CACertificate> Certificates) ReadCADbEntries(string caConfig, int firstRequestId, int maxEntries, Action<string> log = null, Action<int> progressCallback = null, bool writeSqlLog = true)
         {
             const int CVR_SEEK_GE = 0x10;
             const int CVR_SORT_ASCEND = 1;
+
+            if (maxEntries <= 0)
+                throw new ArgumentOutOfRangeException(nameof(maxEntries), "The maximum number of entries must be greater than zero.");
 
             var connectionString = LoadConnectionString();
 
@@ -899,15 +898,21 @@ namespace CertificateManager.Admin.Data.Services
             int requestIdColIndex = certView.GetColumnIndex(0, "RequestID");
             certView.SetRestriction(requestIdColIndex, CVR_SEEK_GE, CVR_SORT_ASCEND, firstRequestId);
 
-            log?.Invoke($"Filtering CA database starting at RequestID >= {firstRequestId}");
+            log?.Invoke($"Filtering CA database starting at RequestID >= {firstRequestId} (maximum {maxEntries} entries)");
 
             IEnumCERTVIEWROW enumRow = certView.OpenView();
 
             int rowCount = 0;
 
-            while (enumRow.Next() != -1)
+            using SqlConnection sqlConnection = new SqlConnection(connectionString);
+            sqlConnection.Open();
+            using SqlTransaction transaction = sqlConnection.BeginTransaction();
+
+            try
             {
-                rowCount++;
+                while (rowCount < maxEntries && enumRow.Next() != -1)
+                {
+                    rowCount++;
                 var request = new CARequest();
                 var certificate = new CACertificate();
                 bool hasCertData = false;
@@ -1050,9 +1055,9 @@ namespace CertificateManager.Admin.Data.Services
                     $"CN = {request.CommonName ?? "(none)"}, " +
                     $"Disposition = {request.DispositionMessage ?? "(none)"}");
 
-                UpdateOrInsertEntry(connectionString, caConfig, request, certificate, log);
-                UpdateOrInsertEKUs(connectionString, caConfig, request, certificate, log);
-                UpdateOrInsertSANs(connectionString, caConfig, request, certificate, log);
+                UpdateOrInsertEntry(sqlConnection, transaction, caConfig, request, certificate, log, writeSqlLog);
+                UpdateOrInsertEKUs(sqlConnection, transaction, caConfig, request, certificate, log, writeSqlLog);
+                UpdateOrInsertSANs(sqlConnection, transaction, caConfig, request, certificate, log, writeSqlLog);
 
                 SubjectAlternativeNames = new List<string>();
                 EKUs = new List<string>();
@@ -1067,9 +1072,19 @@ namespace CertificateManager.Admin.Data.Services
                     int pct = (int)((double)request.RequestId / lastRequestId * 100);
                     progressCallback?.Invoke(pct > 100 ? 100 : pct);
                 }
+                }
+
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
             }
 
-            progressCallback?.Invoke(100);
+            if (rowCount < maxEntries)
+                progressCallback?.Invoke(100);
+
             return (requests, certificates);
         }
     }

@@ -275,13 +275,46 @@ namespace CertificateManager.Admin.Pages.Admin
                     });
                 };
 
-                var (requests, certificates) = await Task.Run(() =>
-                    startRequestId > 0
-                        ? svc.ReadCADbEntries(caConfig, startRequestId, AppendImportLog, progressCallback)
-                        : svc.ReadCADbEntries(caConfig, AppendImportLog, progressCallback));
+                const int batchSize = 1000;
+                int totalRequests = 0;
+                int totalCertificates = 0;
+                int nextRequestId = startRequestId;
 
-                AppendImportLog($"Read {requests.Count} requests and {certificates.Count} certificates.");
-                ShowStatus($"Successfully read {requests.Count} requests and {certificates.Count} certificates from CA database.", InfoBarSeverity.Success);
+                await Task.Run(() =>
+                {
+                    while (true)
+                    {
+                        AppendImportLog($"Reading up to {batchSize} entries from RequestID >= {nextRequestId}...");
+
+                        var (requests, certificates) = svc.ReadCADbEntries(
+                            caConfig,
+                            nextRequestId,
+                            batchSize,
+                            AppendImportLog,
+                            progressCallback,
+                            writeSqlLog: false);
+
+                        totalRequests += requests.Count;
+                        totalCertificates += certificates.Count;
+
+                        if (requests.Count == 0)
+                            break;
+
+                        int lastProcessedRequestId = requests.Max(request => request.RequestId);
+                        AppendImportLog($"Batch completed at RequestID {lastProcessedRequestId} ({requests.Count} entries).");
+
+                        if (requests.Count < batchSize || lastProcessedRequestId == int.MaxValue)
+                            break;
+
+                        if (lastProcessedRequestId < nextRequestId)
+                            throw new InvalidOperationException("The CA database did not return an increasing RequestID.");
+
+                        nextRequestId = lastProcessedRequestId + 1;
+                    }
+                });
+
+                AppendImportLog($"Read {totalRequests} requests and {totalCertificates} certificates.");
+                ShowStatus($"Successfully read {totalRequests} requests and {totalCertificates} certificates from CA database.", InfoBarSeverity.Success);
             }
             catch (Exception ex)
             {
